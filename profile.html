@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Profil Murid - SEMSIRA</title>
     <link rel="stylesheet" href="assets/style.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <style>
         /* UI BEAUTIFICATION - DARK MODE */
         body {
@@ -46,7 +47,17 @@
             margin-bottom: 20px;
         }
 
-        h2 { color: #ffffff; margin: 10px 0 5px 0; font-size: 20px; }
+        /* 二维码容器样式 */
+        #qrcode-container {
+            background: white;
+            padding: 15px;
+            border-radius: 12px;
+            display: inline-block;
+            margin: 15px 0;
+            box-shadow: 0 0 20px rgba(56, 189, 248, 0.2);
+        }
+
+        h2 { color: #ffffff; margin: 10px 0 5px 0; font-size: 22px; }
         h4 { color: #38bdf8; border-bottom: 1px solid #334155; padding-bottom: 10px; margin-bottom: 15px; }
 
         .info-p { margin: 5px 0; color: #94a3b8; font-size: 14px; }
@@ -59,8 +70,6 @@
             font-size: 14px;
         }
 
-        .record-item:last-child { border-bottom: none; }
-
         .btn-blue {
             background: linear-gradient(135deg, #38bdf8 0%, #0284c7 100%);
             color: white;
@@ -69,6 +78,7 @@
             border-radius: 12px;
             font-weight: 600;
             cursor: pointer;
+            width: 100%;
             transition: 0.3s;
         }
 
@@ -76,28 +86,29 @@
 
         /* PRINT OPTIMIZATION */
         @media print {
-            body { background: white; color: black; }
+            body { background: white !important; color: black !important; }
             .container { padding: 0; max-width: 100%; }
             .card { box-shadow: none; border: 1px solid #eee; background: white; color: black; }
-            .btn, header, .back-link { display: none; }
-            h2, h4 { color: black; }
-            .info-p { color: #333; }
-            .record-item { border-bottom: 1px solid #eee; color: black; }
+            .btn-blue, header { display: none; }
+            h2, h4 { color: black !important; }
+            .info-p { color: #333 !important; }
+            #qrcode-container { border: 1px solid #ccc; box-shadow: none; }
         }
     </style>
 </head>
 <body>
     <header>
-        <a href="javascript:history.back()" class="back-link" style="float: left; text-decoration: none; color: white; position: absolute; left: 20px; font-size: 20px;">⬅️</a>
+        <a href="javascript:history.back()" style="float: left; text-decoration: none; color: white; position: absolute; left: 20px; font-size: 20px;">⬅️</a>
         <img src="semsira.png" alt="Logo" class="logo-small">
         <span style="font-weight: 600; margin-left: 10px;">Profil Murid</span>
     </header>
 
     <div class="container">
         <div class="card" style="text-align:center;">
-            <img src="semsira.png" style="width:70px; margin-bottom: 10px; filter: drop-shadow(0 4px 8px rgba(0,0,0,0.2));">
+            <div id="qrcode-container">
+                <div id="qrcode"></div> </div>
             <h2 id="p-name">Memuatkan...</h2>
-            <p id="p-ic" class="info-p">IC: -</p>
+            <p id="p-ic" class="info-p" style="font-weight:bold; letter-spacing:1px; color:#38bdf8;">IC: -</p>
             <p id="p-class" class="info-p">Kelas: -</p>
             <p id="p-gender" class="info-p">Jantina: -</p>
         </div>
@@ -108,14 +119,13 @@
                 <p style="text-align:center; color:#64748b; padding: 20px;">Mencari rekod...</p>
             </div>
             
-            <button class="btn-blue" onclick="window.print()" style="width:100%; margin-top:20px;">🖨️ CETAK / SIMPAN PDF</button>
+            <button class="btn-blue" onclick="window.print()" style="margin-top:20px;">🖨️ CETAK KAD / SIMPAN PDF</button>
         </div>
     </div>
 
     <script type="module">
-        // --- LOGIK ASAL ANDA (TIDAK DIUBAH) ---
         import { db } from './js/firebase-config.js';
-        import { doc, getDoc, collection, getDocs, query, where, orderBy } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-firestore.js";
+        import { doc, getDoc, collection, getDocs, query, where } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-firestore.js";
 
         const urlParams = new URLSearchParams(window.location.search);
         const studentIC = urlParams.get('id');
@@ -125,8 +135,23 @@
             window.location.href = 'dashboard.html';
         }
 
+        // 生成二维码的函数
+        function generateQRCode(text) {
+            const qrcodeDiv = document.getElementById("qrcode");
+            qrcodeDiv.innerHTML = ""; // 清空旧的
+            new QRCode(qrcodeDiv, {
+                text: text,
+                width: 140,
+                height: 140,
+                colorDark : "#000000",
+                colorLight : "#ffffff",
+                correctLevel : QRCode.CorrectLevel.H
+            });
+        }
+
         async function loadProfile() {
             try {
+                // 1. 获取基本资料
                 const studentDoc = await getDoc(doc(db, "students", studentIC));
                 
                 if (studentDoc.exists()) {
@@ -135,15 +160,15 @@
                     document.getElementById('p-ic').innerText = `IC: ${data.ic}`;
                     document.getElementById('p-class').innerText = `Kelas: ${data.kelas}`;
                     document.getElementById('p-gender').innerText = `Jantina: ${data.gender}`;
+                    
+                    // 为该学生生成专属二维码 (以其 IC 为内容)
+                    generateQRCode(data.ic);
                 } else {
                     document.getElementById('p-name').innerText = "Murid Tidak Ditemui";
                 }
 
-                const q = query(
-                    collection(db, "attendance"), 
-                    where("ic", "==", studentIC)
-                );
-                
+                // 2. 获取出勤历史
+                const q = query(collection(db, "attendance"), where("ic", "==", studentIC));
                 const querySnapshot = await getDocs(q);
                 const historyDiv = document.getElementById('attendanceHistory');
                 historyDiv.innerHTML = "";
@@ -173,7 +198,6 @@
 
             } catch (error) {
                 console.error("Ralat memuatkan profil:", error);
-                alert("Gagal memuatkan data dari Firebase.");
             }
         }
 
