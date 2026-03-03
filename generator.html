@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="ms">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Jana QR - SEMSIRA</title>
+    <link rel="stylesheet" href="assets/style.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+</head>
+<body>
+    <header>
+        <a href="menu.html" style="float: left; text-decoration: none;">⬅️</a>
+        <img src="semsira.png" alt="Logo" class="logo-small">
+        <span style="font-weight: bold;">Pendaftaran Murid</span>
+    </header>
+
+    <div class="container">
+        <div class="card">
+            <h3>Maklumat Murid</h3>
+            <input type="text" id="name" placeholder="Nama Penuh (Huruf Besar)" required>
+            <input type="text" id="ic" placeholder="Nombor IC (Contoh: 05010102XXXX)" required>
+            <select id="class">
+                <option value="">Pilih Kelas</option>
+                <option value="6 Al-Farabi">6 Al-Farabi</option>
+                <option value="6 Al-Ghazali">6 Al-Ghazali</option>
+            </select>
+            <select id="gender">
+                <option value="">Jantina</option>
+                <option value="Lelaki">Lelaki</option>
+                <option value="Perempuan">Perempuan</option>
+            </select>
+            <button class="btn btn-blue" onclick="generateAndSave()" style="width:100%; margin-top:10px;">TERUSKAN & JANA QR</button>
+        </div>
+
+        <div id="qr-result-card" class="card" style="display:none; text-align: center;">
+            <h4>QR Code Murid</h4>
+            <div id="qrcode" style="display: flex; justify-content: center; margin: 20px 0;"></div>
+            <p id="display-name" style="font-weight: bold;"></p>
+            <button class="btn btn-green" onclick="window.print()">CETAK QR CODE</button>
+        </div>
+    </div>
+
+    <script type="module">
+        import { db } from './js/firebase-config.js';
+        import { doc, setDoc } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-firestore.js";
+
+        window.generateAndSave = async () => {
+            const name = document.getElementById('name').value.toUpperCase();
+            const ic = document.getElementById('ic').value;
+            const kelas = document.getElementById('class').value;
+            const gender = document.getElementById('gender').value;
+
+            if(!name || !ic || !kelas || !gender) return alert("Sila isi semua maklumat!");
+
+            const studentData = { name, ic, kelas, gender };
+            const qrString = JSON.stringify(studentData);
+
+            try {
+                // Simpan ke Firebase Firestore
+                await setDoc(doc(db, "students", ic), studentData);
+                
+                // Jana QR Code
+                document.getElementById('qrcode').innerHTML = "";
+                new QRCode(document.getElementById("qrcode"), {
+                    text: qrString,
+                    width: 200,
+                    height: 200
+                });
+
+                document.getElementById('display-name').innerText = name;
+                document.getElementById('qr-result-card').style.display = "block";
+                alert("Data berjaya disimpan ke Firebase!");
+            } catch (e) {
+                console.error("Ralat simpan data: ", e);
+            }
+        }
+    </script>
+</body>
+</html>
