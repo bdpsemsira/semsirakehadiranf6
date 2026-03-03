@@ -6,50 +6,142 @@
     <title>Dashboard - SEMSIRA</title>
     <link rel="stylesheet" href="assets/style.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.23/jspdf.plugin.autotable.min.js"></script>
 </head>
 <body>
     <header>
         <a href="menu.html" style="float: left; text-decoration: none;">⬅️</a>
+        <img src="semsira.png" alt="Logo" class="logo-small">
         <span style="font-weight: bold;">Statistik Kehadiran</span>
     </header>
 
     <div class="container">
         <div class="card">
             <h4>Peratus Kehadiran Bulan Ini</h4>
-            <canvas id="attendanceChart"></canvas>
+            <div style="max-width: 250px; margin: 0 auto;">
+                <canvas id="attendanceChart"></canvas>
+            </div>
+            <p id="totalInfo" style="text-align:center; font-size:12px; margin-top:10px;"></p>
         </div>
 
         <div class="card">
-            <h4>Carian Sejarah</h4>
+            <h4>Carian & Muat Turun Laporan</h4>
+            <label style="font-size: 12px;">Pilih Bulan (Laporan Bulanan):</label>
             <input type="month" id="searchMonth">
-            <button class="btn btn-blue" style="width:100%">MUAT TURUN LAPORAN (PDF)</button>
+            <button class="btn btn-blue" onclick="downloadReport('month')" style="width:100%; margin-bottom:15px;">MUAT TURUN LAPORAN BULANAN</button>
+
+            <label style="font-size: 12px;">Pilih Tarikh (Laporan Harian):</label>
+            <input type="date" id="searchDate">
+            <button class="btn btn-green" onclick="downloadReport('day')" style="width:100%">MUAT TURUN LAPORAN HARIAN</button>
         </div>
 
         <div class="card">
             <h4>Senarai Kelas</h4>
             <div id="classList">
-                <div class="btn btn-green" style="margin-bottom:10px; justify-content: space-between;" onclick="location.href='class-detail.html?class=6AF'">
-                    6 Al-Farabi <span>85% Hadir</span>
-                </div>
-                <div class="btn btn-green" style="margin-bottom:10px; justify-content: space-between;" onclick="location.href='class-detail.html?class=6AG'">
-                    6 Al-Ghazali <span>92% Hadir</span>
-                </div>
+                <p style="text-align:center;">Memuatkan senarai kelas...</p>
             </div>
         </div>
     </div>
 
-    <script>
-        const ctx = document.getElementById('attendanceChart').getContext('2d');
-        new Chart(ctx, {
-            type: 'doughnut',
-            data: {
-                labels: ['Hadir', 'Lewat', 'Tidak Hadir'],
-                datasets: [{
-                    data: [70, 15, 5],
-                    backgroundColor: ['#28a745', '#ffc107', '#dc3545']
-                }]
-            }
-        });
+    <script type="module">
+        import { db } from './js/firebase-config.js';
+        import { collection, getDocs, query, where } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-firestore.js";
+
+        let myChart;
+
+        async function initDashboard() {
+            await loadStatistics();
+            await loadClassList();
+        }
+
+        // 1. 加载本月统计数据并渲染图表
+        async function loadStatistics() {
+            const now = new Date();
+            const yearMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+            
+            const q = query(collection(db, "attendance"));
+            const querySnapshot = await getDocs(q);
+            
+            let hadir = 0, lewat = 0;
+            querySnapshot.forEach((doc) => {
+                const data = doc.data();
+                // 筛选本月的记录
+                if (doc.id.startsWith(yearMonth)) {
+                    if (data.status === "Hadir") hadir++;
+                    else if (data.status === "Lewat") lewat++;
+                }
+            });
+
+            updateChart(hadir, lewat);
+            document.getElementById('totalInfo').innerText = `Jumlah Rekod Bulan Ini: ${hadir + lewat}`;
+        }
+
+        function updateChart(h, l) {
+            const ctx = document.getElementById('attendanceChart').getContext('2d');
+            if(myChart) myChart.destroy();
+            
+            myChart = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Hadir', 'Lewat'],
+                    datasets: [{
+                        data: [h, l],
+                        backgroundColor: ['#28a745', '#ffc107']
+                    }]
+                },
+                options: { plugins: { legend: { position: 'bottom' } } }
+            });
+        }
+
+        // 2. 加载在 Generator 注册的班级
+        async function loadClassList() {
+            const classListDiv = document.getElementById('classList');
+            const classes = ["SUMAYYAH", "SARAH", "KHADIJAH", "AISHAH", "FATIMAH", "ZAINAB", "RUQAYYAH"];
+            
+            classListDiv.innerHTML = "";
+            
+            classes.forEach(className => {
+                const btn = document.createElement('div');
+                btn.className = "btn btn-green";
+                btn.style.cssText = "margin-bottom:10px; justify-content: space-between;";
+                btn.innerHTML = `${className} <span style='font-size:12px'>Klik Butiran</span>`;
+                btn.onclick = () => { window.location.href = `class-detail.html?class=${className}`; };
+                classListDiv.appendChild(btn);
+            });
+        }
+
+        // 3. 报告下载功能 (PDF)
+        window.downloadReport = async (type) => {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+            const filterValue = type === 'month' ? document.getElementById('searchMonth').value : document.getElementById('searchDate').value;
+
+            if(!filterValue) return alert("Sila pilih tarikh/bulan!");
+
+            const q = query(collection(db, "attendance"));
+            const querySnapshot = await getDocs(q);
+            const rows = [];
+
+            querySnapshot.forEach((d) => {
+                const data = d.data();
+                if (d.id.startsWith(filterValue)) {
+                    rows.push([data.name, data.class, data.time, data.status]);
+                }
+            });
+
+            if(rows.length === 0) return alert("Tiada data ditemui untuk tarikh tersebut.");
+
+            doc.text(`Laporan Kehadiran SEMSIRA (${filterValue})`, 14, 15);
+            doc.autoTable({
+                head: [['Nama', 'Kelas', 'Masa', 'Status']],
+                body: rows,
+                startY: 20
+            });
+            doc.save(`Laporan_${filterValue}.pdf`);
+        };
+
+        initDashboard();
     </script>
 </body>
 </html>
