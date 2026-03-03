@@ -6,50 +6,117 @@
     <title>Profil Murid - SEMSIRA</title>
     <link rel="stylesheet" href="assets/style.css">
     <style>
+        /* UI BEAUTIFICATION - DARK MODE */
+        body {
+            background-color: #0f172a;
+            background-image: radial-gradient(circle at top right, #1e293b, #0f172a);
+            color: #f1f5f9;
+            margin: 0;
+            font-family: 'Poppins', sans-serif;
+            min-height: 100vh;
+        }
+
+        header {
+            background: #1e293b;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            padding: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        }
+
+        .logo-small {
+            width: 35px;
+            filter: drop-shadow(0 0 5px rgba(255, 255, 255, 0.1));
+        }
+
+        .container {
+            padding: 20px;
+            max-width: 500px;
+            margin: 0 auto;
+        }
+
+        .card {
+            background: #1e293b;
+            border-radius: 20px;
+            padding: 25px;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+            margin-bottom: 20px;
+        }
+
+        h2 { color: #ffffff; margin: 10px 0 5px 0; font-size: 20px; }
+        h4 { color: #38bdf8; border-bottom: 1px solid #334155; padding-bottom: 10px; margin-bottom: 15px; }
+
+        .info-p { margin: 5px 0; color: #94a3b8; font-size: 14px; }
+
         .record-item {
             display: flex;
             justify-content: space-between;
-            padding: 8px 0;
-            border-bottom: 1px solid #eee;
+            padding: 12px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
             font-size: 14px;
         }
+
+        .record-item:last-child { border-bottom: none; }
+
+        .btn-blue {
+            background: linear-gradient(135deg, #38bdf8 0%, #0284c7 100%);
+            color: white;
+            border: none;
+            padding: 15px;
+            border-radius: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+
+        .btn-blue:hover { transform: translateY(-2px); filter: brightness(1.1); }
+
+        /* PRINT OPTIMIZATION */
         @media print {
-            .btn, header { display: none; }
-            .card { box-shadow: none; border: 1px solid #ccc; }
+            body { background: white; color: black; }
+            .container { padding: 0; max-width: 100%; }
+            .card { box-shadow: none; border: 1px solid #eee; background: white; color: black; }
+            .btn, header, .back-link { display: none; }
+            h2, h4 { color: black; }
+            .info-p { color: #333; }
+            .record-item { border-bottom: 1px solid #eee; color: black; }
         }
     </style>
 </head>
 <body>
     <header>
-        <a href="javascript:history.back()" style="float: left; text-decoration: none;">⬅️</a>
+        <a href="javascript:history.back()" class="back-link" style="float: left; text-decoration: none; color: white; position: absolute; left: 20px; font-size: 20px;">⬅️</a>
         <img src="semsira.png" alt="Logo" class="logo-small">
-        <span style="font-weight: bold;">Profil Murid</span>
+        <span style="font-weight: 600; margin-left: 10px;">Profil Murid</span>
     </header>
 
     <div class="container">
         <div class="card" style="text-align:center;">
-            <img src="semsira.png" style="width:60px; margin-bottom: 10px;">
+            <img src="semsira.png" style="width:70px; margin-bottom: 10px; filter: drop-shadow(0 4px 8px rgba(0,0,0,0.2));">
             <h2 id="p-name">Memuatkan...</h2>
-            <p id="p-ic">IC: -</p>
-            <p id="p-class">Kelas: -</p>
-            <p id="p-gender">Jantina: -</p>
+            <p id="p-ic" class="info-p">IC: -</p>
+            <p id="p-class" class="info-p">Kelas: -</p>
+            <p id="p-gender" class="info-p">Jantina: -</p>
         </div>
 
         <div class="card">
             <h4>Rekod Kehadiran Keseluruhan</h4>
             <div id="attendanceHistory">
-                <p style="text-align:center; color:#999;">Mencari rekod...</p>
+                <p style="text-align:center; color:#64748b; padding: 20px;">Mencari rekod...</p>
             </div>
             
-            <button class="btn btn-blue" onclick="window.print()" style="width:100%; margin-top:20px;">CETAK / SIMPAN PDF</button>
+            <button class="btn-blue" onclick="window.print()" style="width:100%; margin-top:20px;">🖨️ CETAK / SIMPAN PDF</button>
         </div>
     </div>
 
     <script type="module">
+        // --- LOGIK ASAL ANDA (TIDAK DIUBAH) ---
         import { db } from './js/firebase-config.js';
         import { doc, getDoc, collection, getDocs, query, where, orderBy } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-firestore.js";
 
-        // 1. Ambil IC murid dari URL parameter (?id=xxxxx)
         const urlParams = new URLSearchParams(window.location.search);
         const studentIC = urlParams.get('id');
 
@@ -60,7 +127,6 @@
 
         async function loadProfile() {
             try {
-                // 2. Tarik Maklumat Peribadi Murid
                 const studentDoc = await getDoc(doc(db, "students", studentIC));
                 
                 if (studentDoc.exists()) {
@@ -73,7 +139,6 @@
                     document.getElementById('p-name').innerText = "Murid Tidak Ditemui";
                 }
 
-                // 3. Tarik Sejarah Kehadiran dari koleksi 'attendance'
                 const q = query(
                     collection(db, "attendance"), 
                     where("ic", "==", studentIC)
@@ -85,24 +150,22 @@
 
                 let attendanceData = [];
                 querySnapshot.forEach((doc) => {
-                    // Ambil tarikh dari ID dokumen (Format: YYYY-MM-DD_IC)
                     const datePart = doc.id.split('_')[0]; 
                     attendanceData.push({ date: datePart, ...doc.data() });
                 });
 
-                // Susun tarikh paling terkini di atas
                 attendanceData.sort((a, b) => new Date(b.date) - new Date(a.date));
 
                 if (attendanceData.length === 0) {
-                    historyDiv.innerHTML = "<p style='text-align:center;'>Tiada rekod kehadiran ditemui.</p>";
+                    historyDiv.innerHTML = "<p style='text-align:center; color:#64748b; padding:20px;'>Tiada rekod kehadiran ditemui.</p>";
                 } else {
                     attendanceData.forEach(record => {
-                        const statusColor = record.status === "Hadir" ? "green" : "orange";
+                        const statusColor = record.status === "Hadir" ? "#10b981" : "#f59e0b";
                         const div = document.createElement('div');
                         div.className = "record-item";
                         div.innerHTML = `
-                            <span>${record.date}</span>
-                            <span style="color:${statusColor}; font-weight:bold;">${record.status} (${record.time})</span>
+                            <span style="font-weight: 500;">${record.date}</span>
+                            <span style="color:${statusColor}; font-weight:600;">${record.status} <small style="color:#94a3b8; font-weight:400;">(${record.time})</small></span>
                         `;
                         historyDiv.appendChild(div);
                     });
