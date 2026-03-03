@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="ms">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Scanner - SEMSIRA</title>
+    <link rel="stylesheet" href="assets/style.css">
+    <script src="https://unpkg.com/html5-qrcode"></script>
+    <style>
+        #reader {
+            width: 100%;
+            border-radius: 15px;
+            overflow: hidden;
+            border: none !important;
+        }
+        .result-card {
+            display: none;
+            margin-top: 20px;
+            border-left: 5px solid var(--primary-color);
+        }
+        .status-hadir { color: var(--success-color); font-weight: bold; }
+        .status-lewat { color: var(--danger-color); font-weight: bold; }
+    </style>
+</head>
+<body>
+    <header>
+        <a href="menu.html" style="float: left; text-decoration: none;">⬅️</a>
+        <span style="font-weight: bold;">Imbas QR Murid</span>
+    </header>
+
+    <div class="container">
+        <div class="card" style="padding: 10px;">
+            <div id="reader"></div>
+        </div>
+
+        <div id="result" class="card result-card">
+            <h3 id="res-name">NAMA MURID</h3>
+            <p id="res-class">KELAS</p>
+            <p>Masa Imbas: <span id="res-time">--:--</span></p>
+            <p>Status: <span id="res-status">--</span></p>
+        </div>
+
+        <button class="btn btn-blue" onclick="location.reload()" style="width:100%; margin-top:10px;">SCAN SEMULA</button>
+    </div>
+
+    <script type="module">
+        import { db } from './js/firebase-config.js';
+        import { doc, setDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-firestore.js";
+
+        const html5QrCode = new Html5Qrcode("reader");
+        const qrConfig = { fps: 10, qrbox: { width: 250, height: 250 } };
+
+        // 开始扫描
+        html5QrCode.start({ facingMode: "environment" }, qrConfig, onScanSuccess);
+
+        async function onScanSuccess(decodedText, decodedResult) {
+            // 停止扫描以处理数据
+            await html5QrCode.stop();
+            
+            try {
+                // 解析二维码 JSON 数据
+                const student = JSON.parse(decodedText);
+                
+                // 获取当前时间
+                const now = new Date();
+                const currentTime = now.getHours().toString().padStart(2, '0') + ":" + 
+                                  now.getMinutes().toString().padStart(2, '0');
+                
+                // 逻辑判断：7:35 AM 为界限
+                const limitHour = 7;
+                const limitMin = 35;
+                let status = "Hadir";
+                
+                if (now.getHours() > limitHour || (now.getHours() === limitHour && now.getMinutes() > limitMin)) {
+                    status = "Lewat";
+                }
+
+                // 显示在界面上
+                document.getElementById('res-name').innerText = student.name;
+                document.getElementById('res-class').innerText = student.class || student.kelas;
+                document.getElementById('res-time').innerText = currentTime;
+                document.getElementById('res-status').innerText = status;
+                document.getElementById('res-status').className = status === "Hadir" ? "status-hadir" : "status-lewat";
+                document.getElementById('result').style.display = "block";
+
+                // 准备存入 Firebase 的数据
+                const dateKey = now.toISOString().split('T')[0]; // 格式: 2024-05-20
+                const attendanceRef = doc(db, "attendance", `${dateKey}_${student.ic}`);
+
+                await setDoc(attendanceRef, {
+                    name: student.name,
+                    ic: student.ic,
+                    class: student.class || student.kelas,
+                    gender: student.gender,
+                    time: currentTime,
+                    status: status,
+                    timestamp: serverTimestamp()
+                });
+
+                // 播放成功提示音 (可选)
+                alert("Rekod Berjaya Disimpan!");
+
+            } catch (e) {
+                console.error("Ralat:", e);
+                alert("QR Kod tidak sah atau ralat sistem.");
+                location.reload();
+            }
+        }
+    </script>
+</body>
+</html>
