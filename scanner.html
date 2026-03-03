@@ -7,25 +7,141 @@
     <link rel="stylesheet" href="assets/style.css">
     <script src="https://unpkg.com/html5-qrcode"></script>
     <style>
+        /* UI BEAUTIFICATION - DARK MODE */
+        body {
+            background-color: #0f172a;
+            background-image: radial-gradient(circle at top right, #1e293b, #0f172a);
+            color: #f1f5f9;
+            margin: 0;
+            font-family: 'Poppins', sans-serif;
+            min-height: 100vh;
+        }
+
+        header {
+            background: #1e293b;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            padding: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        }
+
+        .container {
+            padding: 20px;
+            max-width: 500px;
+            margin: 0 auto;
+        }
+
+        /* Scanner Box Styling */
+        .card {
+            background: #1e293b;
+            border-radius: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+            overflow: hidden;
+            margin-bottom: 15px;
+        }
+
         #reader {
             width: 100%;
-            border-radius: 15px;
-            overflow: hidden;
+            border-radius: 0; /* Let card handle the border radius */
             border: none !important;
+            background: #000;
         }
+
+        /* Menghilangkan garisan putih dalam library html5-qrcode */
+        #reader__dashboard {
+            background: #1e293b !important;
+            color: white !important;
+            padding: 10px !important;
+        }
+
+        #reader video {
+            border-radius: 12px;
+        }
+
+        /* Result Card Customization */
         .result-card {
             display: none;
             margin-top: 20px;
-            border-left: 5px solid var(--primary-color);
+            padding: 20px;
+            border-left: 6px solid #38bdf8;
+            animation: slideUp 0.4s ease-out;
         }
-        .status-hadir { color: var(--success-color); font-weight: bold; }
-        .status-lewat { color: var(--danger-color); font-weight: bold; }
+
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        #res-name {
+            color: #ffffff;
+            margin: 0 0 5px 0;
+            font-size: 1.2rem;
+        }
+
+        #res-class {
+            color: #94a3b8;
+            margin: 0 0 15px 0;
+            font-size: 0.9rem;
+            text-transform: uppercase;
+        }
+
+        .status-hadir { 
+            color: #10b981; /* Emerald Green */
+            font-weight: 700;
+            padding: 4px 12px;
+            background: rgba(16, 185, 129, 0.1);
+            border-radius: 8px;
+        }
+
+        .status-lewat { 
+            color: #f43f5e; /* Rose Red */
+            font-weight: 700;
+            padding: 4px 12px;
+            background: rgba(244, 63, 94, 0.1);
+            border-radius: 8px;
+        }
+
+        .btn-blue {
+            background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%);
+            color: white;
+            border: none;
+            padding: 15px;
+            border-radius: 12px;
+            font-weight: 600;
+            letter-spacing: 1px;
+            transition: 0.3s;
+            box-shadow: 0 4px 12px rgba(2, 132, 199, 0.3);
+        }
+
+        .btn-blue:active {
+            transform: scale(0.95);
+        }
+
+        /* Scan Overlay Effect */
+        #reader__scan_region {
+            position: relative;
+        }
+        
+        #reader__scan_region::after {
+            content: "";
+            position: absolute;
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+            width: 250px; height: 250px;
+            border: 2px solid #38bdf8;
+            border-radius: 15px;
+            box-shadow: 0 0 15px rgba(56, 189, 248, 0.5);
+            pointer-events: none;
+        }
     </style>
 </head>
 <body>
     <header>
-        <a href="menu.html" style="float: left; text-decoration: none;">⬅️</a>
-        <span style="font-weight: bold;">Imbas QR Murid</span>
+        <a href="menu.html" style="float: left; text-decoration: none; color: white; position: absolute; left: 20px; font-size: 20px;">⬅️</a>
+        <span style="font-weight: 600; letter-spacing: 0.5px;">Imbas QR Murid</span>
     </header>
 
     <div class="container">
@@ -36,37 +152,35 @@
         <div id="result" class="card result-card">
             <h3 id="res-name">NAMA MURID</h3>
             <p id="res-class">KELAS</p>
-            <p>Masa Imbas: <span id="res-time">--:--</span></p>
-            <p>Status: <span id="res-status">--</span></p>
+            <div style="font-size: 14px; color: #cbd5e1;">
+                <p style="margin: 5px 0;">🕒 Masa Imbas: <span id="res-time" style="font-weight: 600; color: #fff;">--:--</span></p>
+                <p style="margin: 10px 0;">📌 Status: <span id="res-status">--</span></p>
+            </div>
         </div>
 
-        <button class="btn btn-blue" onclick="location.reload()" style="width:100%; margin-top:10px;">SCAN SEMULA</button>
+        <button class="btn btn-blue" onclick="location.reload()" style="width:100%; margin-top:15px;">🔄 SCAN SEMULA</button>
     </div>
 
     <script type="module">
+        // --- LOGIK ASAL ANDA (TIDAK DIUBAH) ---
         import { db } from './js/firebase-config.js';
         import { doc, setDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-firestore.js";
 
         const html5QrCode = new Html5Qrcode("reader");
         const qrConfig = { fps: 10, qrbox: { width: 250, height: 250 } };
 
-        // 开始扫描
         html5QrCode.start({ facingMode: "environment" }, qrConfig, onScanSuccess);
 
         async function onScanSuccess(decodedText, decodedResult) {
-            // 停止扫描以处理数据
             await html5QrCode.stop();
             
             try {
-                // 解析二维码 JSON 数据
                 const student = JSON.parse(decodedText);
                 
-                // 获取当前时间
                 const now = new Date();
                 const currentTime = now.getHours().toString().padStart(2, '0') + ":" + 
-                                  now.getMinutes().toString().padStart(2, '0');
+                                    now.getMinutes().toString().padStart(2, '0');
                 
-                // 逻辑判断：7:35 AM 为界限
                 const limitHour = 7;
                 const limitMin = 35;
                 let status = "Hadir";
@@ -75,7 +189,6 @@
                     status = "Lewat";
                 }
 
-                // 显示在界面上
                 document.getElementById('res-name').innerText = student.name;
                 document.getElementById('res-class').innerText = student.class || student.kelas;
                 document.getElementById('res-time').innerText = currentTime;
@@ -83,8 +196,7 @@
                 document.getElementById('res-status').className = status === "Hadir" ? "status-hadir" : "status-lewat";
                 document.getElementById('result').style.display = "block";
 
-                // 准备存入 Firebase 的数据
-                const dateKey = now.toISOString().split('T')[0]; // 格式: 2024-05-20
+                const dateKey = now.toISOString().split('T')[0];
                 const attendanceRef = doc(db, "attendance", `${dateKey}_${student.ic}`);
 
                 await setDoc(attendanceRef, {
@@ -97,7 +209,6 @@
                     timestamp: serverTimestamp()
                 });
 
-                // 播放成功提示音 (可选)
                 alert("Rekod Berjaya Disimpan!");
 
             } catch (e) {
