@@ -8,18 +8,128 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.23/jspdf.plugin.autotable.min.js"></script>
+    <style>
+        /* UI BEAUTIFICATION - DARK MODE */
+        body {
+            background-color: #0f172a;
+            background-image: radial-gradient(circle at top right, #1e293b, #0f172a);
+            color: #f1f5f9;
+            margin: 0;
+            font-family: 'Poppins', sans-serif;
+            min-height: 100vh;
+        }
+
+        header {
+            background: #1e293b;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            padding: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        }
+
+        .logo-small {
+            width: 35px;
+            filter: drop-shadow(0 0 5px rgba(255, 255, 255, 0.1));
+        }
+
+        .container {
+            padding: 20px;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .card {
+            background: #1e293b;
+            border-radius: 20px;
+            padding: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+            margin-bottom: 20px;
+        }
+
+        h4 {
+            margin-top: 0;
+            color: #38bdf8; /* Biru muda cerah */
+            font-size: 16px;
+            border-left: 4px solid #38bdf8;
+            padding-left: 10px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 5px;
+            color: #94a3b8;
+        }
+
+        input[type="month"], input[type="date"] {
+            width: 100%;
+            padding: 12px;
+            background: #0f172a;
+            border: 1px solid #334155;
+            border-radius: 10px;
+            color: white;
+            margin-bottom: 10px;
+            font-family: inherit;
+        }
+
+        .btn {
+            border: none;
+            border-radius: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 12px;
+        }
+
+        .btn-blue {
+            background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%);
+            color: white;
+        }
+
+        .btn-green {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            color: white;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            filter: brightness(1.1);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+        }
+
+        #classList .btn-green {
+            background: #334155; /* Warna petak kelas lebih gelap */
+            border: 1px solid rgba(255,255,255,0.05);
+            padding: 18px;
+            font-size: 15px;
+        }
+
+        #classList .btn-green:hover {
+            background: #475569;
+        }
+
+        #totalInfo {
+            color: #94a3b8;
+            font-weight: 500;
+        }
+    </style>
 </head>
 <body>
     <header>
-        <a href="menu.html" style="float: left; text-decoration: none;">⬅️</a>
+        <a href="menu.html" style="float: left; text-decoration: none; color: white; position: absolute; left: 20px; font-size: 20px;">⬅️</a>
         <img src="semsira.png" alt="Logo" class="logo-small">
-        <span style="font-weight: bold;">Statistik Kehadiran</span>
+        <span style="font-weight: 600; margin-left: 10px;">Statistik Kehadiran</span>
     </header>
 
     <div class="container">
         <div class="card">
             <h4>Peratus Kehadiran Bulan Ini</h4>
-            <div style="max-width: 250px; margin: 0 auto;">
+            <div style="max-width: 220px; margin: 15px auto;">
                 <canvas id="attendanceChart"></canvas>
             </div>
             <p id="totalInfo" style="text-align:center; font-size:12px; margin-top:10px;"></p>
@@ -27,24 +137,27 @@
 
         <div class="card">
             <h4>Carian & Muat Turun Laporan</h4>
-            <label style="font-size: 12px;">Pilih Bulan (Laporan Bulanan):</label>
-            <input type="month" id="searchMonth">
-            <button class="btn btn-blue" onclick="downloadReport('month')" style="width:100%; margin-bottom:15px;">MUAT TURUN LAPORAN BULANAN</button>
+            <div style="margin-top:15px;">
+                <label style="font-size: 11px;">Pilih Bulan (Laporan Bulanan):</label>
+                <input type="month" id="searchMonth">
+                <button class="btn btn-blue" onclick="downloadReport('month')" style="width:100%; margin-bottom:15px;">📥 MUAT TURUN PDF BULANAN</button>
 
-            <label style="font-size: 12px;">Pilih Tarikh (Laporan Harian):</label>
-            <input type="date" id="searchDate">
-            <button class="btn btn-green" onclick="downloadReport('day')" style="width:100%">MUAT TURUN LAPORAN HARIAN</button>
+                <label style="font-size: 11px;">Pilih Tarikh (Laporan Harian):</label>
+                <input type="date" id="searchDate">
+                <button class="btn btn-green" onclick="downloadReport('day')" style="width:100%">📅 MUAT TURUN PDF HARIAN</button>
+            </div>
         </div>
 
         <div class="card">
             <h4>Senarai Kelas</h4>
-            <div id="classList">
-                <p style="text-align:center;">Memuatkan senarai kelas...</p>
+            <div id="classList" style="margin-top:15px;">
+                <p style="text-align:center; color:#64748b;">Memuatkan senarai kelas...</p>
             </div>
         </div>
     </div>
 
     <script type="module">
+        // --- KOD LOGIK ASAL (TIDAK DIUBAH) ---
         import { db } from './js/firebase-config.js';
         import { collection, getDocs, query, where } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-firestore.js";
 
@@ -55,7 +168,6 @@
             await loadClassList();
         }
 
-        // 1. 加载本月统计数据并渲染图表
         async function loadStatistics() {
             const now = new Date();
             const yearMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
@@ -66,7 +178,6 @@
             let hadir = 0, lewat = 0;
             querySnapshot.forEach((doc) => {
                 const data = doc.data();
-                // 筛选本月的记录
                 if (doc.id.startsWith(yearMonth)) {
                     if (data.status === "Hadir") hadir++;
                     else if (data.status === "Lewat") lewat++;
@@ -87,14 +198,23 @@
                     labels: ['Hadir', 'Lewat'],
                     datasets: [{
                         data: [h, l],
-                        backgroundColor: ['#28a745', '#ffc107']
+                        backgroundColor: ['#10b981', '#f59e0b'], // Warna hijau & oren dark mode
+                        borderWidth: 0,
+                        hoverOffset: 4
                     }]
                 },
-                options: { plugins: { legend: { position: 'bottom' } } }
+                options: { 
+                    cutout: '70%',
+                    plugins: { 
+                        legend: { 
+                            position: 'bottom',
+                            labels: { color: '#94a3b8', font: { family: 'Poppins' } }
+                        } 
+                    } 
+                }
             });
         }
 
-        // 2. 加载在 Generator 注册的班级
         async function loadClassList() {
             const classListDiv = document.getElementById('classList');
             const classes = ["SUMAYYAH", "SARAH", "KHADIJAH", "AISHAH", "FATIMAH", "ZAINAB", "RUQAYYAH"];
@@ -105,13 +225,12 @@
                 const btn = document.createElement('div');
                 btn.className = "btn btn-green";
                 btn.style.cssText = "margin-bottom:10px; justify-content: space-between;";
-                btn.innerHTML = `${className} <span style='font-size:12px'>Klik Butiran</span>`;
+                btn.innerHTML = `<span>🏫 ${className}</span> <span style='font-size:10px; opacity:0.6;'>LIHAT ➔</span>`;
                 btn.onclick = () => { window.location.href = `class-detail.html?class=${className}`; };
                 classListDiv.appendChild(btn);
             });
         }
 
-        // 3. 报告下载功能 (PDF)
         window.downloadReport = async (type) => {
             const { jsPDF } = window.jspdf;
             const doc = new jsPDF();
@@ -126,19 +245,25 @@
             querySnapshot.forEach((d) => {
                 const data = d.data();
                 if (d.id.startsWith(filterValue)) {
-                    rows.push([data.name, data.class, data.time, data.status]);
+                    rows.push([data.name, data.class || data.kelas, data.time, data.status]);
                 }
             });
 
             if(rows.length === 0) return alert("Tiada data ditemui untuk tarikh tersebut.");
 
-            doc.text(`Laporan Kehadiran SEMSIRA (${filterValue})`, 14, 15);
+            doc.setFontSize(18);
+            doc.text(`LAPORAN KEHADIRAN SEMSIRA`, 14, 20);
+            doc.setFontSize(11);
+            doc.text(`Tarikh/Bulan: ${filterValue}`, 14, 28);
+            
             doc.autoTable({
-                head: [['Nama', 'Kelas', 'Masa', 'Status']],
+                head: [['Nama Murid', 'Kelas', 'Masa', 'Status']],
                 body: rows,
-                startY: 20
+                startY: 35,
+                theme: 'striped',
+                headStyles: { fillColor: [2, 132, 199] }
             });
-            doc.save(`Laporan_${filterValue}.pdf`);
+            doc.save(`Laporan_SEMSIRA_${filterValue}.pdf`);
         };
 
         initDashboard();
