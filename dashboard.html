@@ -27,6 +27,9 @@
             align-items: center;
             justify-content: center;
             box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            position: sticky;
+            top: 0;
+            z-index: 100;
         }
 
         .logo-small {
@@ -51,7 +54,7 @@
 
         h4 {
             margin-top: 0;
-            color: #38bdf8; /* Biru muda cerah */
+            color: #38bdf8;
             font-size: 16px;
             border-left: 4px solid #38bdf8;
             padding-left: 10px;
@@ -61,6 +64,7 @@
             display: block;
             margin-bottom: 5px;
             color: #94a3b8;
+            font-size: 11px;
         }
 
         input[type="month"], input[type="date"] {
@@ -72,6 +76,7 @@
             color: white;
             margin-bottom: 10px;
             font-family: inherit;
+            box-sizing: border-box;
         }
 
         .btn {
@@ -84,6 +89,7 @@
             align-items: center;
             justify-content: center;
             padding: 12px;
+            width: 100%;
         }
 
         .btn-blue {
@@ -102,15 +108,25 @@
             box-shadow: 0 5px 15px rgba(0,0,0,0.3);
         }
 
-        #classList .btn-green {
-            background: #334155; /* Warna petak kelas lebih gelap */
+        /* 班级列表按钮优化 */
+        #classList .btn-class {
+            background: #334155;
             border: 1px solid rgba(255,255,255,0.05);
             padding: 18px;
             font-size: 15px;
+            margin-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            color: white;
+            text-decoration: none;
+            border-radius: 12px;
+            transition: 0.3s;
         }
 
-        #classList .btn-green:hover {
+        #classList .btn-class:hover {
             background: #475569;
+            transform: translateX(5px);
         }
 
         #totalInfo {
@@ -138,13 +154,13 @@
         <div class="card">
             <h4>Carian & Muat Turun Laporan</h4>
             <div style="margin-top:15px;">
-                <label style="font-size: 11px;">Pilih Bulan (Laporan Bulanan):</label>
+                <label>Pilih Bulan (Laporan Bulanan):</label>
                 <input type="month" id="searchMonth">
-                <button class="btn btn-blue" onclick="downloadReport('month')" style="width:100%; margin-bottom:15px;">📥 MUAT TURUN PDF BULANAN</button>
+                <button class="btn btn-blue" onclick="downloadReport('month')" style="margin-bottom:15px;">📥 MUAT TURUN PDF BULANAN</button>
 
-                <label style="font-size: 11px;">Pilih Tarikh (Laporan Harian):</label>
+                <label>Pilih Tarikh (Laporan Harian):</label>
                 <input type="date" id="searchDate">
-                <button class="btn btn-green" onclick="downloadReport('day')" style="width:100%">📅 MUAT TURUN PDF HARIAN</button>
+                <button class="btn btn-green" onclick="downloadReport('day')">📅 MUAT TURUN PDF HARIAN</button>
             </div>
         </div>
 
@@ -157,7 +173,6 @@
     </div>
 
     <script type="module">
-        // --- KOD LOGIK ASAL (TIDAK DIUBAH) ---
         import { db } from './js/firebase-config.js';
         import { collection, getDocs, query, where } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-firestore.js";
 
@@ -177,8 +192,8 @@
             
             let hadir = 0, lewat = 0;
             querySnapshot.forEach((doc) => {
-                const data = doc.data();
                 if (doc.id.startsWith(yearMonth)) {
+                    const data = doc.data();
                     if (data.status === "Hadir") hadir++;
                     else if (data.status === "Lewat") lewat++;
                 }
@@ -198,7 +213,7 @@
                     labels: ['Hadir', 'Lewat'],
                     datasets: [{
                         data: [h, l],
-                        backgroundColor: ['#10b981', '#f59e0b'], // Warna hijau & oren dark mode
+                        backgroundColor: ['#10b981', '#f59e0b'],
                         borderWidth: 0,
                         hoverOffset: 4
                     }]
@@ -215,18 +230,29 @@
             });
         }
 
+        // --- 这里是修改后的核心部分 ---
         async function loadClassList() {
             const classListDiv = document.getElementById('classList');
-            const classes = ["SUMAYYAH", "SARAH", "KHADIJAH", "AISHAH", "FATIMAH", "ZAINAB", "RUQAYYAH"];
+            
+            // 已添加 UMMU KALSOM
+            const classes = [
+                "SUMAYYAH", 
+                "SARAH", 
+                "KHADIJAH", 
+                "AISHAH", 
+                "FATIMAH", 
+                "ZAINAB", 
+                "RUQAYYAH", 
+                "UMMU KALSOM"
+            ];
             
             classListDiv.innerHTML = "";
             
             classes.forEach(className => {
-                const btn = document.createElement('div');
-                btn.className = "btn btn-green";
-                btn.style.cssText = "margin-bottom:10px; justify-content: space-between;";
+                const btn = document.createElement('a');
+                btn.href = `class-detail.html?class=${encodeURIComponent(className)}`;
+                btn.className = "btn-class";
                 btn.innerHTML = `<span>🏫 ${className}</span> <span style='font-size:10px; opacity:0.6;'>LIHAT ➔</span>`;
-                btn.onclick = () => { window.location.href = `class-detail.html?class=${className}`; };
                 classListDiv.appendChild(btn);
             });
         }
@@ -243,8 +269,8 @@
             const rows = [];
 
             querySnapshot.forEach((d) => {
-                const data = d.data();
                 if (d.id.startsWith(filterValue)) {
+                    const data = d.data();
                     rows.push([data.name, data.class || data.kelas, data.time, data.status]);
                 }
             });
