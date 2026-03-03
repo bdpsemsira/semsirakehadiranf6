@@ -7,32 +7,117 @@
     <link rel="icon" href="semsira.png" type="image/png">
     <link rel="stylesheet" href="assets/style.css">
     <style>
+        /* UI BEAUTIFICATION - DARK MODE */
+        body {
+            background-color: #0f172a;
+            background-image: radial-gradient(circle at top right, #1e293b, #0f172a);
+            color: #f1f5f9;
+            margin: 0;
+            font-family: 'Poppins', sans-serif;
+            min-height: 100vh;
+        }
+
+        header {
+            background: #1e293b;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            padding: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        }
+
+        .logo-small {
+            width: 40px;
+            filter: drop-shadow(0 0 5px rgba(255, 255, 255, 0.1));
+        }
+
         .menu-container {
             text-align: center;
-            padding-top: 40px;
+            padding: 30px 20px;
         }
-        .welcome-text {
-            margin-bottom: 30px;
+
+        .welcome-text h2 {
+            color: #ffffff;
+            font-size: 24px;
+            margin-bottom: 5px;
         }
-        .btn-menu {
-            margin-bottom: 20px;
+
+        .welcome-text p {
+            color: #94a3b8;
+            font-size: 15px;
+        }
+
+        .menu-grid {
             display: flex;
             flex-direction: column;
-            gap: 5px;
-            padding: 25px;
-            font-size: 18px;
+            gap: 15px;
+            margin-top: 20px;
         }
+
+        /* Rekaan Butang Menu Baru */
+        .btn-menu {
+            position: relative;
+            overflow: hidden;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: 18px;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            text-align: left;
+            align-items: flex-start;
+            padding: 22px;
+            text-decoration: none;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .btn-menu:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+            filter: brightness(1.1);
+        }
+
+        .btn-menu:active {
+            transform: scale(0.98);
+        }
+
+        /* Warna Neon mengikut Kategori */
+        .btn-blue { 
+            background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%); 
+            box-shadow: 0 4px 15px rgba(14, 165, 233, 0.25);
+        }
+        .btn-green { 
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%); 
+            box-shadow: 0 4px 15px rgba(16, 185, 129, 0.25);
+        }
+        .btn-red { 
+            background: linear-gradient(135deg, #f43f5e 0%, #e11d48 100%); 
+            box-shadow: 0 4px 15px rgba(244, 63, 94, 0.25);
+        }
+
         .btn-menu span {
-            font-size: 12px;
-            font-weight: normal;
-            opacity: 0.9;
+            font-size: 13px;
+            font-weight: 400;
+            color: rgba(255, 255, 255, 0.85);
+            display: block;
         }
+
         .logout-link {
             display: inline-block;
-            margin-top: 30px;
-            color: var(--danger-color);
+            margin-top: 40px;
+            color: #94a3b8;
             text-decoration: none;
-            font-weight: bold;
+            font-size: 14px;
+            font-weight: 600;
+            padding: 10px 20px;
+            border-radius: 10px;
+            transition: all 0.2s;
+            border: 1px solid rgba(244, 63, 94, 0.2);
+        }
+
+        .logout-link:hover {
+            color: #fb7185;
+            background: rgba(244, 63, 94, 0.1);
         }
     </style>
 </head>
@@ -40,43 +125,41 @@
 
     <header>
         <img src="semsira.png" alt="Logo" class="logo-small">
-        <span style="font-weight: bold; margin-left: 10px;">SEMSIRA Mobile</span>
+        <span style="font-weight: 600; margin-left: 12px; font-size: 18px; letter-spacing: 0.5px;">SEMSIRA Mobile</span>
     </header>
 
     <div class="container menu-container">
         <div class="welcome-text">
-            <h2>Selamat Datang, Pentadbir</h2>
-            <p>Sila pilih tugasan hari ini:</p>
+            <h2>Selamat Datang</h2>
+            <p>Pilih tugasan pentadbir hari ini</p>
         </div>
 
         <div class="menu-grid">
             <a href="scanner.html" class="btn btn-blue btn-menu">
-                📸 Imbas Kehadiran (Scanner)
-                <span>Scan QR Murid & Rekod Masa</span>
+                <div style="font-weight: bold;">📸 Imbas Kehadiran (Scanner)</div>
+                <span>Scan QR Murid & Rekod Masa Automatik</span>
             </a>
 
             <a href="dashboard.html" class="btn btn-green btn-menu">
-                📊 Paparan Data (Dashboard)
-                <span>Statistik, Laporan & Sejarah</span>
+                <div style="font-weight: bold;">📊 Paparan Data (Dashboard)</div>
+                <span>Statistik Kehadiran, Laporan & Sejarah</span>
             </a>
 
             <a href="generator.html" class="btn btn-red btn-menu">
-                🖨️ Jana QR Code (Generator)
-                <span>Tambah Murid & Cetak Kod</span>
+                <div style="font-weight: bold;">🖨️ Jana QR Code (Generator)</div>
+                <span>Tambah Murid Baru & Cetak Kod QR</span>
             </a>
         </div>
 
-        <a href="#" id="logoutBtn" class="logout-link">Log Keluar</a>
+        <a href="#" id="logoutBtn" class="logout-link">Log Keluar Aplikasi</a>
     </div>
 
     <script>
-        // --- KAWALAN KESELAMATAN ---
-        // Semak jika pengguna sudah log masuk melalui sessionStorage
+        // --- KAWALAN KESELAMATAN (LOGIK ASAL KEKAL) ---
         if (sessionStorage.getItem('isLoggedIn') !== 'true') {
             window.location.href = 'index.html';
         }
 
-        // Fungsi Log Keluar
         document.getElementById('logoutBtn').addEventListener('click', (e) => {
             e.preventDefault();
             if(confirm("Adakah anda pasti ingin log keluar?")) {
