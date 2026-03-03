@@ -9,33 +9,119 @@
 <body>
     <header>
         <a href="dashboard.html" style="float: left; text-decoration: none;">⬅️</a>
-        <span id="classNameTitle" style="font-weight: bold;">Senarai Murid</span>
+        <img src="semsira.png" alt="Logo" class="logo-small">
+        <span id="classNameTitle" style="font-weight: bold;">Memuatkan...</span>
     </header>
 
     <div class="container">
         <div class="card">
+            <label style="font-size: 12px;">Pilih Tarikh Semakan:</label>
             <input type="date" id="filterDate">
-            <p>Peratus Hadir (Tarikh Tersebut): <b>90%</b></p>
+            <p style="margin-top: 10px;">Peratus Hadir: <b id="attendancePercentage">0%</b></p>
         </div>
 
-        <div class="card" style="padding: 0;">
+        <div class="card" style="padding: 0; overflow-x: auto;">
             <table>
                 <thead>
                     <tr>
-                        <th>Nama</th>
+                        <th>Nama Murid</th>
                         <th>Status</th>
-                        <th>Profil</th>
+                        <th style="text-align: center;">Profil</th>
                     </tr>
                 </thead>
                 <tbody id="studentTableBody">
                     <tr>
-                        <td>AHMAD BIN ALI</td>
-                        <td><span style="color:green">Hadir</span></td>
-                        <td><button onclick="location.href='profile.html?id=050101020304'" class="btn btn-blue" style="padding:5px 10px; font-size:12px;">Profil</button></td>
+                        <td colspan="3" style="text-align:center;">Mencari data murid...</td>
                     </tr>
                 </tbody>
             </table>
         </div>
     </div>
+
+    <script type="module">
+        import { db } from './js/firebase-config.js';
+        import { collection, getDocs, query, where } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-firestore.js";
+
+        // 1. Ambil nama kelas dari URL
+        const urlParams = new URLSearchParams(window.location.search);
+        const selectedClass = urlParams.get('class');
+        document.getElementById('classNameTitle').innerText = `Kelas: ${selectedClass}`;
+
+        // 2. Set tarikh hari ini sebagai default
+        const dateInput = document.getElementById('filterDate');
+        const today = new Date().toISOString().split('T')[0];
+        dateInput.value = today;
+
+        // 3. Fungsi Utama: Muat Data
+        async function loadClassData() {
+            const tableBody = document.getElementById('studentTableBody');
+            const dateValue = dateInput.value;
+            tableBody.innerHTML = `<tr><td colspan="3" style="text-align:center;">Memuatkan...</td></tr>`;
+
+            try {
+                // A. Ambil semua murid dalam kelas ini
+                const qStudents = query(collection(db, "students"), where("kelas", "==", selectedClass));
+                const studentSnapshot = await getDocs(qStudents);
+                
+                // B. Ambil semua rekod kehadiran pada tarikh ini
+                const qAttendance = query(collection(db, "attendance"));
+                const attendanceSnapshot = await getDocs(qAttendance);
+                
+                // Simpan rekod kehadiran dalam Map untuk carian pantas
+                const attendanceMap = new Map();
+                attendanceSnapshot.forEach(doc => {
+                    if (doc.id.startsWith(dateValue)) {
+                        const data = doc.data();
+                        attendanceMap.set(data.ic, data); // Key: IC, Value: Data Kehadiran
+                    }
+                });
+
+                let html = "";
+                let countHadir = 0;
+                let totalStudents = 0;
+
+                studentSnapshot.forEach((doc) => {
+                    totalStudents++;
+                    const student = doc.data();
+                    const attendanceRecord = attendanceMap.get(student.ic);
+                    
+                    let statusHtml = `<span style="color:#999 italic">Tiada Rekod</span>`;
+                    if (attendanceRecord) {
+                        countHadir++;
+                        const color = attendanceRecord.status === "Hadir" ? "green" : "orange";
+                        statusHtml = `<span style="color:${color}; font-weight:bold;">${attendanceRecord.status} (${attendanceRecord.time})</span>`;
+                    }
+
+                    html += `
+                        <tr>
+                            <td style="font-size: 13px;">${student.name}</td>
+                            <td style="font-size: 13px;">${statusHtml}</td>
+                            <td style="text-align: center;">
+                                <button onclick="location.href='profile.html?id=${student.ic}'" class="btn btn-blue" style="padding:5px 10px; font-size:11px;">Profil</button>
+                            </td>
+                        </tr>
+                    `;
+                });
+
+                if (totalStudents === 0) {
+                    tableBody.innerHTML = `<tr><td colspan="3" style="text-align:center;">Tiada murid berdaftar dalam kelas ini.</td></tr>`;
+                    document.getElementById('attendancePercentage').innerText = "0%";
+                } else {
+                    tableBody.innerHTML = html;
+                    const percentage = Math.round((countHadir / totalStudents) * 100);
+                    document.getElementById('attendancePercentage').innerText = `${percentage}%`;
+                }
+
+            } catch (error) {
+                console.error("Ralat:", error);
+                tableBody.innerHTML = `<tr><td colspan="3" style="text-align:center; color:red;">Gagal memuatkan data.</td></tr>`;
+            }
+        }
+
+        // Jalankan fungsi apabila tarikh ditukar atau halaman dibuka
+        dateInput.addEventListener('change', loadClassData);
+        window.onload = loadClassData;
+
+    </script>
 </body>
 </html>
