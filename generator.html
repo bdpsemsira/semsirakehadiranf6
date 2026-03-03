@@ -19,12 +19,19 @@
             <h3>Maklumat Murid</h3>
             <input type="text" id="name" placeholder="Nama Penuh (Huruf Besar)" required>
             <input type="text" id="ic" placeholder="Nombor IC (Contoh: 05010102XXXX)" required>
-            <select id="class">
+            
+            <select id="class" required>
                 <option value="">Pilih Kelas</option>
-                <option value="6 Al-Farabi">6 Al-Farabi</option>
-                <option value="6 Al-Ghazali">6 Al-Ghazali</option>
+                <option value="SUMAYYAH">SUMAYYAH</option>
+                <option value="SARAH">SARAH</option>
+                <option value="KHADIJAH">KHADIJAH</option>
+                <option value="AISHAH">AISHAH</option>
+                <option value="FATIMAH">FATIMAH</option>
+                <option value="ZAINAB">ZAINAB</option>
+                <option value="RUQAYYAH">RUQAYYAH</option>
             </select>
-            <select id="gender">
+
+            <select id="gender" required>
                 <option value="">Jantina</option>
                 <option value="Lelaki">Lelaki</option>
                 <option value="Perempuan">Perempuan</option>
@@ -50,13 +57,23 @@
             const kelas = document.getElementById('class').value;
             const gender = document.getElementById('gender').value;
 
-            if(!name || !ic || !kelas || !gender) return alert("Sila isi semua maklumat!");
+            if(!name || !ic || !kelas || !gender) {
+                alert("Sila isi semua maklumat!");
+                return;
+            }
 
-            const studentData = { name, ic, kelas, gender };
+            const studentData = { 
+                name: name, 
+                ic: ic, 
+                kelas: kelas, 
+                gender: gender 
+            };
+            
+            // Data yang akan dimasukkan ke dalam QR Code
             const qrString = JSON.stringify(studentData);
 
             try {
-                // Simpan ke Firebase Firestore
+                // Simpan maklumat murid ke Firebase Firestore
                 await setDoc(doc(db, "students", ic), studentData);
                 
                 // Jana QR Code
@@ -64,14 +81,22 @@
                 new QRCode(document.getElementById("qrcode"), {
                     text: qrString,
                     width: 200,
-                    height: 200
+                    height: 200,
+                    colorDark : "#000000",
+                    colorLight : "#ffffff",
+                    correctLevel : QRCode.CorrectLevel.H
                 });
 
                 document.getElementById('display-name').innerText = name;
                 document.getElementById('qr-result-card').style.display = "block";
-                alert("Data berjaya disimpan ke Firebase!");
+                
+                // Skrol ke bahagian QR code secara automatik
+                document.getElementById('qr-result-card').scrollIntoView({ behavior: 'smooth' });
+                
+                alert("Data berjaya disimpan dan QR Code telah dijana!");
             } catch (e) {
                 console.error("Ralat simpan data: ", e);
+                alert("Ralat sistem: Gagal menyimpan data.");
             }
         }
     </script>
