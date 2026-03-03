@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="ms">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Butiran Kelas - SEMSIRA</title>
+    <link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+    <header>
+        <a href="dashboard.html" style="float: left; text-decoration: none;">⬅️</a>
+        <span id="classNameTitle" style="font-weight: bold;">Senarai Murid</span>
+    </header>
+
+    <div class="container">
+        <div class="card">
+            <input type="date" id="filterDate">
+            <p>Peratus Hadir (Tarikh Tersebut): <b>90%</b></p>
+        </div>
+
+        <div class="card" style="padding: 0;">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Nama</th>
+                        <th>Status</th>
+                        <th>Profil</th>
+                    </tr>
+                </thead>
+                <tbody id="studentTableBody">
+                    <tr>
+                        <td>AHMAD BIN ALI</td>
+                        <td><span style="color:green">Hadir</span></td>
+                        <td><button onclick="location.href='profile.html?id=050101020304'" class="btn btn-blue" style="padding:5px 10px; font-size:12px;">Profil</button></td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</body>
+</html>
