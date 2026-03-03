@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="ms">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - SEMSIRA</title>
+    <link rel="stylesheet" href="assets/style.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <header>
+        <a href="menu.html" style="float: left; text-decoration: none;">⬅️</a>
+        <span style="font-weight: bold;">Statistik Kehadiran</span>
+    </header>
+
+    <div class="container">
+        <div class="card">
+            <h4>Peratus Kehadiran Bulan Ini</h4>
+            <canvas id="attendanceChart"></canvas>
+        </div>
+
+        <div class="card">
+            <h4>Carian Sejarah</h4>
+            <input type="month" id="searchMonth">
+            <button class="btn btn-blue" style="width:100%">MUAT TURUN LAPORAN (PDF)</button>
+        </div>
+
+        <div class="card">
+            <h4>Senarai Kelas</h4>
+            <div id="classList">
+                <div class="btn btn-green" style="margin-bottom:10px; justify-content: space-between;" onclick="location.href='class-detail.html?class=6AF'">
+                    6 Al-Farabi <span>85% Hadir</span>
+                </div>
+                <div class="btn btn-green" style="margin-bottom:10px; justify-content: space-between;" onclick="location.href='class-detail.html?class=6AG'">
+                    6 Al-Ghazali <span>92% Hadir</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const ctx = document.getElementById('attendanceChart').getContext('2d');
+        new Chart(ctx, {
+            type: 'doughnut',
+            data: {
+                labels: ['Hadir', 'Lewat', 'Tidak Hadir'],
+                datasets: [{
+                    data: [70, 15, 5],
+                    backgroundColor: ['#28a745', '#ffc107', '#dc3545']
+                }]
+            }
+        });
+    </script>
+</body>
+</html>
