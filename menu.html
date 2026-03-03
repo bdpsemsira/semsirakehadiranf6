@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="ms">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Menu Utama - SEMSIRA</title>
+    <link rel="icon" href="semsira.png" type="image/png">
+    <link rel="stylesheet" href="assets/style.css">
+    <style>
+        .menu-container {
+            text-align: center;
+            padding-top: 40px;
+        }
+        .welcome-text {
+            margin-bottom: 30px;
+        }
+        .btn-menu {
+            margin-bottom: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+            padding: 25px;
+            font-size: 18px;
+        }
+        .btn-menu span {
+            font-size: 12px;
+            font-weight: normal;
+            opacity: 0.9;
+        }
+        .logout-link {
+            display: inline-block;
+            margin-top: 30px;
+            color: var(--danger-color);
+            text-decoration: none;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <img src="semsira.png" alt="Logo" class="logo-small">
+        <span style="font-weight: bold; margin-left: 10px;">SEMSIRA Mobile</span>
+    </header>
+
+    <div class="container menu-container">
+        <div class="welcome-text">
+            <h2>Selamat Datang, Pentadbir</h2>
+            <p>Sila pilih tugasan hari ini:</p>
+        </div>
+
+        <div class="menu-grid">
+            <a href="scanner.html" class="btn btn-blue btn-menu">
+                📸 Imbas Kehadiran (Scanner)
+                <span>Scan QR Murid & Rekod Masa</span>
+            </a>
+
+            <a href="dashboard.html" class="btn btn-green btn-menu">
+                📊 Paparan Data (Dashboard)
+                <span>Statistik, Laporan & Sejarah</span>
+            </a>
+
+            <a href="generator.html" class="btn btn-red btn-menu">
+                🖨️ Jana QR Code (Generator)
+                <span>Tambah Murid & Cetak Kod</span>
+            </a>
+        </div>
+
+        <a href="#" id="logoutBtn" class="logout-link">Log Keluar</a>
+    </div>
+
+    <script>
+        // --- KAWALAN KESELAMATAN ---
+        // Semak jika pengguna sudah log masuk melalui sessionStorage
+        if (sessionStorage.getItem('isLoggedIn') !== 'true') {
+            window.location.href = 'index.html';
+        }
+
+        // Fungsi Log Keluar
+        document.getElementById('logoutBtn').addEventListener('click', (e) => {
+            e.preventDefault();
+            if(confirm("Adakah anda pasti ingin log keluar?")) {
+                sessionStorage.clear();
+                window.location.href = 'index.html';
+            }
+        });
+    </script>
+
+</body>
+</html>
