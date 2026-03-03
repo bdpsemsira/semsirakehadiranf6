@@ -6,12 +6,120 @@
     <title>Jana QR - SEMSIRA</title>
     <link rel="stylesheet" href="assets/style.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <style>
+        /* UI BEAUTIFICATION - DARK MODE */
+        body {
+            background-color: #0f172a;
+            background-image: radial-gradient(circle at top right, #1e293b, #0f172a);
+            color: #f1f5f9;
+            margin: 0;
+            font-family: 'Poppins', sans-serif;
+            min-height: 100vh;
+        }
+
+        header {
+            background: #1e293b;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            padding: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        }
+
+        .logo-small {
+            width: 35px;
+            filter: drop-shadow(0 0 5px rgba(255, 255, 255, 0.1));
+        }
+
+        .container {
+            padding: 20px;
+            max-width: 500px;
+            margin: 0 auto;
+        }
+
+        .card {
+            background: #1e293b;
+            border-radius: 20px;
+            padding: 25px;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+            margin-bottom: 20px;
+        }
+
+        h3, h4 {
+            color: #38bdf8;
+            margin-top: 0;
+            font-weight: 600;
+        }
+
+        input, select {
+            width: 100%;
+            padding: 14px;
+            margin: 10px 0;
+            background: #0f172a;
+            border: 1px solid #334155;
+            border-radius: 12px;
+            color: white;
+            font-size: 14px;
+            box-sizing: border-box;
+            outline: none;
+            transition: border-color 0.3s;
+        }
+
+        input:focus, select:focus {
+            border-color: #38bdf8;
+        }
+
+        .btn {
+            border: none;
+            border-radius: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            padding: 15px;
+        }
+
+        .btn-blue {
+            background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%);
+            color: white;
+            box-shadow: 0 4px 12px rgba(2, 132, 199, 0.3);
+        }
+
+        .btn-green {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            color: white;
+            box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            filter: brightness(1.1);
+        }
+
+        /* Container untuk QR Code agar nampak bersih */
+        #qrcode {
+            background: white;
+            padding: 15px;
+            border-radius: 15px;
+            display: inline-block;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+        }
+
+        @media print {
+            header, .btn-blue, input, select, h3 { display: none !important; }
+            body { background: white; }
+            .card { border: none; box-shadow: none; background: white; color: black; }
+            #qr-result-card { display: block !important; margin-top: 50px; }
+            #display-name { color: black; font-size: 20px; }
+        }
+    </style>
 </head>
 <body>
     <header>
-        <a href="menu.html" style="float: left; text-decoration: none;">⬅️</a>
+        <a href="menu.html" style="float: left; text-decoration: none; color: white; position: absolute; left: 20px; font-size: 20px;">⬅️</a>
         <img src="semsira.png" alt="Logo" class="logo-small">
-        <span style="font-weight: bold;">Pendaftaran Murid</span>
+        <span style="font-weight: 600; margin-left: 10px;">Pendaftaran Murid</span>
     </header>
 
     <div class="container">
@@ -29,21 +137,23 @@
                 <option value="FATIMAH">FATIMAH</option>
                 <option value="ZAINAB">ZAINAB</option>
                 <option value="RUQAYYAH">RUQAYYAH</option>
-            </select>
+                <option value="UMMU KALSOM">UMMU KALSOM</option> </select>
 
             <select id="gender" required>
                 <option value="">Jantina</option>
                 <option value="Lelaki">Lelaki</option>
                 <option value="Perempuan">Perempuan</option>
             </select>
-            <button class="btn btn-blue" onclick="generateAndSave()" style="width:100%; margin-top:10px;">TERUSKAN & JANA QR</button>
+            <button class="btn btn-blue" onclick="generateAndSave()" style="width:100%; margin-top:10px;">💾 SIMPAN & JANA QR</button>
         </div>
 
         <div id="qr-result-card" class="card" style="display:none; text-align: center;">
             <h4>QR Code Murid</h4>
-            <div id="qrcode" style="display: flex; justify-content: center; margin: 20px 0;"></div>
-            <p id="display-name" style="font-weight: bold;"></p>
-            <button class="btn btn-green" onclick="window.print()">CETAK QR CODE</button>
+            <div id="qrcode-container" style="margin: 20px 0;">
+                <div id="qrcode"></div>
+            </div>
+            <p id="display-name" style="font-weight: bold; margin-bottom: 20px; font-size: 18px;"></p>
+            <button class="btn btn-green" onclick="window.print()" style="width: 100%;">🖨️ CETAK QR CODE</button>
         </div>
     </div>
 
@@ -69,14 +179,11 @@
                 gender: gender 
             };
             
-            // Data yang akan dimasukkan ke dalam QR Code
             const qrString = JSON.stringify(studentData);
 
             try {
-                // Simpan maklumat murid ke Firebase Firestore
                 await setDoc(doc(db, "students", ic), studentData);
                 
-                // Jana QR Code
                 document.getElementById('qrcode').innerHTML = "";
                 new QRCode(document.getElementById("qrcode"), {
                     text: qrString,
@@ -90,7 +197,6 @@
                 document.getElementById('display-name').innerText = name;
                 document.getElementById('qr-result-card').style.display = "block";
                 
-                // Skrol ke bahagian QR code secara automatik
                 document.getElementById('qr-result-card').scrollIntoView({ behavior: 'smooth' });
                 
                 alert("Data berjaya disimpan dan QR Code telah dijana!");
