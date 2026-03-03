@@ -5,25 +5,116 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Profil Murid - SEMSIRA</title>
     <link rel="stylesheet" href="assets/style.css">
+    <style>
+        .record-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px solid #eee;
+            font-size: 14px;
+        }
+        @media print {
+            .btn, header { display: none; }
+            .card { box-shadow: none; border: 1px solid #ccc; }
+        }
+    </style>
 </head>
 <body>
+    <header>
+        <a href="javascript:history.back()" style="float: left; text-decoration: none;">⬅️</a>
+        <img src="semsira.png" alt="Logo" class="logo-small">
+        <span style="font-weight: bold;">Profil Murid</span>
+    </header>
+
     <div class="container">
         <div class="card" style="text-align:center;">
-            <img src="semsira.png" style="width:60px;">
-            <h2 id="p-name">MUHAMMAD BIN ABDULLAH</h2>
-            <p id="p-ic">IC: 050101025566</p>
-            <p id="p-class">Kelas: 6 Al-Farabi</p>
-            <p id="p-gender">Jantina: Lelaki</p>
+            <img src="semsira.png" style="width:60px; margin-bottom: 10px;">
+            <h2 id="p-name">Memuatkan...</h2>
+            <p id="p-ic">IC: -</p>
+            <p id="p-class">Kelas: -</p>
+            <p id="p-gender">Jantina: -</p>
         </div>
 
         <div class="card">
-            <h4>Rekod Kehadiran Bulanan</h4>
+            <h4>Rekod Kehadiran Keseluruhan</h4>
             <div id="attendanceHistory">
-                <p>01/03/2026 - <span style="color:green">Hadir (07:20 AM)</span></p>
-                <p>02/03/2026 - <span style="color:orange">Lewat (07:45 AM)</span></p>
+                <p style="text-align:center; color:#999;">Mencari rekod...</p>
             </div>
-            <button class="btn btn-blue" onclick="window.print()" style="width:100%; margin-top:20px;">CETAK PROFIL</button>
+            
+            <button class="btn btn-blue" onclick="window.print()" style="width:100%; margin-top:20px;">CETAK / SIMPAN PDF</button>
         </div>
     </div>
+
+    <script type="module">
+        import { db } from './js/firebase-config.js';
+        import { doc, getDoc, collection, getDocs, query, where, orderBy } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-firestore.js";
+
+        // 1. Ambil IC murid dari URL parameter (?id=xxxxx)
+        const urlParams = new URLSearchParams(window.location.search);
+        const studentIC = urlParams.get('id');
+
+        if (!studentIC) {
+            alert("Ralat: ID Murid tidak ditemui.");
+            window.location.href = 'dashboard.html';
+        }
+
+        async function loadProfile() {
+            try {
+                // 2. Tarik Maklumat Peribadi Murid
+                const studentDoc = await getDoc(doc(db, "students", studentIC));
+                
+                if (studentDoc.exists()) {
+                    const data = studentDoc.data();
+                    document.getElementById('p-name').innerText = data.name;
+                    document.getElementById('p-ic').innerText = `IC: ${data.ic}`;
+                    document.getElementById('p-class').innerText = `Kelas: ${data.kelas}`;
+                    document.getElementById('p-gender').innerText = `Jantina: ${data.gender}`;
+                } else {
+                    document.getElementById('p-name').innerText = "Murid Tidak Ditemui";
+                }
+
+                // 3. Tarik Sejarah Kehadiran dari koleksi 'attendance'
+                const q = query(
+                    collection(db, "attendance"), 
+                    where("ic", "==", studentIC)
+                );
+                
+                const querySnapshot = await getDocs(q);
+                const historyDiv = document.getElementById('attendanceHistory');
+                historyDiv.innerHTML = "";
+
+                let attendanceData = [];
+                querySnapshot.forEach((doc) => {
+                    // Ambil tarikh dari ID dokumen (Format: YYYY-MM-DD_IC)
+                    const datePart = doc.id.split('_')[0]; 
+                    attendanceData.push({ date: datePart, ...doc.data() });
+                });
+
+                // Susun tarikh paling terkini di atas
+                attendanceData.sort((a, b) => new Date(b.date) - new Date(a.date));
+
+                if (attendanceData.length === 0) {
+                    historyDiv.innerHTML = "<p style='text-align:center;'>Tiada rekod kehadiran ditemui.</p>";
+                } else {
+                    attendanceData.forEach(record => {
+                        const statusColor = record.status === "Hadir" ? "green" : "orange";
+                        const div = document.createElement('div');
+                        div.className = "record-item";
+                        div.innerHTML = `
+                            <span>${record.date}</span>
+                            <span style="color:${statusColor}; font-weight:bold;">${record.status} (${record.time})</span>
+                        `;
+                        historyDiv.appendChild(div);
+                    });
+                }
+
+            } catch (error) {
+                console.error("Ralat memuatkan profil:", error);
+                alert("Gagal memuatkan data dari Firebase.");
+            }
+        }
+
+        window.onload = loadProfile;
+    </script>
 </body>
 </html>
