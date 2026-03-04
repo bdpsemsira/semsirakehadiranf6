@@ -28,105 +28,76 @@
         }
 
         .menu-btn {
-            background: none;
-            border: none;
-            color: white;
-            font-size: 24px;
-            cursor: pointer;
+            background: none; border: none; color: white;
+            font-size: 24px; cursor: pointer;
         }
 
-        /* 弹出小菜单 */
         .dropdown-menu {
-            display: none;
-            position: absolute;
-            top: 60px;
-            right: 15px;
-            background: #1e293b;
-            border: 1px solid rgba(255,255,255,0.1);
-            border-radius: 12px;
-            width: 220px;
+            display: none; position: absolute; top: 60px; right: 15px;
+            background: #1e293b; border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 12px; width: 220px; z-index: 1000; padding: 10px;
             box-shadow: 0 10px 25px rgba(0,0,0,0.5);
-            z-index: 1000;
-            padding: 10px;
         }
         .dropdown-menu.show { display: block; }
 
-        /* 扫描区域限制为 80% */
+        /* 镜头高度 80% */
         .scanner-container {
             position: relative;
             width: 100vw;
             height: 80vh; 
             background: #000;
-            overflow: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
         }
 
-        #reader {
-            width: 100% !important;
-            height: 100% !important;
+        #reader { width: 100% !important; height: 100% !important; }
+        #reader video { object-fit: cover !important; }
+
+        /* 隐藏自带UI */
+        #reader__scan_region, #reader__dashboard { display: none !important; }
+
+        /* --- 正方形 QR 框 --- */
+        .qr-box {
+            position: absolute;
+            width: 260px;
+            height: 260px;
+            border: 2px solid rgba(56, 189, 248, 0.8);
+            border-radius: 15px;
+            box-shadow: 0 0 0 1000px rgba(0, 0, 0, 0.5); /* 遮罩效果 */
+            z-index: 50;
+            pointer-events: none;
         }
 
-        #reader video {
-            object-fit: cover !important;
-            width: 100% !important;
-            height: 100% !important;
-        }
-
-        /* 隐藏库自带的扫描框 */
-        #reader__scan_region, #reader__dashboard {
-            display: none !important;
-        }
-
-        /* --- 智能红外激光线 --- */
+        /* 扫描线：现在限制在正方形内 */
         .laser-line {
             position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 3px;
-            background: rgba(239, 68, 68, 0.8); /* 红色激光 */
-            box-shadow: 0 0 15px 2px rgba(239, 68, 68, 0.6);
-            z-index: 60;
-            animation: infraredScan 3s infinite ease-in-out;
-        }
-
-        @keyframes infraredScan {
-            0% { top: 0%; opacity: 0; }
-            10% { opacity: 1; }
-            90% { opacity: 1; }
-            100% { top: 100%; opacity: 0; }
-        }
-
-        /* 结果卡片位置优化 */
-        .result-card {
-            position: fixed;
-            bottom: 20px;
-            left: 50%;
-            transform: translateX(-50%);
+            top: 0; left: 5%;
             width: 90%;
-            max-width: 450px;
-            background: #1e293b;
-            border-radius: 20px;
-            padding: 20px;
-            display: none;
-            z-index: 200;
-            box-shadow: 0 -5px 20px rgba(0,0,0,0.4);
-            border-left: 5px solid #ef4444; /* 红色主题呼应激光 */
+            height: 3px;
+            background: #38bdf8;
+            box-shadow: 0 0 15px #38bdf8;
+            animation: scanAnim 2.5s infinite ease-in-out;
+        }
+
+        @keyframes scanAnim {
+            0% { top: 5%; opacity: 0; }
+            50% { opacity: 1; }
+            100% { top: 95%; opacity: 0; }
+        }
+
+        .result-card {
+            position: fixed; bottom: 20px; left: 50%;
+            transform: translateX(-50%); width: 90%; max-width: 450px;
+            background: #1e293b; border-radius: 20px; padding: 20px;
+            display: none; z-index: 200; border-top: 5px solid #38bdf8;
         }
 
         .progress-container {
-            width: 100%;
-            height: 5px;
-            background: rgba(255,255,255,0.1);
-            margin-top: 15px;
-            border-radius: 10px;
-            overflow: hidden;
+            width: 100%; height: 5px; background: rgba(255,255,255,0.1);
+            margin-top: 15px; border-radius: 10px; overflow: hidden;
         }
-
-        #progress {
-            width: 0%;
-            height: 100%;
-            background: #ef4444;
-        }
+        #progress { width: 0%; height: 100%; background: #38bdf8; }
 
         .status-hadir { color: #10b981; font-weight: bold; }
         .status-lewat { color: #f43f5e; font-weight: bold; }
@@ -142,11 +113,10 @@
         <div id="dropMenu" class="dropdown-menu">
             <div style="padding: 10px;">
                 <label style="font-size: 12px; color: #94a3b8;">Kamera</label>
-                <select id="camSelect" onchange="changeCamera(this.value)" style="width:100%; background:#0f172a; color:white; border:1px solid #334155; padding:8px; border-radius:5px; margin-top:5px;">
-                    <option>Detecting...</option>
+                <select id="camSelect" onchange="changeCamera(this.value)" style="width:100%; background:#0f172a; color:white; border:1px solid #334155; padding:8px; border-radius:5px;">
                 </select>
             </div>
-            <div style="padding: 10px; display: flex; justify-content: space-between; align-items: center; border-top: 1px solid rgba(255,255,255,0.05);">
+            <div style="padding: 10px; display: flex; justify-content: space-between; align-items: center;">
                 <span style="font-size: 13px;">Mirror View</span>
                 <input type="checkbox" id="mirrorCheck" onchange="toggleMirror(this.checked)">
             </div>
@@ -155,26 +125,34 @@
 
     <div class="scanner-container">
         <div id="reader"></div>
-        <div class="laser-line"></div>
+        <div class="qr-box">
+            <div class="laser-line"></div>
+        </div>
     </div>
 
     <div id="result" class="result-card">
-        <h3 id="res-name" style="margin:0; font-size: 1.2rem; color: #fff;">NAMA MURID</h3>
-        <p id="res-class" style="margin:5px 0; color: #94a3b8;">KELAS</p>
-        <p style="margin:0; font-size: 14px;">Status: <span id="res-status">--</span></p>
-        
-        <div class="progress-container">
-            <div id="progress"></div>
-        </div>
-        <p style="font-size: 10px; color: #64748b; text-align: center; margin-top: 8px;">Success! Resetting in 3s...</p>
+        <h3 id="res-name" style="margin:0;">NAMA MURID</h3>
+        <p id="res-class" style="margin:5px 0; color: #38bdf8;">KELAS</p>
+        <p>Status: <span id="res-status">--</span></p>
+        <div class="progress-container"><div id="progress"></div></div>
     </div>
+
+    <audio id="beepSound" src="https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3" preload="auto"></audio>
 
     <script type="module">
         import { db } from './js/firebase-config.js';
         import { doc, setDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-firestore.js";
 
         const html5QrCode = new Html5Qrcode("reader");
-        const beep = new Audio('https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3');
+        const beep = document.getElementById('beepSound');
+
+        // 核心修复：用户点击任何地方时解锁音频播放
+        document.body.addEventListener('click', () => {
+            beep.play().then(() => {
+                beep.pause(); 
+                beep.currentTime = 0;
+            }).catch(e => console.log("Audio unlock failed"));
+        }, { once: true });
 
         window.toggleMenu = () => document.getElementById('dropMenu').classList.toggle('show');
         
@@ -196,8 +174,7 @@
                 select.innerHTML = '';
                 devices.forEach(d => {
                     const opt = document.createElement('option');
-                    opt.value = d.id;
-                    opt.text = d.label;
+                    opt.value = d.id; opt.text = d.label;
                     if(d.id === localStorage.getItem('preferredCameraId')) opt.selected = true;
                     select.appendChild(opt);
                 });
@@ -205,12 +182,9 @@
                 const isMirror = localStorage.getItem('cameraMirror') === 'true';
                 document.getElementById('mirrorCheck').checked = isMirror;
 
-                // 核心：虽然不画框，但我们要告诉引擎识别区域涵盖大部分视野
                 const config = { 
                     fps: 25, 
-                    qrbox: (viewWidth, viewHeight) => {
-                        return { width: viewWidth * 0.8, height: viewHeight * 0.6 };
-                    },
+                    qrbox: { width: 260, height: 260 }, // 强制正方形识别
                     aspectRatio: 1.0
                 };
                 
@@ -221,16 +195,16 @@
                     .then(() => {
                         const video = document.querySelector('#reader video');
                         if(video) video.style.transform = isMirror ? "scaleX(-1)" : "scaleX(1)";
-                    })
-                    .catch(() => {
-                        html5QrCode.start({ facingMode: "user" }, config, onScanSuccess);
                     });
             } catch (e) { console.error(e); }
         }
 
         async function onScanSuccess(text) {
             await html5QrCode.stop();
-            beep.play().catch(()=>{});
+            
+            // 播放声音
+            beep.currentTime = 0;
+            beep.play().catch(err => console.log("Sound play error:", err));
 
             try {
                 const data = JSON.parse(text);
@@ -266,7 +240,6 @@
                 }, 3000);
 
             } catch (e) {
-                console.error("Format Error");
                 initScanner();
             }
         }
