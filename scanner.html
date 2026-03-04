@@ -12,69 +12,120 @@
             color: #f1f5f9;
             margin: 0;
             font-family: 'Poppins', sans-serif;
-            min-height: 100vh;
+            overflow: hidden;
         }
 
+        /* 顶部栏 */
         header {
             background: #1e293b;
             padding: 15px;
-            text-align: center;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            position: relative;
+            z-index: 100;
         }
 
-        .container {
-            padding: 15px;
-            max-width: 500px;
-            margin: 0 auto;
+        /* 三点菜单按钮 */
+        .menu-btn {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 24px;
+            cursor: pointer;
+            padding: 0 10px;
         }
 
-        /* 模拟 Google Meet 的选择器样式 */
-        .camera-selector-container {
+        /* 弹出小菜单 */
+        .dropdown-menu {
+            display: none;
+            position: absolute;
+            top: 60px;
+            right: 15px;
             background: #1e293b;
-            padding: 12px;
-            border-radius: 15px;
-            margin-bottom: 15px;
             border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 12px;
+            width: 200px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+            z-index: 1000;
+            padding: 10px;
         }
+
+        .dropdown-menu.show { display: block; }
+
+        .menu-item {
+            padding: 10px;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+        }
+
+        .menu-item:last-child { border: none; }
+
+        .menu-item label { font-size: 12px; color: #94a3b8; display: block; margin-bottom: 5px; }
 
         select {
             width: 100%;
-            padding: 10px;
-            border-radius: 8px;
             background: #0f172a;
-            color: #38bdf8;
+            color: white;
             border: 1px solid #334155;
-            font-size: 14px;
-            outline: none;
+            padding: 5px;
+            border-radius: 5px;
         }
 
-        .card {
-            background: #1e293b;
-            border-radius: 20px;
-            overflow: hidden;
-            margin-bottom: 15px;
-            border: 1px solid rgba(255,255,255,0.05);
-        }
-
+        /* 扫描器容器 */
         #reader {
-            width: 100% !important;
+            width: 100vw !important;
+            height: 100vh !important;
             background: #000;
         }
 
         #reader video {
-            object-fit: contain !important;
+            object-fit: cover !important; /* 铺满屏幕 */
         }
 
+        /* 结果卡片浮动在底部 */
         .result-card {
-            display: none;
+            position: fixed;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 90%;
+            max-width: 400px;
+            background: #1e293b;
+            border-radius: 20px;
             padding: 20px;
-            border-left: 6px solid #38bdf8;
-            animation: slideUp 0.4s ease;
+            display: none;
+            z-index: 200;
+            box-shadow: 0 -10px 30px rgba(0,0,0,0.5);
+            border-top: 4px solid #38bdf8;
         }
 
-        @keyframes slideUp {
-            from { opacity: 0; transform: translateY(20px); }
-            to { opacity: 1; transform: translateY(0); }
+        /* 智能追踪框 (QR Trace Area) */
+        .qr-overlay {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 250px;
+            height: 250px;
+            border: 2px solid rgba(56, 189, 248, 0.5);
+            border-radius: 20px;
+            pointer-events: none;
+            z-index: 50;
+        }
+
+        .qr-overlay::before {
+            content: "";
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 2px;
+            background: #38bdf8;
+            box-shadow: 0 0 15px #38bdf8;
+            animation: scanAnim 2s infinite linear;
+        }
+
+        @keyframes scanAnim {
+            0% { top: 0; }
+            50% { top: 100%; }
+            100% { top: 0; }
         }
 
         .status-hadir { color: #10b981; font-weight: bold; }
@@ -82,28 +133,35 @@
     </style>
 </head>
 <body>
+
     <header>
-        <a href="menu.html" style="text-decoration: none; color: white; position: absolute; left: 20px; font-size: 20px;">⬅️</a>
-        <span style="font-weight: 600;">Scanner Pro</span>
+        <a href="menu.html" style="text-decoration: none; color: white; font-size: 20px;">⬅️</a>
+        <span style="font-weight: 600;">Scanner SEMSIRA</span>
+        <button class="menu-btn" onclick="toggleMenu()">⋮</button>
+        
+        <div id="dropMenu" class="dropdown-menu">
+            <div class="menu-item">
+                <label>Pilih Kamera</label>
+                <select id="camSelect" onchange="changeCamera(this.value)">
+                    <option>Loading...</option>
+                </select>
+            </div>
+            <div class="menu-item" style="display: flex; justify-content: space-between; align-items: center;">
+                <span style="font-size: 13px;">Mirror View</span>
+                <input type="checkbox" id="mirrorCheck" onchange="toggleMirror(this.checked)">
+            </div>
+        </div>
     </header>
 
-    <div class="container">
-        <div class="camera-selector-container">
-            <label style="font-size: 12px; color: #94a3b8; display: block; margin-bottom: 5px;">🎥 Pilih Kamera (Tukar Sini)</label>
-            <select id="cameraSelect">
-                <option value="">Mengesan Kamera...</option>
-            </select>
-        </div>
+    <div id="reader"></div>
+    <div class="qr-overlay"></div>
 
-        <div class="card">
-            <div id="reader"></div>
-        </div>
-
-        <div id="result" class="card result-card">
-            <h3 id="res-name" style="margin:0;">NAMA MURID</h3>
-            <p id="res-class" style="color:#38bdf8; margin:5px 0;">KELAS</p>
-            <p>🕒 Masa: <span id="res-time">--:--</span></p>
-            <p>📌 Status: <span id="res-status">--</span></p>
+    <div id="result" class="result-card">
+        <h3 id="res-name" style="margin:0; font-size: 1.2rem;">NAMA</h3>
+        <p id="res-class" style="margin:5px 0; color: #38bdf8;">KELAS</p>
+        <p style="margin:0; font-size: 14px;">Status: <span id="res-status">--</span></p>
+        <div style="width:100%; height:4px; background:rgba(255,255,255,0.1); margin-top:10px;">
+            <div id="progress" style="width:100%; height:100%; background:#38bdf8; transition: width 3s linear;"></div>
         </div>
     </div>
 
@@ -112,104 +170,94 @@
         import { doc, setDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-firestore.js";
 
         const html5QrCode = new Html5Qrcode("reader");
-        const cameraSelect = document.getElementById('cameraSelect');
         const beep = new Audio('https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3');
 
-        // 初始化相机列表
-        async function initCameraList() {
-            try {
-                const devices = await Html5Qrcode.getCameras();
-                cameraSelect.innerHTML = ''; // 清空
-                
-                if (devices && devices.length > 0) {
-                    devices.forEach(device => {
-                        const option = document.createElement('option');
-                        option.value = device.id;
-                        option.text = device.label || `Camera ${cameraSelect.length + 1}`;
-                        cameraSelect.appendChild(option);
-                    });
+        // 绑定全局函数以便 HTML 调用
+        window.toggleMenu = () => document.getElementById('dropMenu').classList.toggle('show');
+        
+        window.toggleMirror = (val) => {
+            localStorage.setItem('cameraMirror', val);
+            const video = document.querySelector('#reader video');
+            if(video) video.style.transform = val ? "scaleX(-1)" : "scaleX(1)";
+        };
 
-                    // 默认启动第一个（或之前存过的）
-                    const lastUsed = localStorage.getItem('preferredCameraId');
-                    if (lastUsed && devices.some(d => d.id === lastUsed)) {
-                        cameraSelect.value = lastUsed;
-                    }
-                    
-                    startScanner(cameraSelect.value);
-                }
-            } catch (err) {
-                cameraSelect.innerHTML = '<option>Ralat Akses Kamera</option>';
-            }
-        }
+        window.changeCamera = (id) => {
+            localStorage.setItem('preferredCameraId', id);
+            location.reload(); // 重启扫描器以应用新镜头
+        };
 
-        // 启动/切换相机函数
-        async function startScanner(cameraId) {
-            if (html5QrCode.getState() === 2) {
-                await html5QrCode.stop();
-            }
+        async function initScanner() {
+            // 1. 获取并填充相机列表
+            const devices = await Html5Qrcode.getCameras();
+            const select = document.getElementById('camSelect');
+            select.innerHTML = '';
+            devices.forEach(d => {
+                const opt = document.createElement('option');
+                opt.value = d.id;
+                opt.text = d.label;
+                if(d.id === localStorage.getItem('preferredCameraId')) opt.selected = true;
+                select.appendChild(opt);
+            });
 
-            const config = { 
-                fps: 20, 
-                qrbox: { width: 250, height: 250 },
-                aspectRatio: 1.0 
-            };
+            // 2. 初始化设置
+            const isMirror = localStorage.getItem('cameraMirror') === 'true';
+            document.getElementById('mirrorCheck').checked = isMirror;
+
+            // 3. 启动扫描
+            const config = { fps: 20, qrbox: 250 };
+            const cameraId = localStorage.getItem('preferredCameraId') || { facingMode: "environment" };
 
             html5QrCode.start(cameraId, config, onScanSuccess)
-                .catch(err => console.error("Gagal start:", err));
+                .then(() => {
+                    const video = document.querySelector('#reader video');
+                    if(video) video.style.transform = isMirror ? "scaleX(-1)" : "scaleX(1)";
+                })
+                .catch(() => {
+                    // 降级启动
+                    html5QrCode.start({ facingMode: "user" }, config, onScanSuccess);
+                });
         }
 
-        // 监听下拉菜单：用户一选，立刻切换
-        cameraSelect.addEventListener('change', (e) => {
-            const newId = e.target.value;
-            localStorage.setItem('preferredCameraId', newId); // 顺便存一下，下次开还是这个
-            startScanner(newId);
-        });
-
-        async function onScanSuccess(decodedText) {
+        async function onScanSuccess(text) {
             await html5QrCode.stop();
-            beep.play();
-            
+            beep.play().catch(()=>{});
+
             try {
-                const student = JSON.parse(decodedText);
+                const data = JSON.parse(text);
                 const now = new Date();
-                const currentTime = now.getHours().toString().padStart(2,'0') + ":" + now.getMinutes().toString().padStart(2,'0');
+                const timeStr = now.getHours().toString().padStart(2,'0') + ":" + now.getMinutes().toString().padStart(2,'0');
                 
-                // 判断逻辑
-                const savedLateTime = localStorage.getItem('lateTimeLimit') || "07:35";
-                const [lH, lM] = savedLateTime.split(':').map(Number);
-                let status = (now.getHours() > lH || (now.getHours() === lH && now.getMinutes() > lM)) ? "Lewat" : "Hadir";
+                // 判断迟到
+                const limit = localStorage.getItem('lateTimeLimit') || "07:35";
+                const status = (timeStr > limit) ? "Lewat" : "Hadir";
 
-                // UI更新
-                document.getElementById('res-name').innerText = student.name;
-                document.getElementById('res-class').innerText = student.kelas || student.class;
-                document.getElementById('res-time').innerText = currentTime;
+                document.getElementById('res-name').innerText = data.name;
+                document.getElementById('res-class').innerText = data.kelas || data.class;
                 document.getElementById('res-status').innerText = status.toUpperCase();
-                document.getElementById('res-status').className = status === "Hadir" ? "status-hadir" : "status-lewat";
+                document.getElementById('res-status').className = (status === "Hadir") ? "status-hadir" : "status-lewat";
+                
                 document.getElementById('result').style.display = "block";
+                document.getElementById('progress').style.width = "100%";
 
-                // 写入Firebase
+                // Firebase 记录
                 const dateKey = now.toISOString().split('T')[0];
-                await setDoc(doc(db, "attendance", `${dateKey}_${student.ic}`), {
-                    name: student.name,
-                    ic: student.ic,
-                    class: student.kelas || student.class,
-                    time: currentTime,
-                    status: status,
-                    timestamp: serverTimestamp()
+                await setDoc(doc(db, "attendance", `${dateKey}_${data.ic}`), {
+                    ...data, time: timeStr, status: status, timestamp: serverTimestamp()
                 });
 
+                setTimeout(() => { document.getElementById('progress').style.width = "0%"; }, 50);
                 setTimeout(() => {
                     document.getElementById('result').style.display = "none";
-                    startScanner(cameraSelect.value); 
+                    initScanner();
                 }, 3000);
 
             } catch (e) {
-                startScanner(cameraSelect.value);
+                console.error("Format QR Salah");
+                initScanner();
             }
         }
 
-        // 运行初始化
-        initCameraList();
+        window.onload = initScanner;
     </script>
 </body>
 </html>
