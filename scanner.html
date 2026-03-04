@@ -8,11 +8,12 @@
     <script src="https://unpkg.com/html5-qrcode"></script>
     <style>
         body {
-            background-color: #0f172a;
+            background-color: #020617;
             color: #f1f5f9;
             margin: 0;
             font-family: 'Poppins', sans-serif;
             overflow: hidden;
+            height: 100vh;
         }
 
         header {
@@ -21,8 +22,9 @@
             display: flex;
             align-items: center;
             justify-content: space-between;
-            position: relative;
             z-index: 100;
+            height: 60px;
+            box-sizing: border-box;
         }
 
         .menu-btn {
@@ -31,9 +33,9 @@
             color: white;
             font-size: 24px;
             cursor: pointer;
-            padding: 0 10px;
         }
 
+        /* 弹出小菜单 */
         .dropdown-menu {
             display: none;
             position: absolute;
@@ -47,105 +49,83 @@
             z-index: 1000;
             padding: 10px;
         }
-
         .dropdown-menu.show { display: block; }
 
-        .menu-item {
-            padding: 10px;
-            border-bottom: 1px solid rgba(255,255,255,0.05);
-        }
-
-        .menu-item label { font-size: 12px; color: #94a3b8; display: block; margin-bottom: 5px; }
-
-        select {
-            width: 100%;
-            background: #0f172a;
-            color: white;
-            border: 1px solid #334155;
-            padding: 8px;
-            border-radius: 5px;
+        /* 扫描区域限制为 80% */
+        .scanner-container {
+            position: relative;
+            width: 100vw;
+            height: 80vh; 
+            background: #000;
+            overflow: hidden;
         }
 
         #reader {
-            width: 100vw !important;
-            height: 100vh !important;
-            background: #000;
+            width: 100% !important;
+            height: 100% !important;
         }
 
         #reader video {
             object-fit: cover !important;
+            width: 100% !important;
+            height: 100% !important;
         }
 
-        /* --- 核心修复：隐藏 html5-qrcode 自带的重叠框 --- */
-        #reader__scan_region {
+        /* 隐藏库自带的扫描框 */
+        #reader__scan_region, #reader__dashboard {
             display: none !important;
         }
-        #reader__dashboard {
-            background: transparent !important;
-            color: white !important;
-            padding: 10px !important;
-        }
 
-        /* 自定义智能追踪框 */
-        .qr-overlay {
-            position: fixed;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            width: 260px;
-            height: 260px;
-            border: 2px solid rgba(56, 189, 248, 0.5);
-            border-radius: 20px;
-            pointer-events: none;
-            z-index: 50;
-        }
-
-        .qr-overlay::before {
-            content: "";
+        /* --- 智能红外激光线 --- */
+        .laser-line {
             position: absolute;
-            top: 0; left: 0; width: 100%; height: 2px;
-            background: #38bdf8;
-            box-shadow: 0 0 15px #38bdf8;
-            animation: scanAnim 2s infinite linear;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 3px;
+            background: rgba(239, 68, 68, 0.8); /* 红色激光 */
+            box-shadow: 0 0 15px 2px rgba(239, 68, 68, 0.6);
+            z-index: 60;
+            animation: infraredScan 3s infinite ease-in-out;
         }
 
-        @keyframes scanAnim {
-            0% { top: 0; }
-            50% { top: 100%; }
-            100% { top: 0; }
+        @keyframes infraredScan {
+            0% { top: 0%; opacity: 0; }
+            10% { opacity: 1; }
+            90% { opacity: 1; }
+            100% { top: 100%; opacity: 0; }
         }
 
+        /* 结果卡片位置优化 */
         .result-card {
             position: fixed;
-            bottom: 30px;
+            bottom: 20px;
             left: 50%;
             transform: translateX(-50%);
-            width: 85%;
-            max-width: 400px;
+            width: 90%;
+            max-width: 450px;
             background: #1e293b;
             border-radius: 20px;
             padding: 20px;
             display: none;
             z-index: 200;
-            box-shadow: 0 -10px 30px rgba(0,0,0,0.5);
-            border-top: 4px solid #38bdf8;
+            box-shadow: 0 -5px 20px rgba(0,0,0,0.4);
+            border-left: 5px solid #ef4444; /* 红色主题呼应激光 */
         }
 
-        /* 进度条样式修复 */
         .progress-container {
             width: 100%;
-            height: 6px;
+            height: 5px;
             background: rgba(255,255,255,0.1);
             margin-top: 15px;
-            border-radius: 3px;
+            border-radius: 10px;
             overflow: hidden;
         }
 
         #progress {
             width: 0%;
             height: 100%;
-            background: #38bdf8;
-            /* transition 将在 JS 中触发 */
+            background: #ef4444;
         }
 
         .status-hadir { color: #10b981; font-weight: bold; }
@@ -156,35 +136,37 @@
 
     <header>
         <a href="menu.html" style="text-decoration: none; color: white; font-size: 20px;">⬅️</a>
-        <span style="font-weight: 600;">Scanner SEMSIRA</span>
+        <span style="font-weight: 600;">Automated Attendance</span>
         <button class="menu-btn" onclick="toggleMenu()">⋮</button>
         
         <div id="dropMenu" class="dropdown-menu">
-            <div class="menu-item">
-                <label>Pilih Kamera</label>
-                <select id="camSelect" onchange="changeCamera(this.value)">
-                    <option>Loading...</option>
+            <div style="padding: 10px;">
+                <label style="font-size: 12px; color: #94a3b8;">Kamera</label>
+                <select id="camSelect" onchange="changeCamera(this.value)" style="width:100%; background:#0f172a; color:white; border:1px solid #334155; padding:8px; border-radius:5px; margin-top:5px;">
+                    <option>Detecting...</option>
                 </select>
             </div>
-            <div class="menu-item" style="display: flex; justify-content: space-between; align-items: center;">
+            <div style="padding: 10px; display: flex; justify-content: space-between; align-items: center; border-top: 1px solid rgba(255,255,255,0.05);">
                 <span style="font-size: 13px;">Mirror View</span>
                 <input type="checkbox" id="mirrorCheck" onchange="toggleMirror(this.checked)">
             </div>
         </div>
     </header>
 
-    <div id="reader"></div>
-    <div class="qr-overlay"></div>
+    <div class="scanner-container">
+        <div id="reader"></div>
+        <div class="laser-line"></div>
+    </div>
 
     <div id="result" class="result-card">
-        <h3 id="res-name" style="margin:0; font-size: 1.2rem;">NAMA</h3>
-        <p id="res-class" style="margin:5px 0; color: #38bdf8;">KELAS</p>
+        <h3 id="res-name" style="margin:0; font-size: 1.2rem; color: #fff;">NAMA MURID</h3>
+        <p id="res-class" style="margin:5px 0; color: #94a3b8;">KELAS</p>
         <p style="margin:0; font-size: 14px;">Status: <span id="res-status">--</span></p>
         
         <div class="progress-container">
             <div id="progress"></div>
         </div>
-        <p style="font-size: 10px; color: #64748b; text-align: center; margin-top: 5px;">Sedia dalam 3 saat...</p>
+        <p style="font-size: 10px; color: #64748b; text-align: center; margin-top: 8px;">Success! Resetting in 3s...</p>
     </div>
 
     <script type="module">
@@ -223,10 +205,12 @@
                 const isMirror = localStorage.getItem('cameraMirror') === 'true';
                 document.getElementById('mirrorCheck').checked = isMirror;
 
-                // 配置识别区域
+                // 核心：虽然不画框，但我们要告诉引擎识别区域涵盖大部分视野
                 const config = { 
-                    fps: 20, 
-                    qrbox: { width: 250, height: 250 }, // 匹配 overlay 的尺寸
+                    fps: 25, 
+                    qrbox: (viewWidth, viewHeight) => {
+                        return { width: viewWidth * 0.8, height: viewHeight * 0.6 };
+                    },
                     aspectRatio: 1.0
                 };
                 
@@ -256,43 +240,33 @@
                 const limit = localStorage.getItem('lateTimeLimit') || "07:35";
                 const status = (timeStr > limit) ? "Lewat" : "Hadir";
 
-                // 更新 UI
                 document.getElementById('res-name').innerText = data.name;
                 document.getElementById('res-class').innerText = data.kelas || data.class;
                 document.getElementById('res-status').innerText = status.toUpperCase();
                 document.getElementById('res-status').className = (status === "Hadir") ? "status-hadir" : "status-lewat";
                 
-                // 显示卡片并启动进度条
                 const card = document.getElementById('result');
                 const bar = document.getElementById('progress');
                 
                 card.style.display = "block";
-                
-                // --- 进度条逻辑修复 ---
                 bar.style.transition = "none";
                 bar.style.width = "100%";
-                
-                // 强制重绘
                 void bar.offsetWidth;
-                
-                // 开始倒计时动画
                 bar.style.transition = "width 3s linear";
                 bar.style.width = "0%";
 
-                // Firebase 记录
                 const dateKey = now.toISOString().split('T')[0];
                 await setDoc(doc(db, "attendance", `${dateKey}_${data.ic}`), {
                     ...data, time: timeStr, status: status, timestamp: serverTimestamp()
                 });
 
-                // 3秒后重启
                 setTimeout(() => {
                     card.style.display = "none";
                     initScanner();
                 }, 3000);
 
             } catch (e) {
-                console.error("Format QR Salah");
+                console.error("Format Error");
                 initScanner();
             }
         }
