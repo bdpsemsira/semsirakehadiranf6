@@ -40,7 +40,6 @@
             margin-bottom: 15px;
         }
 
-        /* 解决前置被裁切的关键：contain */
         #reader {
             width: 100% !important;
             background: #000;
@@ -74,7 +73,6 @@
         .timer-bar { width: 100%; height: 4px; background: rgba(255,255,255,0.1); margin-top: 20px; border-radius: 2px; position: relative; overflow: hidden; }
         .timer-progress { position: absolute; left: 0; top: 0; height: 100%; background: #38bdf8; width: 100%; transition: width 3s linear; }
 
-        /* 扫描框动画 */
         #reader__scan_region::after {
             content: "";
             position: absolute;
@@ -118,62 +116,80 @@
         const beep = new Audio('https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3');
         const html5QrCode = new Html5Qrcode("reader");
 
-        // 基础配置
         const qrConfig = { 
             fps: 25, 
             qrbox: (vw, vh) => {
                 let size = Math.min(vw, vh) * 0.75;
                 return { width: size, height: size };
             },
-            // 请求较高分辨率有助于对焦
             videoConstraints: {
                 width: { min: 640, ideal: 1280 },
-                height: { min: 480, ideal: 720 }
+                height: { min: 480, ideal: 720 },
+                // 增加提示，告诉浏览器我们偏向后置
+                facingMode: "environment"
             }
         };
 
-        // 启动扫描函数
         async function startScanner() {
-            const savedCameraId = localStorage.getItem('preferredCameraId');
             const isMirror = localStorage.getItem('cameraMirror') === 'true';
+            const savedId = localStorage.getItem('preferredCameraId');
             
-            // 确保没有正在运行的实例
-            if (html5QrCode.getState() === 2) {
-                await html5QrCode.stop();
-            }
+            if (html5QrCode.getState() === 2) await html5QrCode.stop();
 
-            // 核心逻辑：如果保存了 ID，就只传 deviceId，绝不传 facingMode
-            let cameraSpec;
-            if (savedCameraId && savedCameraId !== "") {
-                cameraSpec = { deviceId: { exact: savedCameraId } };
-            } else {
-                cameraSpec = { facingMode: "environment" }; // 默认后置
-            }
+            try {
+                // 1. 获取所有摄像头列表
+                const devices = await Html5Qrcode.getCameras();
+                let targetId = null;
 
-            html5QrCode.start(cameraSpec, qrConfig, onScanSuccess)
-                .then(() => {
-                    const videoElem = document.querySelector('#reader video');
-                    if (videoElem) {
-                        // 应用镜像
-                        videoElem.style.transform = isMirror ? "scaleX(-1)" : "scaleX(1)";
-                        videoElem.style.webkitTransform = isMirror ? "scaleX(-1)" : "scaleX(1)";
+                if (devices && devices.length > 0) {
+                    // 2. 逻辑：如果 savedId 还在列表里，用它
+                    const idExists = devices.find(d => d.id === savedId);
+                    
+                    if (idExists) {
+                        targetId = savedId;
+                    } else {
+                        // 3. 核心突破：自动寻找带有 "back" 或 "rear" 字样的摄像头
+                        const backCamera = devices.find(d => 
+                            d.label.toLowerCase().includes('back') || 
+                            d.label.toLowerCase().includes('rear') ||
+                            d.label.toLowerCase().includes('environment')
+                        );
+                        // 如果没找到带名字的，强制选最后一个（移动端通常最后位是主摄）
+                        targetId = backCamera ? backCamera.id : devices[devices.length - 1].id;
                     }
 
-                    // 尝试开启持续自动对焦
-                    const track = html5QrCode.getRunningTrack();
-                    if (track && track.getCapabilities().focusMode?.includes('continuous')) {
-                        track.applyConstraints({ advanced: [{ focusMode: 'continuous' }] })
-                             .catch(e => console.warn("Focus setup failed"));
-                    }
-                })
-                .catch(err => {
-                    console.error("Camera Switch Error:", err);
-                    // 彻底失败时，尝试最通用的启动方式
-                    html5QrCode.start({ facingMode: "environment" }, qrConfig, onScanSuccess);
-                });
+                    // 4. 使用明确的 ID 启动，不使用 facingMode 对象
+                    html5QrCode.start(targetId, qrConfig, onScanSuccess)
+                        .then(() => {
+                            applyPostStartFixes(isMirror);
+                        })
+                        .catch(err => {
+                            console.error("ID start failed, trying environment mode", err);
+                            html5QrCode.start({ facingMode: "environment" }, qrConfig, onScanSuccess);
+                        });
+                }
+            } catch (err) {
+                console.error("Gagal mendapatkan senarai kamera", err);
+            }
         }
 
-        // 扫描成功回调
+        function applyPostStartFixes(isMirror) {
+            const videoElem = document.querySelector('#reader video');
+            if (videoElem) {
+                videoElem.style.transform = isMirror ? "scaleX(-1)" : "scaleX(1)";
+                videoElem.style.webkitTransform = isMirror ? "scaleX(-1)" : "scaleX(1)";
+            }
+            
+            // 完善对焦系统
+            try {
+                const track = html5QrCode.getRunningTrack();
+                const caps = track.getCapabilities();
+                if (caps.focusMode && caps.focusMode.includes('continuous')) {
+                    track.applyConstraints({ advanced: [{ focusMode: 'continuous' }] });
+                }
+            } catch (e) {}
+        }
+
         async function onScanSuccess(decodedText) {
             await html5QrCode.stop();
             beep.play().catch(() => {});
@@ -186,10 +202,8 @@
                 
                 const savedLateTime = localStorage.getItem('lateTimeLimit') || "07:35";
                 const [lH, lM] = savedLateTime.split(':').map(Number);
-                
                 let status = (now.getHours() > lH || (now.getHours() === lH && now.getMinutes() > lM)) ? "Lewat" : "Hadir";
 
-                // UI 更新
                 document.getElementById('res-name').innerText = student.name;
                 document.getElementById('res-class').innerText = student.kelas || student.class;
                 document.getElementById('res-time').innerText = currentTime;
@@ -199,7 +213,6 @@
                 document.getElementById('result').style.display = "block";
                 document.getElementById('progress').style.width = "100%";
 
-                // Firebase 写入
                 const dateKey = now.toISOString().split('T')[0];
                 await setDoc(doc(db, "attendance", `${dateKey}_${student.ic}`), {
                     name: student.name, ic: student.ic, class: student.kelas || student.class,
@@ -209,7 +222,7 @@
                 setTimeout(() => { document.getElementById('progress').style.width = "0%"; }, 50);
                 setTimeout(() => {
                     document.getElementById('result').style.display = "none";
-                    startScanner(); // 重新启动
+                    startScanner(); 
                 }, 3000);
             } catch (e) {
                 console.error("Data Error:", e);
@@ -217,7 +230,6 @@
             }
         }
 
-        // 初始化
         startScanner();
     </script>
 </body>
