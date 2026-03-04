@@ -7,6 +7,7 @@
     <link rel="stylesheet" href="assets/style.css">
     <script src="https://unpkg.com/html5-qrcode"></script>
     <style>
+        /* UI BEAUTIFICATION */
         body {
             background-color: #0f172a;
             background-image: radial-gradient(circle at top right, #1e293b, #0f172a);
@@ -14,10 +15,12 @@
             margin: 0;
             font-family: 'Poppins', sans-serif;
             min-height: 100vh;
+            overflow-x: hidden;
         }
 
         header {
             background: #1e293b;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
             padding: 15px;
             display: flex;
             align-items: center;
@@ -40,23 +43,23 @@
             margin-bottom: 15px;
         }
 
-        /* --- 核心修复：防止裁切 --- */
+        /* --- 核心修复：画面完整显示 --- */
         #reader {
             width: 100% !important;
-            background: #000;
             border: none !important;
+            background: #000;
         }
 
         #reader video {
-            /* 改为 contain 确保画面完整显示，不漏掉任何角落 */
+            /* 重点：使用 contain 防止前置镜头画面被裁剪 */
             object-fit: contain !important; 
             width: 100% !important;
             height: auto !important;
         }
 
-        /* 结果显示卡片 */
         .result-card {
             display: none;
+            margin-top: 20px;
             padding: 25px;
             border-left: 6px solid #38bdf8;
             animation: slideUp 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
@@ -70,13 +73,42 @@
         #res-name { color: #ffffff; margin: 0; font-size: 1.4rem; text-transform: uppercase; }
         #res-class { color: #38bdf8; margin: 5px 0 15px 0; font-size: 1rem; font-weight: 600; }
 
-        .status-hadir { color: #10b981; font-weight: 800; padding: 8px 16px; background: rgba(16, 185, 129, 0.15); border-radius: 10px; display: inline-block; }
-        .status-lewat { color: #f43f5e; font-weight: 800; padding: 8px 16px; background: rgba(244, 63, 94, 0.15); border-radius: 10px; display: inline-block; }
+        .status-hadir { 
+            color: #10b981; 
+            font-weight: 800;
+            padding: 8px 16px;
+            background: rgba(16, 185, 129, 0.15);
+            border-radius: 10px;
+            display: inline-block;
+        }
 
-        .timer-bar { width: 100%; height: 4px; background: rgba(255,255,255,0.1); margin-top: 20px; border-radius: 2px; position: relative; overflow: hidden; }
-        .timer-progress { position: absolute; left: 0; top: 0; height: 100%; background: #38bdf8; width: 100%; transition: width 3s linear; }
+        .status-lewat { 
+            color: #f43f5e; 
+            font-weight: 800;
+            padding: 8px 16px;
+            background: rgba(244, 63, 94, 0.15);
+            border-radius: 10px;
+            display: inline-block;
+        }
 
-        /* 扫描框动画效果 */
+        .timer-bar {
+            width: 100%;
+            height: 4px;
+            background: rgba(255,255,255,0.1);
+            margin-top: 20px;
+            border-radius: 2px;
+            position: relative;
+            overflow: hidden;
+        }
+        .timer-progress {
+            position: absolute;
+            left: 0; top: 0; height: 100%;
+            background: #38bdf8;
+            width: 100%;
+            transition: width 3s linear;
+        }
+
+        /* 扫描框样式 */
         #reader__scan_region::after {
             content: "";
             position: absolute;
@@ -93,7 +125,7 @@
 <body>
     <header>
         <a href="menu.html" style="float: left; text-decoration: none; color: white; position: absolute; left: 20px; font-size: 20px;">⬅️</a>
-        <span style="font-weight: 600;">Scanner SEMSIRA</span>
+        <span style="font-weight: 600;">Auto-Scanner SEMSIRA</span>
     </header>
 
     <div class="container">
@@ -108,7 +140,10 @@
                 <p>🕒 Masa: <span id="res-time" style="font-weight: 600; color: #fff;">--:--</span></p>
                 <p style="margin-top: 10px;">📌 Status: <span id="res-status">--</span></p>
             </div>
-            <div class="timer-bar"><div id="progress" class="timer-progress"></div></div>
+            
+            <div class="timer-bar">
+                <div id="progress" class="timer-progress"></div>
+            </div>
             <p style="font-size: 11px; color: #64748b; margin-top: 8px; text-align: center;">Sedia dalam 3 saat...</p>
         </div>
     </div>
@@ -120,13 +155,18 @@
         const beep = new Audio('https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3');
         const html5QrCode = new Html5Qrcode("reader");
 
-        // --- 核心修复：动态 qrbox 大小 ---
+        // --- 1. 扫描配置：优化分辨率与识别框 ---
         const qrConfig = { 
             fps: 25, 
             qrbox: (viewfinderWidth, viewfinderHeight) => {
-                // 自动根据画面大小设置扫描区为宽度的 70%，增加边缘容错率
-                let size = Math.min(viewfinderWidth, viewfinderHeight) * 0.7;
+                let size = Math.min(viewfinderWidth, viewfinderHeight) * 0.75;
                 return { width: size, height: size };
+            },
+            // 强制请求高分辨率，有助于定焦镜头识别
+            videoConstraints: {
+                width: { min: 640, ideal: 1280, max: 1920 },
+                height: { min: 480, ideal: 720, max: 1080 },
+                aspectRatio: { ideal: 1.7777777778 } 
             }
         };
 
@@ -136,20 +176,34 @@
             const savedCameraId = localStorage.getItem('preferredCameraId');
             const isMirror = localStorage.getItem('cameraMirror') === 'true';
             
-            const cameraMode = savedCameraId ? { deviceId: { exact: savedCameraId } } : { facingMode: "environment" };
+            // 优先使用设置的 ID，否则使用前置
+            const cameraMode = savedCameraId ? { deviceId: { exact: savedCameraId } } : { facingMode: "user" };
 
             html5QrCode.start(cameraMode, qrConfig, onScanSuccess)
                 .then(() => {
                     const videoElem = document.querySelector('#reader video');
                     if (videoElem) {
-                        // 应用设置中的镜像翻转
                         videoElem.style.transform = isMirror ? "scaleX(-1)" : "scaleX(1)";
                         videoElem.style.webkitTransform = isMirror ? "scaleX(-1)" : "scaleX(1)";
                     }
+
+                    // --- 2. 完善自动对焦：强制下发指令 ---
+                    try {
+                        const track = html5QrCode.getRunningTrack();
+                        if (track) {
+                            const capabilities = track.getCapabilities();
+                            // 如果硬件支持连续自动对焦 (Continuous Focus)
+                            if (capabilities.focusMode && capabilities.focusMode.includes('continuous')) {
+                                track.applyConstraints({
+                                    advanced: [{ focusMode: 'continuous' }]
+                                });
+                            }
+                        }
+                    } catch (e) { console.warn("Advanced focus not supported."); }
                 })
                 .catch(err => {
                     console.error("Camera error:", err);
-                    html5QrCode.start({ facingMode: "environment" }, qrConfig, onScanSuccess);
+                    html5QrCode.start({ facingMode: "user" }, { fps: 15 }, onScanSuccess);
                 });
         }
 
@@ -174,11 +228,16 @@
                 document.getElementById('res-status').innerText = status.toUpperCase();
                 document.getElementById('res-status').className = status === "Hadir" ? "status-hadir" : "status-lewat";
                 
-                document.getElementById('result').style.display = "block";
-                document.getElementById('progress').style.width = "100%";
+                const resultCard = document.getElementById('result');
+                const progressBar = document.getElementById('progress');
+                
+                resultCard.style.display = "block";
+                progressBar.style.width = "100%";
 
                 const dateKey = now.toISOString().split('T')[0];
-                await setDoc(doc(db, "attendance", `${dateKey}_${student.ic}`), {
+                const attendanceRef = doc(db, "attendance", `${dateKey}_${student.ic}`);
+
+                await setDoc(attendanceRef, {
                     name: student.name,
                     ic: student.ic,
                     class: student.kelas || student.class,
@@ -187,14 +246,16 @@
                     timestamp: serverTimestamp()
                 });
 
-                setTimeout(() => { document.getElementById('progress').style.width = "0%"; }, 50);
+                setTimeout(() => { progressBar.style.width = "0%"; }, 50);
+
                 setTimeout(() => {
-                    document.getElementById('result').style.display = "none";
+                    resultCard.style.display = "none";
                     startScanner(); 
                 }, 3000);
 
             } catch (e) {
-                console.error("Parse error:", e);
+                console.error("Parse Error:", e);
+                // 扫到无效二维码，2秒后重启
                 setTimeout(startScanner, 2000);
             }
         }
