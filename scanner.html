@@ -49,6 +49,11 @@
             background: #000;
         }
 
+        /* 强制覆盖内部 video 样式，初始不反转 */
+        #reader video {
+            object-fit: cover !important;
+        }
+
         .result-card {
             display: none;
             margin-top: 20px;
@@ -149,17 +154,24 @@
 
         startScanner();
 
-        // --- 对接：动态选择相机的函数 ---
+        // --- 对接：动态选择相机 & 镜像开关 ---
         async function startScanner() {
             const savedCameraId = localStorage.getItem('preferredCameraId');
+            const isMirror = localStorage.getItem('cameraMirror') === 'true'; // 获取设置
             
-            // 如果设置里存了相机ID，直接用 ID；否则用后置镜头
             const cameraMode = savedCameraId ? { deviceId: { exact: savedCameraId } } : { facingMode: "environment" };
 
             html5QrCode.start(cameraMode, qrConfig, onScanSuccess)
+                .then(() => {
+                    // 相机启动后，根据设置应用镜像效果
+                    const videoElem = document.querySelector('#reader video');
+                    if (videoElem) {
+                        videoElem.style.transform = isMirror ? "scaleX(-1)" : "scaleX(1)";
+                        videoElem.style.webkitTransform = isMirror ? "scaleX(-1)" : "scaleX(1)";
+                    }
+                })
                 .catch(err => {
-                    console.error("Gagal mulakan kamera pilihan, mencuba kamera default:", err);
-                    // 降级处理：如果选中的相机不可用，尝试默认模式
+                    console.error("Gagal mulakan kamera pilihan:", err);
                     html5QrCode.start({ facingMode: "environment" }, qrConfig, onScanSuccess);
                 });
         }
@@ -175,7 +187,7 @@
                                     now.getMinutes().toString().padStart(2, '0');
                 
                 // --- 对接：动态计算迟到时间 ---
-                const savedLateTime = localStorage.getItem('lateTimeLimit') || "07:35"; // 获取设置的时间，默认07:35
+                const savedLateTime = localStorage.getItem('lateTimeLimit') || "07:35";
                 const [limitHour, limitMin] = savedLateTime.split(':').map(Number);
                 
                 let status = "Hadir";
