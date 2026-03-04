@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="ms">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tetapan Sistem - SEMSIRA</title>
+    <link rel="stylesheet" href="assets/style.css">
+    <style>
+        /* UI BEAUTIFICATION - DARK MODE */
+        body {
+            background-color: #0f172a;
+            background-image: radial-gradient(circle at top right, #1e293b, #0f172a);
+            color: #f1f5f9;
+            margin: 0;
+            font-family: 'Poppins', sans-serif;
+            min-height: 100vh;
+        }
+
+        header {
+            background: #1e293b;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            padding: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        }
+
+        .container {
+            padding: 20px;
+            max-width: 500px;
+            margin: 0 auto;
+        }
+
+        .card {
+            background: #1e293b;
+            border-radius: 20px;
+            padding: 25px;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+            margin-bottom: 20px;
+        }
+
+        h3 {
+            color: #38bdf8;
+            margin-top: 0;
+            font-size: 18px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .setting-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 10px;
+            font-size: 14px;
+            color: #94a3b8;
+        }
+
+        select, input {
+            width: 100%;
+            padding: 12px;
+            border-radius: 10px;
+            background: #0f172a;
+            border: 1px solid #334155;
+            color: white;
+            font-family: inherit;
+            outline: none;
+        }
+
+        select:focus {
+            border-color: #38bdf8;
+        }
+
+        .btn-save {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            color: white;
+            border: none;
+            padding: 15px;
+            border-radius: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            width: 100%;
+            transition: 0.3s;
+            margin-top: 10px;
+        }
+
+        .btn-save:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(16, 185, 129, 0.3);
+        }
+
+        .info-box {
+            background: rgba(56, 189, 248, 0.1);
+            border: 1px solid rgba(56, 189, 248, 0.2);
+            padding: 15px;
+            border-radius: 12px;
+            font-size: 13px;
+            line-height: 1.5;
+            color: #bae6fd;
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <a href="menu.html" style="float: left; text-decoration: none; color: white; position: absolute; left: 20px; font-size: 20px;">⬅️</a>
+        <span style="font-weight: 600;">Tetapan Sistem</span>
+    </header>
+
+    <div class="container">
+        <div class="card">
+            <h3>📷 Tetapan Kamera</h3>
+            <div class="setting-group">
+                <label for="cameraSelect">Pilih Sumber Kamera (Default)</label>
+                <select id="cameraSelect">
+                    <option value="">Mengesan kamera...</option>
+                </select>
+            </div>
+            <div class="info-box">
+                💡 <b>Tip:</b> Jika anda menggunakan hardware khas (USB Camera), pastikan ia disambungkan sebelum membuka halaman ini.
+            </div>
+        </div>
+
+        <div class="card">
+            <h3>⏰ Had Masa Lewat</h3>
+            <div class="setting-group">
+                <label>Masa Mula Lewat (HH:mm)</label>
+                <input type="time" id="lateTime" value="07:35">
+            </div>
+            <button class="btn-save" onclick="saveSettings()">💾 SIMPAN TETAPAN</button>
+        </div>
+    </div>
+
+    <script src="https://unpkg.com/html5-qrcode"></script>
+    <script>
+        // --- 1. 检测所有可用的摄像头 ---
+        async function getCameras() {
+            const cameraSelect = document.getElementById('cameraSelect');
+            
+            try {
+                const devices = await Html5Qrcode.getCameras();
+                cameraSelect.innerHTML = ''; // 清空加载提示
+
+                if (devices && devices.length) {
+                    devices.forEach(device => {
+                        const option = document.createElement('option');
+                        option.value = device.id;
+                        option.text = device.label || `Kamera ${cameraSelect.length + 1}`;
+                        cameraSelect.appendChild(option);
+                    });
+
+                    // 如果之前存过选择，则自动选中
+                    const savedCamera = localStorage.getItem('preferredCameraId');
+                    if (savedCamera) cameraSelect.value = savedCamera;
+
+                } else {
+                    cameraSelect.innerHTML = '<option value="">Tiada kamera dikesan</option>';
+                }
+            } catch (err) {
+                console.error("Gagal mengesan kamera:", err);
+                cameraSelect.innerHTML = '<option value="">Ralat keizinan kamera</option>';
+            }
+        }
+
+        // --- 2. 保存设置到 LocalStorage ---
+        function saveSettings() {
+            const cameraId = document.getElementById('cameraSelect').value;
+            const lateTime = document.getElementById('lateTime').value;
+
+            localStorage.setItem('preferredCameraId', cameraId);
+            localStorage.setItem('lateTimeLimit', lateTime);
+
+            alert("Tetapan berjaya disimpan!");
+        }
+
+        // 页面加载时运行
+        window.onload = () => {
+            getCameras();
+            
+            // 加载保存的时间设置
+            const savedTime = localStorage.getItem('lateTimeLimit');
+            if (savedTime) document.getElementById('lateTime').value = savedTime;
+        };
+    </script>
+</body>
+</html>
