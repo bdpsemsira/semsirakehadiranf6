@@ -7,7 +7,7 @@
     <link rel="stylesheet" href="assets/style.css">
     <script src="https://unpkg.com/html5-qrcode"></script>
     <style>
-        /* UI BEAUTIFICATION - DARK MODE */
+        /* UI 保持不变 */
         body {
             background-color: #0f172a;
             background-image: radial-gradient(circle at top right, #1e293b, #0f172a);
@@ -49,7 +49,6 @@
             background: #000;
         }
 
-        /* Result Card Customization */
         .result-card {
             display: none;
             margin-top: 20px;
@@ -84,7 +83,6 @@
             display: inline-block;
         }
 
-        /* 倒计时进度条 */
         .timer-bar {
             width: 100%;
             height: 4px;
@@ -145,25 +143,29 @@
         import { db } from './js/firebase-config.js';
         import { doc, setDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-firestore.js";
 
-        // 创建音频上下文用于播放“滴”声
         const beep = new Audio('https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3');
-
         const html5QrCode = new Html5Qrcode("reader");
         const qrConfig = { fps: 20, qrbox: { width: 250, height: 250 } };
 
-        // 启动相机
         startScanner();
 
-        function startScanner() {
-            html5QrCode.start({ facingMode: "environment" }, qrConfig, onScanSuccess)
-                .catch(err => console.error("Scanner error:", err));
+        // --- 对接：动态选择相机的函数 ---
+        async function startScanner() {
+            const savedCameraId = localStorage.getItem('preferredCameraId');
+            
+            // 如果设置里存了相机ID，直接用 ID；否则用后置镜头
+            const cameraMode = savedCameraId ? { deviceId: { exact: savedCameraId } } : { facingMode: "environment" };
+
+            html5QrCode.start(cameraMode, qrConfig, onScanSuccess)
+                .catch(err => {
+                    console.error("Gagal mulakan kamera pilihan, mencuba kamera default:", err);
+                    // 降级处理：如果选中的相机不可用，尝试默认模式
+                    html5QrCode.start({ facingMode: "environment" }, qrConfig, onScanSuccess);
+                });
         }
 
         async function onScanSuccess(decodedText) {
-            // 1. 立即停止扫描，防止重复读取
             await html5QrCode.stop();
-            
-            // 2. 播放成功音效
             beep.play().catch(e => console.log("Audio play blocked"));
 
             try {
@@ -172,10 +174,15 @@
                 const currentTime = now.getHours().toString().padStart(2, '0') + ":" + 
                                     now.getMinutes().toString().padStart(2, '0');
                 
-                // 判断迟到 (7:35 AM)
-                let status = (now.getHours() > 7 || (now.getHours() === 7 && now.getMinutes() > 35)) ? "Lewat" : "Hadir";
+                // --- 对接：动态计算迟到时间 ---
+                const savedLateTime = localStorage.getItem('lateTimeLimit') || "07:35"; // 获取设置的时间，默认07:35
+                const [limitHour, limitMin] = savedLateTime.split(':').map(Number);
+                
+                let status = "Hadir";
+                if (now.getHours() > limitHour || (now.getHours() === limitHour && now.getMinutes() > limitMin)) {
+                    status = "Lewat";
+                }
 
-                // 3. 更新 UI 显示
                 document.getElementById('res-name').innerText = student.name;
                 document.getElementById('res-class').innerText = student.kelas || student.class;
                 document.getElementById('res-time').innerText = currentTime;
@@ -186,9 +193,8 @@
                 const progressBar = document.getElementById('progress');
                 
                 resultCard.style.display = "block";
-                progressBar.style.width = "100%"; // 重置进度条
+                progressBar.style.width = "100%";
 
-                // 4. 保存到 Firebase
                 const dateKey = now.toISOString().split('T')[0];
                 const attendanceRef = doc(db, "attendance", `${dateKey}_${student.ic}`);
 
@@ -201,19 +207,15 @@
                     timestamp: serverTimestamp()
                 });
 
-                // 5. 自动重启逻辑：3秒倒计时
-                setTimeout(() => {
-                    progressBar.style.width = "0%";
-                }, 10);
+                setTimeout(() => { progressBar.style.width = "0%"; }, 10);
 
                 setTimeout(() => {
                     resultCard.style.display = "none";
-                    startScanner(); // 重新启动相机
+                    startScanner(); 
                 }, 3000);
 
             } catch (e) {
                 console.error("Error:", e);
-                // 如果扫到错误的二维码，2秒后重启
                 setTimeout(startScanner, 2000);
             }
         }
