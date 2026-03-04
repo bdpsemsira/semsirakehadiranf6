@@ -6,103 +6,54 @@
     <title>Tetapan Sistem - SEMSIRA</title>
     <link rel="stylesheet" href="assets/style.css">
     <style>
-        /* UI BEAUTIFICATION - DARK MODE */
-        body {
-            background-color: #0f172a;
-            background-image: radial-gradient(circle at top right, #1e293b, #0f172a);
-            color: #f1f5f9;
-            margin: 0;
-            font-family: 'Poppins', sans-serif;
-            min-height: 100vh;
-        }
-
-        header {
-            background: #1e293b;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-            padding: 15px;
+        /* ... 保持原有样式 ... */
+        body { background-color: #0f172a; color: #f1f5f9; font-family: 'Poppins', sans-serif; }
+        header { background: #1e293b; padding: 15px; text-align: center; }
+        .container { padding: 20px; max-width: 500px; margin: 0 auto; }
+        .card { background: #1e293b; border-radius: 20px; padding: 25px; margin-bottom: 20px; border: 1px solid rgba(255,255,255,0.05); }
+        h3 { color: #38bdf8; margin-top: 0; }
+        .setting-group { margin-bottom: 20px; }
+        label { display: block; margin-bottom: 10px; font-size: 14px; color: #94a3b8; }
+        select, input { width: 100%; padding: 12px; border-radius: 10px; background: #0f172a; border: 1px solid #334155; color: white; }
+        
+        /* 新增：开关样式 (Toggle Switch) */
+        .switch-container {
             display: flex;
+            justify-content: space-between;
             align-items: center;
-            justify-content: center;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
-        }
-
-        .container {
-            padding: 20px;
-            max-width: 500px;
-            margin: 0 auto;
-        }
-
-        .card {
-            background: #1e293b;
-            border-radius: 20px;
-            padding: 25px;
-            border: 1px solid rgba(255, 255, 255, 0.05);
-            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
-            margin-bottom: 20px;
-        }
-
-        h3 {
-            color: #38bdf8;
-            margin-top: 0;
-            font-size: 18px;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .setting-group {
-            margin-bottom: 20px;
-        }
-
-        label {
-            display: block;
-            margin-bottom: 10px;
-            font-size: 14px;
-            color: #94a3b8;
-        }
-
-        select, input {
-            width: 100%;
+            background: rgba(15, 23, 42, 0.5);
             padding: 12px;
-            border-radius: 10px;
-            background: #0f172a;
+            border-radius: 12px;
             border: 1px solid #334155;
-            color: white;
-            font-family: inherit;
-            outline: none;
         }
-
-        select:focus {
-            border-color: #38bdf8;
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 50px;
+            height: 26px;
         }
-
-        .btn-save {
-            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-            color: white;
-            border: none;
-            padding: 15px;
-            border-radius: 12px;
-            font-weight: 600;
+        .switch input { opacity: 0; width: 0; height: 0; }
+        .slider {
+            position: absolute;
             cursor: pointer;
-            width: 100%;
-            transition: 0.3s;
-            margin-top: 10px;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background-color: #334155;
+            transition: .4s;
+            border-radius: 34px;
         }
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 18px; width: 18px;
+            left: 4px; bottom: 4px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+        input:checked + .slider { background-color: #38bdf8; }
+        input:checked + .slider:before { transform: translateX(24px); }
 
-        .btn-save:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(16, 185, 129, 0.3);
-        }
-
-        .info-box {
-            background: rgba(56, 189, 248, 0.1);
-            border: 1px solid rgba(56, 189, 248, 0.2);
-            padding: 15px;
-            border-radius: 12px;
-            font-size: 13px;
-            line-height: 1.5;
-            color: #bae6fd;
-        }
+        .btn-save { background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white; border: none; padding: 15px; border-radius: 12px; width: 100%; font-weight: 600; cursor: pointer; }
     </style>
 </head>
 <body>
@@ -116,13 +67,21 @@
         <div class="card">
             <h3>📷 Tetapan Kamera</h3>
             <div class="setting-group">
-                <label for="cameraSelect">Pilih Sumber Kamera (Default)</label>
+                <label for="cameraSelect">Pilih Sumber Kamera</label>
                 <select id="cameraSelect">
                     <option value="">Mengesan kamera...</option>
                 </select>
             </div>
-            <div class="info-box">
-                💡 <b>Tip:</b> Jika anda menggunakan hardware khas (USB Camera), pastikan ia disambungkan sebelum membuka halaman ini.
+            
+            <div class="setting-group">
+                <label>Mirror View (Pantulan Imej)</label>
+                <div class="switch-container">
+                    <span style="font-size: 14px;">Aktifkan Mirroring</span>
+                    <label class="switch">
+                        <input type="checkbox" id="mirrorToggle">
+                        <span class="slider"></span>
+                    </label>
+                </div>
             </div>
         </div>
 
@@ -138,14 +97,11 @@
 
     <script src="https://unpkg.com/html5-qrcode"></script>
     <script>
-        // --- 1. 检测所有可用的摄像头 ---
         async function getCameras() {
             const cameraSelect = document.getElementById('cameraSelect');
-            
             try {
                 const devices = await Html5Qrcode.getCameras();
-                cameraSelect.innerHTML = ''; // 清空加载提示
-
+                cameraSelect.innerHTML = '';
                 if (devices && devices.length) {
                     devices.forEach(device => {
                         const option = document.createElement('option');
@@ -153,38 +109,32 @@
                         option.text = device.label || `Kamera ${cameraSelect.length + 1}`;
                         cameraSelect.appendChild(option);
                     });
-
-                    // 如果之前存过选择，则自动选中
                     const savedCamera = localStorage.getItem('preferredCameraId');
                     if (savedCamera) cameraSelect.value = savedCamera;
-
-                } else {
-                    cameraSelect.innerHTML = '<option value="">Tiada kamera dikesan</option>';
                 }
-            } catch (err) {
-                console.error("Gagal mengesan kamera:", err);
-                cameraSelect.innerHTML = '<option value="">Ralat keizinan kamera</option>';
-            }
+            } catch (err) { cameraSelect.innerHTML = '<option value="">Ralat Kamera</option>'; }
         }
 
-        // --- 2. 保存设置到 LocalStorage ---
         function saveSettings() {
             const cameraId = document.getElementById('cameraSelect').value;
             const lateTime = document.getElementById('lateTime').value;
+            const isMirror = document.getElementById('mirrorToggle').checked;
 
             localStorage.setItem('preferredCameraId', cameraId);
             localStorage.setItem('lateTimeLimit', lateTime);
+            localStorage.setItem('cameraMirror', isMirror); // 保存开关状态
 
             alert("Tetapan berjaya disimpan!");
         }
 
-        // 页面加载时运行
         window.onload = () => {
             getCameras();
-            
-            // 加载保存的时间设置
             const savedTime = localStorage.getItem('lateTimeLimit');
             if (savedTime) document.getElementById('lateTime').value = savedTime;
+            
+            // 加载镜像开关状态
+            const savedMirror = localStorage.getItem('cameraMirror') === 'true';
+            document.getElementById('mirrorToggle').checked = savedMirror;
         };
     </script>
 </body>
