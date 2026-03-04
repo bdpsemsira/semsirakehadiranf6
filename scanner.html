@@ -14,7 +14,6 @@
             margin: 0;
             font-family: 'Poppins', sans-serif;
             min-height: 100vh;
-            overflow-x: hidden;
         }
 
         header {
@@ -41,13 +40,13 @@
             margin-bottom: 15px;
         }
 
+        /* 解决前置被裁切的关键：contain */
         #reader {
             width: 100% !important;
             background: #000;
             border: none !important;
         }
 
-        /* 核心修复：使用 contain 防止画面被裁切 */
         #reader video {
             object-fit: contain !important; 
             width: 100% !important;
@@ -75,6 +74,7 @@
         .timer-bar { width: 100%; height: 4px; background: rgba(255,255,255,0.1); margin-top: 20px; border-radius: 2px; position: relative; overflow: hidden; }
         .timer-progress { position: absolute; left: 0; top: 0; height: 100%; background: #38bdf8; width: 100%; transition: width 3s linear; }
 
+        /* 扫描框动画 */
         #reader__scan_region::after {
             content: "";
             position: absolute;
@@ -90,7 +90,7 @@
 </head>
 <body>
     <header>
-        <a href="menu.html" style="float: left; text-decoration: none; color: white; position: absolute; left: 20px; font-size: 20px;">⬅️</a>
+        <a href="menu.html" style="text-decoration: none; color: white; position: absolute; left: 20px; font-size: 20px;">⬅️</a>
         <span style="font-weight: 600;">Auto-Scanner SEMSIRA</span>
     </header>
 
@@ -118,50 +118,62 @@
         const beep = new Audio('https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3');
         const html5QrCode = new Html5Qrcode("reader");
 
+        // 基础配置
         const qrConfig = { 
             fps: 25, 
             qrbox: (vw, vh) => {
                 let size = Math.min(vw, vh) * 0.75;
                 return { width: size, height: size };
             },
+            // 请求较高分辨率有助于对焦
             videoConstraints: {
                 width: { min: 640, ideal: 1280 },
                 height: { min: 480, ideal: 720 }
             }
         };
 
-        startScanner();
-
+        // 启动扫描函数
         async function startScanner() {
             const savedCameraId = localStorage.getItem('preferredCameraId');
             const isMirror = localStorage.getItem('cameraMirror') === 'true';
             
-            // 重要：如果保存了 ID，绝对不要传 facingMode，防止冲突
-            let cameraSpec = savedCameraId ? { deviceId: { exact: savedCameraId } } : { facingMode: "environment" };
+            // 确保没有正在运行的实例
+            if (html5QrCode.getState() === 2) {
+                await html5QrCode.stop();
+            }
+
+            // 核心逻辑：如果保存了 ID，就只传 deviceId，绝不传 facingMode
+            let cameraSpec;
+            if (savedCameraId && savedCameraId !== "") {
+                cameraSpec = { deviceId: { exact: savedCameraId } };
+            } else {
+                cameraSpec = { facingMode: "environment" }; // 默认后置
+            }
 
             html5QrCode.start(cameraSpec, qrConfig, onScanSuccess)
                 .then(() => {
                     const videoElem = document.querySelector('#reader video');
                     if (videoElem) {
+                        // 应用镜像
                         videoElem.style.transform = isMirror ? "scaleX(-1)" : "scaleX(1)";
                         videoElem.style.webkitTransform = isMirror ? "scaleX(-1)" : "scaleX(1)";
                     }
 
-                    // 自动对焦逻辑
-                    try {
-                        const track = html5QrCode.getRunningTrack();
-                        const capabilities = track.getCapabilities();
-                        if (capabilities.focusMode && capabilities.focusMode.includes('continuous')) {
-                            track.applyConstraints({ advanced: [{ focusMode: 'continuous' }] });
-                        }
-                    } catch (e) { console.log("Focus mode not supported"); }
+                    // 尝试开启持续自动对焦
+                    const track = html5QrCode.getRunningTrack();
+                    if (track && track.getCapabilities().focusMode?.includes('continuous')) {
+                        track.applyConstraints({ advanced: [{ focusMode: 'continuous' }] })
+                             .catch(e => console.warn("Focus setup failed"));
+                    }
                 })
                 .catch(err => {
-                    console.error("Camera failed, fallback to default:", err);
+                    console.error("Camera Switch Error:", err);
+                    // 彻底失败时，尝试最通用的启动方式
                     html5QrCode.start({ facingMode: "environment" }, qrConfig, onScanSuccess);
                 });
         }
 
+        // 扫描成功回调
         async function onScanSuccess(decodedText) {
             await html5QrCode.stop();
             beep.play().catch(() => {});
@@ -177,6 +189,7 @@
                 
                 let status = (now.getHours() > lH || (now.getHours() === lH && now.getMinutes() > lM)) ? "Lewat" : "Hadir";
 
+                // UI 更新
                 document.getElementById('res-name').innerText = student.name;
                 document.getElementById('res-class').innerText = student.kelas || student.class;
                 document.getElementById('res-time').innerText = currentTime;
@@ -186,6 +199,7 @@
                 document.getElementById('result').style.display = "block";
                 document.getElementById('progress').style.width = "100%";
 
+                // Firebase 写入
                 const dateKey = now.toISOString().split('T')[0];
                 await setDoc(doc(db, "attendance", `${dateKey}_${student.ic}`), {
                     name: student.name, ic: student.ic, class: student.kelas || student.class,
@@ -195,13 +209,16 @@
                 setTimeout(() => { document.getElementById('progress').style.width = "0%"; }, 50);
                 setTimeout(() => {
                     document.getElementById('result').style.display = "none";
-                    startScanner(); 
+                    startScanner(); // 重新启动
                 }, 3000);
             } catch (e) {
-                console.error("Scan Error:", e);
+                console.error("Data Error:", e);
                 setTimeout(startScanner, 2000);
             }
         }
+
+        // 初始化
+        startScanner();
     </script>
 </body>
 </html>
