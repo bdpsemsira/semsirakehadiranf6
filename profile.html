@@ -47,7 +47,6 @@
             margin-bottom: 20px;
         }
 
-        /* 二维码容器样式 - 保持与 Generator 风格一致 */
         #qrcode-outer {
             background: white;
             padding: 15px;
@@ -73,9 +72,14 @@
 
         .record-item:last-child { border-bottom: none; }
 
-        .btn-blue {
-            background: linear-gradient(135deg, #38bdf8 0%, #0284c7 100%);
-            color: white;
+        .btn-group {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        .btn {
             border: none;
             padding: 15px;
             border-radius: 12px;
@@ -83,14 +87,25 @@
             cursor: pointer;
             width: 100%;
             transition: 0.3s;
-            margin-top: 20px;
+            font-family: inherit;
         }
 
-        .btn-blue:hover { transform: translateY(-2px); filter: brightness(1.1); }
+        .btn-blue {
+            background: linear-gradient(135deg, #38bdf8 0%, #0284c7 100%);
+            color: white;
+        }
 
-        /* PRINT OPTIMIZATION - 打印时隐藏不必要的元素 */
+        .btn-red {
+            background: rgba(239, 68, 68, 0.1);
+            color: #ef4444;
+            border: 1px solid rgba(239, 68, 68, 0.2);
+        }
+
+        .btn:hover { transform: translateY(-2px); filter: brightness(1.1); }
+        .btn-red:hover { background: #ef4444; color: white; }
+
         @media print {
-            header, .btn-blue, .back-link { display: none !important; }
+            header, .btn-group, .back-link { display: none !important; }
             body { background: white !important; color: black !important; }
             .container { padding: 0; max-width: 100%; }
             .card { box-shadow: none; border: 1px solid #eee; background: white; color: black; }
@@ -110,7 +125,8 @@
     <div class="container">
         <div class="card" style="text-align:center;">
             <div id="qrcode-outer">
-                <div id="qrcode"></div> </div>
+                <div id="qrcode"></div> 
+            </div>
             <h2 id="p-name">Memuatkan...</h2>
             <p id="p-ic" class="info-p highlight-ic">IC: -</p>
             <p id="p-class" class="info-p">Kelas: -</p>
@@ -123,13 +139,16 @@
                 <p style="text-align:center; color:#64748b; padding: 20px;">Mencari rekod...</p>
             </div>
             
-            <button class="btn-blue" onclick="window.print()">🖨️ CETAK KAD / SIMPAN PDF</button>
+            <div class="btn-group">
+                <button class="btn btn-blue" onclick="window.print()">🖨️ CETAK KAD / SIMPAN PDF</button>
+                <button class="btn btn-red" id="deleteBtn">🗑️ HAPUS MURID & SEMUA REKOD</button>
+            </div>
         </div>
     </div>
 
     <script type="module">
         import { db } from './js/firebase-config.js';
-        import { doc, getDoc, collection, getDocs, query, where } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-firestore.js";
+        import { doc, getDoc, collection, getDocs, query, where, deleteDoc, writeBatch } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-firestore.js";
 
         const urlParams = new URLSearchParams(window.location.search);
         const studentIC = urlParams.get('id');
@@ -139,51 +158,41 @@
             window.location.href = 'dashboard.html';
         }
 
-        // --- 同步 Generator 的二维码生成函数 ---
         function generateQRCode(jsonString) {
             const qrcodeDiv = document.getElementById("qrcode");
             qrcodeDiv.innerHTML = ""; 
             new QRCode(qrcodeDiv, {
                 text: jsonString,
-                width: 200,   // 与 Generator 一致
-                height: 200,  // 与 Generator 一致
+                width: 200,
+                height: 200,
                 colorDark : "#000000",
                 colorLight : "#ffffff",
-                correctLevel : QRCode.CorrectLevel.H // 与 Generator 一致
+                correctLevel : QRCode.CorrectLevel.H
             });
         }
 
         async function loadProfile() {
             try {
-                // 1. 获取 Firebase 中的学生资料
                 const studentDoc = await getDoc(doc(db, "students", studentIC));
                 
                 if (studentDoc.exists()) {
                     const data = studentDoc.data();
-                    
-                    // 更新 UI 文字
                     document.getElementById('p-name').innerText = data.name;
                     document.getElementById('p-ic').innerText = `IC: ${data.ic}`;
                     document.getElementById('p-class').innerText = `Kelas: ${data.kelas}`;
                     document.getElementById('p-gender').innerText = `Jantina: ${data.gender}`;
                     
-                    // --- 核心修复：构造与 Generator 完全一致的 JSON 数据结构 ---
                     const studentDataForQR = { 
                         name: data.name, 
                         ic: data.ic, 
                         kelas: data.kelas, 
                         gender: data.gender 
                     };
-                    const qrString = JSON.stringify(studentDataForQR);
-                    
-                    // 生成二维码
-                    generateQRCode(qrString);
-                    
+                    generateQRCode(JSON.stringify(studentDataForQR));
                 } else {
                     document.getElementById('p-name').innerText = "Murid Tidak Ditemui";
                 }
 
-                // 2. 获取该学生的出勤记录
                 const q = query(collection(db, "attendance"), where("ic", "==", studentIC));
                 const querySnapshot = await getDocs(q);
                 const historyDiv = document.getElementById('attendanceHistory');
@@ -195,7 +204,6 @@
                     attendanceData.push({ date: datePart, ...doc.data() });
                 });
 
-                // 按日期倒序排列（最新的在上面）
                 attendanceData.sort((a, b) => new Date(b.date) - new Date(a.date));
 
                 if (attendanceData.length === 0) {
@@ -212,12 +220,40 @@
                         historyDiv.appendChild(div);
                     });
                 }
-
             } catch (error) {
-                console.error("Ralat memuatkan profil:", error);
-                alert("Gagal memuatkan data dari Firebase.");
+                console.error("Ralat:", error);
             }
         }
+
+        // --- 核心逻辑：删除学生及其所有出勤记录 ---
+        document.getElementById('deleteBtn').onclick = async () => {
+            const confirmDelete = confirm("PERHATIAN: Padam profil murid ini?\n\nTindakan ini juga akan memadam SEMUA REKOD KEHADIRAN murid ini secara kekal.");
+            
+            if (confirmDelete) {
+                try {
+                    // 1. 删除学生个人资料文档
+                    await deleteDoc(doc(db, "students", studentIC));
+
+                    // 2. 查找并删除所有相关的出勤记录
+                    const q = query(collection(db, "attendance"), where("ic", "==", studentIC));
+                    const querySnapshot = await getDocs(q);
+                    
+                    if (!querySnapshot.empty) {
+                        const batch = writeBatch(db); // 使用 Batch 一次性执行多个删除操作，更高效
+                        querySnapshot.forEach((doc) => {
+                            batch.delete(doc.ref);
+                        });
+                        await batch.commit();
+                    }
+
+                    alert("Profil dan semua rekod kehadiran berjaya dipadamkan.");
+                    window.location.href = 'dashboard.html';
+                } catch (error) {
+                    console.error("Ralat semasa memadam data:", error);
+                    alert("Gagal memadam data. Sila periksa sambungan internet.");
+                }
+            }
+        };
 
         window.onload = loadProfile;
     </script>
