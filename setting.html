@@ -6,58 +6,30 @@
     <title>Tetapan Sistem - SEMSIRA</title>
     <link rel="stylesheet" href="assets/style.css">
     <style>
-        /* ... 保持原有样式 ... */
-        body { background-color: #0f172a; color: #f1f5f9; font-family: 'Poppins', sans-serif; }
-        header { background: #1e293b; padding: 15px; text-align: center; }
+        body { background-color: #0f172a; color: #f1f5f9; font-family: 'Poppins', sans-serif; margin: 0; }
+        header { background: #1e293b; padding: 15px; text-align: center; box-shadow: 0 2px 10px rgba(0,0,0,0.3); }
         .container { padding: 20px; max-width: 500px; margin: 0 auto; }
         .card { background: #1e293b; border-radius: 20px; padding: 25px; margin-bottom: 20px; border: 1px solid rgba(255,255,255,0.05); }
-        h3 { color: #38bdf8; margin-top: 0; }
+        h3 { color: #38bdf8; margin: 0 0 20px 0; font-size: 1.1rem; }
         .setting-group { margin-bottom: 20px; }
-        label { display: block; margin-bottom: 10px; font-size: 14px; color: #94a3b8; }
-        select, input { width: 100%; padding: 12px; border-radius: 10px; background: #0f172a; border: 1px solid #334155; color: white; }
+        label { display: block; margin-bottom: 8px; font-size: 13px; color: #94a3b8; }
+        select, input { width: 100%; padding: 12px; border-radius: 10px; background: #0f172a; border: 1px solid #334155; color: white; box-sizing: border-box; }
         
-        /* 新增：开关样式 (Toggle Switch) */
         .switch-container {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            background: rgba(15, 23, 42, 0.5);
-            padding: 12px;
-            border-radius: 12px;
-            border: 1px solid #334155;
+            display: flex; justify-content: space-between; align-items: center;
+            background: rgba(15, 23, 42, 0.5); padding: 12px; border-radius: 12px; border: 1px solid #334155;
         }
-        .switch {
-            position: relative;
-            display: inline-block;
-            width: 50px;
-            height: 26px;
-        }
+        .switch { position: relative; display: inline-block; width: 44px; height: 24px; }
         .switch input { opacity: 0; width: 0; height: 0; }
-        .slider {
-            position: absolute;
-            cursor: pointer;
-            top: 0; left: 0; right: 0; bottom: 0;
-            background-color: #334155;
-            transition: .4s;
-            border-radius: 34px;
-        }
-        .slider:before {
-            position: absolute;
-            content: "";
-            height: 18px; width: 18px;
-            left: 4px; bottom: 4px;
-            background-color: white;
-            transition: .4s;
-            border-radius: 50%;
-        }
+        .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #334155; transition: .4s; border-radius: 24px; }
+        .slider:before { position: absolute; content: ""; height: 18px; width: 18px; left: 3px; bottom: 3px; background-color: white; transition: .4s; border-radius: 50%; }
         input:checked + .slider { background-color: #38bdf8; }
-        input:checked + .slider:before { transform: translateX(24px); }
+        input:checked + .slider:before { transform: translateX(20px); }
 
-        .btn-save { background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white; border: none; padding: 15px; border-radius: 12px; width: 100%; font-weight: 600; cursor: pointer; }
+        .btn-save { background: linear-gradient(135deg, #38bdf8 0%, #0284c7 100%); color: white; border: none; padding: 15px; border-radius: 12px; width: 100%; font-weight: 600; cursor: pointer; margin-top: 10px; }
     </style>
 </head>
 <body>
-
     <header>
         <a href="menu.html" style="float: left; text-decoration: none; color: white; position: absolute; left: 20px; font-size: 20px;">⬅️</a>
         <span style="font-weight: 600;">Tetapan Sistem</span>
@@ -67,12 +39,9 @@
         <div class="card">
             <h3>📷 Tetapan Kamera</h3>
             <div class="setting-group">
-                <label for="cameraSelect">Pilih Sumber Kamera</label>
-                <select id="cameraSelect">
-                    <option value="">Mengesan kamera...</option>
-                </select>
+                <label>Pilih Sumber Kamera</label>
+                <select id="cameraSelect"><option value="">Mengesan kamera...</option></select>
             </div>
-            
             <div class="setting-group">
                 <label>Mirror View (Pantulan Imej)</label>
                 <div class="switch-container">
@@ -97,45 +66,37 @@
 
     <script src="https://unpkg.com/html5-qrcode"></script>
     <script>
-        async function getCameras() {
+        async function init() {
+            // 1. 获取相机列表
             const cameraSelect = document.getElementById('cameraSelect');
             try {
                 const devices = await Html5Qrcode.getCameras();
                 cameraSelect.innerHTML = '';
                 if (devices && devices.length) {
-                    devices.forEach(device => {
-                        const option = document.createElement('option');
-                        option.value = device.id;
-                        option.text = device.label || `Kamera ${cameraSelect.length + 1}`;
-                        cameraSelect.appendChild(option);
+                    devices.forEach(d => {
+                        const opt = document.createElement('option');
+                        opt.value = d.id;
+                        opt.text = d.label || `Camera ${cameraSelect.length + 1}`;
+                        cameraSelect.appendChild(opt);
                     });
-                    const savedCamera = localStorage.getItem('preferredCameraId');
-                    if (savedCamera) cameraSelect.value = savedCamera;
+                    const savedId = localStorage.getItem('preferredCameraId');
+                    if (savedId) cameraSelect.value = savedId;
                 }
-            } catch (err) { cameraSelect.innerHTML = '<option value="">Ralat Kamera</option>'; }
+            } catch (e) { cameraSelect.innerHTML = '<option>Ralat Keizinan</option>'; }
+
+            // 2. 加载其他设置
+            document.getElementById('lateTime').value = localStorage.getItem('lateTimeLimit') || "07:35";
+            document.getElementById('mirrorToggle').checked = localStorage.getItem('cameraMirror') === 'true';
         }
 
         function saveSettings() {
-            const cameraId = document.getElementById('cameraSelect').value;
-            const lateTime = document.getElementById('lateTime').value;
-            const isMirror = document.getElementById('mirrorToggle').checked;
-
-            localStorage.setItem('preferredCameraId', cameraId);
-            localStorage.setItem('lateTimeLimit', lateTime);
-            localStorage.setItem('cameraMirror', isMirror); // 保存开关状态
-
-            alert("Tetapan berjaya disimpan!");
+            localStorage.setItem('preferredCameraId', document.getElementById('cameraSelect').value);
+            localStorage.setItem('lateTimeLimit', document.getElementById('lateTime').value);
+            localStorage.setItem('cameraMirror', document.getElementById('mirrorToggle').checked);
+            alert("Tetapan Berjaya Disimpan!");
         }
 
-        window.onload = () => {
-            getCameras();
-            const savedTime = localStorage.getItem('lateTimeLimit');
-            if (savedTime) document.getElementById('lateTime').value = savedTime;
-            
-            // 加载镜像开关状态
-            const savedMirror = localStorage.getItem('cameraMirror') === 'true';
-            document.getElementById('mirrorToggle').checked = savedMirror;
-        };
+        window.onload = init;
     </script>
 </body>
 </html>
