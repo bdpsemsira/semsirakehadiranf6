@@ -54,34 +54,43 @@
         #reader { width: 100% !important; height: 100% !important; border: none !important; }
         #reader video { object-fit: cover !important; }
 
-        /* --- 核心修复：强制去掉库自带的白色框和自带遮罩 --- */
+        /* --- 彻底隐藏库自带的遮罩和白框 --- */
         #reader__scan_region { 
             border: none !important; 
+            background: transparent !important; /* 关键：让自带遮罩变透明 */
             box-shadow: none !important;
         }
-        #reader__scan_region svg { display: none !important; } /* 去掉角落的边框线条 */
+        /* 彻底移除库自带的四个角线条 */
+        #reader__scan_region svg { 
+            display: none !important; 
+        } 
         #reader__dashboard { display: none !important; }
 
-        /* --- 只有蓝色的正方形 QR 框 --- */
+        /* --- 自定义蓝色正方形（这是唯一的视觉参考） --- */
         .qr-box {
             position: absolute;
             width: 260px;
             height: 260px;
-            border: 2px solid #38bdf8; /* 纯蓝色 */
+            border: 2px solid #38bdf8;
             border-radius: 20px;
-            box-shadow: 0 0 0 2000px rgba(0, 0, 0, 0.6); /* 黑色半透明遮罩 */
+            /* 使用 box-shadow 创建外围深色遮罩 */
+            box-shadow: 0 0 0 2000px rgba(0, 0, 0, 0.7); 
             z-index: 50;
             pointer-events: none;
+            display: flex;
+            justify-content: center;
+            align-items: center;
         }
 
         /* 蓝色激光线 */
         .laser-line {
             position: absolute;
-            top: 0; left: 5%;
+            top: 5%;
+            left: 5%;
             width: 90%;
-            height: 3px;
+            height: 2px;
             background: #38bdf8;
-            box-shadow: 0 0 15px #38bdf8;
+            box-shadow: 0 0 12px #38bdf8;
             animation: scanAnim 2s infinite ease-in-out;
         }
 
@@ -96,6 +105,7 @@
             transform: translateX(-50%); width: 90%; max-width: 450px;
             background: #1e293b; border-radius: 20px; padding: 20px;
             display: none; z-index: 200; border-top: 5px solid #38bdf8;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
         }
 
         .progress-container {
@@ -151,9 +161,9 @@
         const html5QrCode = new Html5Qrcode("reader");
         const beep = document.getElementById('beepSound');
 
-        // 音频解锁
+        // 解锁音频
         document.body.addEventListener('click', () => {
-            beep.play().then(() => { beep.pause(); beep.currentTime = 0; }).catch(e => {});
+            beep.play().then(() => { beep.pause(); beep.currentTime = 0; }).catch(() => {});
         }, { once: true });
 
         window.toggleMenu = () => document.getElementById('dropMenu').classList.toggle('show');
@@ -181,11 +191,11 @@
                     select.appendChild(opt);
                 });
 
+                // 配置参数：确保逻辑扫码区域与蓝色框大小一致
                 const config = { 
                     fps: 25, 
                     qrbox: { width: 260, height: 260 },
-                    aspectRatio: 1.0,
-                    showTorchButtonIfSupported: true // 可选：如果设备支持，显示闪光灯按钮
+                    aspectRatio: 1.0
                 };
                 
                 const isMirror = localStorage.getItem('cameraMirror') === 'true';
@@ -205,7 +215,7 @@
         async function onScanSuccess(text) {
             await html5QrCode.stop();
             beep.currentTime = 0;
-            beep.play().catch(err => {});
+            beep.play().catch(() => {});
 
             try {
                 const data = JSON.parse(text);
