@@ -40,7 +40,6 @@
         }
         .dropdown-menu.show { display: block; }
 
-        /* 镜头高度 80% */
         .scanner-container {
             position: relative;
             width: 100vw;
@@ -49,27 +48,33 @@
             display: flex;
             justify-content: center;
             align-items: center;
+            overflow: hidden;
         }
 
-        #reader { width: 100% !important; height: 100% !important; }
+        #reader { width: 100% !important; height: 100% !important; border: none !important; }
         #reader video { object-fit: cover !important; }
 
-        /* 隐藏自带UI */
-        #reader__scan_region, #reader__dashboard { display: none !important; }
+        /* --- 核心修复：强制去掉库自带的白色框和自带遮罩 --- */
+        #reader__scan_region { 
+            border: none !important; 
+            box-shadow: none !important;
+        }
+        #reader__scan_region svg { display: none !important; } /* 去掉角落的边框线条 */
+        #reader__dashboard { display: none !important; }
 
-        /* --- 正方形 QR 框 --- */
+        /* --- 只有蓝色的正方形 QR 框 --- */
         .qr-box {
             position: absolute;
             width: 260px;
             height: 260px;
-            border: 2px solid rgba(56, 189, 248, 0.8);
-            border-radius: 15px;
-            box-shadow: 0 0 0 1000px rgba(0, 0, 0, 0.5); /* 遮罩效果 */
+            border: 2px solid #38bdf8; /* 纯蓝色 */
+            border-radius: 20px;
+            box-shadow: 0 0 0 2000px rgba(0, 0, 0, 0.6); /* 黑色半透明遮罩 */
             z-index: 50;
             pointer-events: none;
         }
 
-        /* 扫描线：现在限制在正方形内 */
+        /* 蓝色激光线 */
         .laser-line {
             position: absolute;
             top: 0; left: 5%;
@@ -77,7 +82,7 @@
             height: 3px;
             background: #38bdf8;
             box-shadow: 0 0 15px #38bdf8;
-            animation: scanAnim 2.5s infinite ease-in-out;
+            animation: scanAnim 2s infinite ease-in-out;
         }
 
         @keyframes scanAnim {
@@ -146,12 +151,9 @@
         const html5QrCode = new Html5Qrcode("reader");
         const beep = document.getElementById('beepSound');
 
-        // 核心修复：用户点击任何地方时解锁音频播放
+        // 音频解锁
         document.body.addEventListener('click', () => {
-            beep.play().then(() => {
-                beep.pause(); 
-                beep.currentTime = 0;
-            }).catch(e => console.log("Audio unlock failed"));
+            beep.play().then(() => { beep.pause(); beep.currentTime = 0; }).catch(e => {});
         }, { once: true });
 
         window.toggleMenu = () => document.getElementById('dropMenu').classList.toggle('show');
@@ -179,15 +181,16 @@
                     select.appendChild(opt);
                 });
 
+                const config = { 
+                    fps: 25, 
+                    qrbox: { width: 260, height: 260 },
+                    aspectRatio: 1.0,
+                    showTorchButtonIfSupported: true // 可选：如果设备支持，显示闪光灯按钮
+                };
+                
                 const isMirror = localStorage.getItem('cameraMirror') === 'true';
                 document.getElementById('mirrorCheck').checked = isMirror;
 
-                const config = { 
-                    fps: 25, 
-                    qrbox: { width: 260, height: 260 }, // 强制正方形识别
-                    aspectRatio: 1.0
-                };
-                
                 const savedId = localStorage.getItem('preferredCameraId');
                 const cameraParam = savedId ? savedId : { facingMode: "environment" };
 
@@ -201,16 +204,13 @@
 
         async function onScanSuccess(text) {
             await html5QrCode.stop();
-            
-            // 播放声音
             beep.currentTime = 0;
-            beep.play().catch(err => console.log("Sound play error:", err));
+            beep.play().catch(err => {});
 
             try {
                 const data = JSON.parse(text);
                 const now = new Date();
                 const timeStr = now.getHours().toString().padStart(2,'0') + ":" + now.getMinutes().toString().padStart(2,'0');
-                
                 const limit = localStorage.getItem('lateTimeLimit') || "07:35";
                 const status = (timeStr > limit) ? "Lewat" : "Hadir";
 
@@ -238,12 +238,10 @@
                     card.style.display = "none";
                     initScanner();
                 }, 3000);
-
             } catch (e) {
                 initScanner();
             }
         }
-
         window.onload = initScanner;
     </script>
 </body>
