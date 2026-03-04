@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Scanner - SEMSIRA</title>
+    <title>Scanner Automatik - SEMSIRA</title>
     <link rel="stylesheet" href="assets/style.css">
     <script src="https://unpkg.com/html5-qrcode"></script>
     <style>
@@ -15,6 +15,7 @@
             margin: 0;
             font-family: 'Poppins', sans-serif;
             min-height: 100vh;
+            overflow-x: hidden;
         }
 
         header {
@@ -33,7 +34,6 @@
             margin: 0 auto;
         }
 
-        /* Scanner Box Styling */
         .card {
             background: #1e293b;
             border-radius: 20px;
@@ -45,95 +45,72 @@
 
         #reader {
             width: 100%;
-            border-radius: 0; /* Let card handle the border radius */
             border: none !important;
             background: #000;
-        }
-
-        /* Menghilangkan garisan putih dalam library html5-qrcode */
-        #reader__dashboard {
-            background: #1e293b !important;
-            color: white !important;
-            padding: 10px !important;
-        }
-
-        #reader video {
-            border-radius: 12px;
         }
 
         /* Result Card Customization */
         .result-card {
             display: none;
             margin-top: 20px;
-            padding: 20px;
+            padding: 25px;
             border-left: 6px solid #38bdf8;
-            animation: slideUp 0.4s ease-out;
+            animation: slideUp 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
         }
 
         @keyframes slideUp {
-            from { opacity: 0; transform: translateY(20px); }
+            from { opacity: 0; transform: translateY(30px); }
             to { opacity: 1; transform: translateY(0); }
         }
 
-        #res-name {
-            color: #ffffff;
-            margin: 0 0 5px 0;
-            font-size: 1.2rem;
-        }
-
-        #res-class {
-            color: #94a3b8;
-            margin: 0 0 15px 0;
-            font-size: 0.9rem;
-            text-transform: uppercase;
-        }
+        #res-name { color: #ffffff; margin: 0; font-size: 1.4rem; text-transform: uppercase; }
+        #res-class { color: #38bdf8; margin: 5px 0 15px 0; font-size: 1rem; font-weight: 600; }
 
         .status-hadir { 
-            color: #10b981; /* Emerald Green */
-            font-weight: 700;
-            padding: 4px 12px;
-            background: rgba(16, 185, 129, 0.1);
-            border-radius: 8px;
+            color: #10b981; 
+            font-weight: 800;
+            padding: 8px 16px;
+            background: rgba(16, 185, 129, 0.15);
+            border-radius: 10px;
+            display: inline-block;
         }
 
         .status-lewat { 
-            color: #f43f5e; /* Rose Red */
-            font-weight: 700;
-            padding: 4px 12px;
-            background: rgba(244, 63, 94, 0.1);
-            border-radius: 8px;
+            color: #f43f5e; 
+            font-weight: 800;
+            padding: 8px 16px;
+            background: rgba(244, 63, 94, 0.15);
+            border-radius: 10px;
+            display: inline-block;
         }
 
-        .btn-blue {
-            background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%);
-            color: white;
-            border: none;
-            padding: 15px;
-            border-radius: 12px;
-            font-weight: 600;
-            letter-spacing: 1px;
-            transition: 0.3s;
-            box-shadow: 0 4px 12px rgba(2, 132, 199, 0.3);
-        }
-
-        .btn-blue:active {
-            transform: scale(0.95);
-        }
-
-        /* Scan Overlay Effect */
-        #reader__scan_region {
+        /* 倒计时进度条 */
+        .timer-bar {
+            width: 100%;
+            height: 4px;
+            background: rgba(255,255,255,0.1);
+            margin-top: 20px;
+            border-radius: 2px;
             position: relative;
+            overflow: hidden;
         }
-        
+        .timer-progress {
+            position: absolute;
+            left: 0; top: 0; height: 100%;
+            background: #38bdf8;
+            width: 100%;
+            transition: width 3s linear;
+        }
+
         #reader__scan_region::after {
             content: "";
             position: absolute;
             top: 50%; left: 50%;
             transform: translate(-50%, -50%);
-            width: 250px; height: 250px;
+            width: 200px; height: 200px;
             border: 2px solid #38bdf8;
-            border-radius: 15px;
-            box-shadow: 0 0 15px rgba(56, 189, 248, 0.5);
+            border-radius: 20px;
+            box-shadow: 0 0 20px rgba(56, 189, 248, 0.4);
             pointer-events: none;
         }
     </style>
@@ -141,7 +118,7 @@
 <body>
     <header>
         <a href="menu.html" style="float: left; text-decoration: none; color: white; position: absolute; left: 20px; font-size: 20px;">⬅️</a>
-        <span style="font-weight: 600; letter-spacing: 0.5px;">Imbas QR Murid</span>
+        <span style="font-weight: 600;">Auto-Scanner SEMSIRA</span>
     </header>
 
     <div class="container">
@@ -152,69 +129,92 @@
         <div id="result" class="card result-card">
             <h3 id="res-name">NAMA MURID</h3>
             <p id="res-class">KELAS</p>
-            <div style="font-size: 14px; color: #cbd5e1;">
-                <p style="margin: 5px 0;">🕒 Masa Imbas: <span id="res-time" style="font-weight: 600; color: #fff;">--:--</span></p>
-                <p style="margin: 10px 0;">📌 Status: <span id="res-status">--</span></p>
+            <div style="font-size: 15px; color: #cbd5e1;">
+                <p>🕒 Masa: <span id="res-time" style="font-weight: 600; color: #fff;">--:--</span></p>
+                <p style="margin-top: 10px;">📌 Status: <span id="res-status">--</span></p>
             </div>
+            
+            <div class="timer-bar">
+                <div id="progress" class="timer-progress"></div>
+            </div>
+            <p style="font-size: 11px; color: #64748b; margin-top: 8px; text-align: center;">Sedia dalam 3 saat...</p>
         </div>
-
-        <button class="btn btn-blue" onclick="location.reload()" style="width:100%; margin-top:15px;">🔄 SCAN SEMULA</button>
     </div>
 
     <script type="module">
-        // --- LOGIK ASAL ANDA (TIDAK DIUBAH) ---
         import { db } from './js/firebase-config.js';
         import { doc, setDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-firestore.js";
 
+        // 创建音频上下文用于播放“滴”声
+        const beep = new Audio('https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3');
+
         const html5QrCode = new Html5Qrcode("reader");
-        const qrConfig = { fps: 10, qrbox: { width: 250, height: 250 } };
+        const qrConfig = { fps: 20, qrbox: { width: 250, height: 250 } };
 
-        html5QrCode.start({ facingMode: "environment" }, qrConfig, onScanSuccess);
+        // 启动相机
+        startScanner();
 
-        async function onScanSuccess(decodedText, decodedResult) {
+        function startScanner() {
+            html5QrCode.start({ facingMode: "environment" }, qrConfig, onScanSuccess)
+                .catch(err => console.error("Scanner error:", err));
+        }
+
+        async function onScanSuccess(decodedText) {
+            // 1. 立即停止扫描，防止重复读取
             await html5QrCode.stop();
             
+            // 2. 播放成功音效
+            beep.play().catch(e => console.log("Audio play blocked"));
+
             try {
                 const student = JSON.parse(decodedText);
-                
                 const now = new Date();
                 const currentTime = now.getHours().toString().padStart(2, '0') + ":" + 
                                     now.getMinutes().toString().padStart(2, '0');
                 
-                const limitHour = 7;
-                const limitMin = 35;
-                let status = "Hadir";
-                
-                if (now.getHours() > limitHour || (now.getHours() === limitHour && now.getMinutes() > limitMin)) {
-                    status = "Lewat";
-                }
+                // 判断迟到 (7:35 AM)
+                let status = (now.getHours() > 7 || (now.getHours() === 7 && now.getMinutes() > 35)) ? "Lewat" : "Hadir";
 
+                // 3. 更新 UI 显示
                 document.getElementById('res-name').innerText = student.name;
-                document.getElementById('res-class').innerText = student.class || student.kelas;
+                document.getElementById('res-class').innerText = student.kelas || student.class;
                 document.getElementById('res-time').innerText = currentTime;
-                document.getElementById('res-status').innerText = status;
+                document.getElementById('res-status').innerText = status.toUpperCase();
                 document.getElementById('res-status').className = status === "Hadir" ? "status-hadir" : "status-lewat";
-                document.getElementById('result').style.display = "block";
+                
+                const resultCard = document.getElementById('result');
+                const progressBar = document.getElementById('progress');
+                
+                resultCard.style.display = "block";
+                progressBar.style.width = "100%"; // 重置进度条
 
+                // 4. 保存到 Firebase
                 const dateKey = now.toISOString().split('T')[0];
                 const attendanceRef = doc(db, "attendance", `${dateKey}_${student.ic}`);
 
                 await setDoc(attendanceRef, {
                     name: student.name,
                     ic: student.ic,
-                    class: student.class || student.kelas,
-                    gender: student.gender,
+                    class: student.kelas || student.class,
                     time: currentTime,
                     status: status,
                     timestamp: serverTimestamp()
                 });
 
-                alert("Rekod Berjaya Disimpan!");
+                // 5. 自动重启逻辑：3秒倒计时
+                setTimeout(() => {
+                    progressBar.style.width = "0%";
+                }, 10);
+
+                setTimeout(() => {
+                    resultCard.style.display = "none";
+                    startScanner(); // 重新启动相机
+                }, 3000);
 
             } catch (e) {
-                console.error("Ralat:", e);
-                alert("QR Kod tidak sah atau ralat sistem.");
-                location.reload();
+                console.error("Error:", e);
+                // 如果扫到错误的二维码，2秒后重启
+                setTimeout(startScanner, 2000);
             }
         }
     </script>
