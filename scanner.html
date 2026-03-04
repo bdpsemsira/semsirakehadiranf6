@@ -9,7 +9,6 @@
     <style>
         body {
             background-color: #0f172a;
-            background-image: radial-gradient(circle at top right, #1e293b, #0f172a);
             color: #f1f5f9;
             margin: 0;
             font-family: 'Poppins', sans-serif;
@@ -19,93 +18,92 @@
         header {
             background: #1e293b;
             padding: 15px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
+            text-align: center;
             box-shadow: 0 4px 15px rgba(0,0,0,0.2);
         }
 
         .container {
-            padding: 20px;
+            padding: 15px;
             max-width: 500px;
             margin: 0 auto;
+        }
+
+        /* 模拟 Google Meet 的选择器样式 */
+        .camera-selector-container {
+            background: #1e293b;
+            padding: 12px;
+            border-radius: 15px;
+            margin-bottom: 15px;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+
+        select {
+            width: 100%;
+            padding: 10px;
+            border-radius: 8px;
+            background: #0f172a;
+            color: #38bdf8;
+            border: 1px solid #334155;
+            font-size: 14px;
+            outline: none;
         }
 
         .card {
             background: #1e293b;
             border-radius: 20px;
-            border: 1px solid rgba(255, 255, 255, 0.05);
-            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
             overflow: hidden;
             margin-bottom: 15px;
+            border: 1px solid rgba(255,255,255,0.05);
         }
 
         #reader {
             width: 100% !important;
             background: #000;
-            border: none !important;
         }
 
         #reader video {
-            object-fit: contain !important; 
-            width: 100% !important;
-            height: auto !important;
+            object-fit: contain !important;
         }
 
         .result-card {
             display: none;
-            padding: 25px;
+            padding: 20px;
             border-left: 6px solid #38bdf8;
-            animation: slideUp 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            animation: slideUp 0.4s ease;
         }
 
         @keyframes slideUp {
-            from { opacity: 0; transform: translateY(30px); }
+            from { opacity: 0; transform: translateY(20px); }
             to { opacity: 1; transform: translateY(0); }
         }
 
-        #res-name { color: #ffffff; margin: 0; font-size: 1.4rem; text-transform: uppercase; }
-        #res-class { color: #38bdf8; margin: 5px 0 15px 0; font-size: 1rem; font-weight: 600; }
-
-        .status-hadir { color: #10b981; font-weight: 800; padding: 8px 16px; background: rgba(16, 185, 129, 0.15); border-radius: 10px; display: inline-block; }
-        .status-lewat { color: #f43f5e; font-weight: 800; padding: 8px 16px; background: rgba(244, 63, 94, 0.15); border-radius: 10px; display: inline-block; }
-
-        .timer-bar { width: 100%; height: 4px; background: rgba(255,255,255,0.1); margin-top: 20px; border-radius: 2px; position: relative; overflow: hidden; }
-        .timer-progress { position: absolute; left: 0; top: 0; height: 100%; background: #38bdf8; width: 100%; transition: width 3s linear; }
-
-        #reader__scan_region::after {
-            content: "";
-            position: absolute;
-            top: 50%; left: 50%;
-            transform: translate(-50%, -50%);
-            width: 70%; height: 70%;
-            border: 2px solid #38bdf8;
-            border-radius: 20px;
-            box-shadow: 0 0 20px rgba(56, 189, 248, 0.4);
-            pointer-events: none;
-        }
+        .status-hadir { color: #10b981; font-weight: bold; }
+        .status-lewat { color: #f43f5e; font-weight: bold; }
     </style>
 </head>
 <body>
     <header>
         <a href="menu.html" style="text-decoration: none; color: white; position: absolute; left: 20px; font-size: 20px;">⬅️</a>
-        <span style="font-weight: 600;">Auto-Scanner SEMSIRA</span>
+        <span style="font-weight: 600;">Scanner Pro</span>
     </header>
 
     <div class="container">
-        <div class="card" style="padding: 10px;">
+        <div class="camera-selector-container">
+            <label style="font-size: 12px; color: #94a3b8; display: block; margin-bottom: 5px;">🎥 Pilih Kamera (Tukar Sini)</label>
+            <select id="cameraSelect">
+                <option value="">Mengesan Kamera...</option>
+            </select>
+        </div>
+
+        <div class="card">
             <div id="reader"></div>
         </div>
 
         <div id="result" class="card result-card">
-            <h3 id="res-name">NAMA MURID</h3>
-            <p id="res-class">KELAS</p>
-            <div style="font-size: 15px; color: #cbd5e1;">
-                <p>🕒 Masa: <span id="res-time" style="font-weight: 600; color: #fff;">--:--</span></p>
-                <p style="margin-top: 10px;">📌 Status: <span id="res-status">--</span></p>
-            </div>
-            <div class="timer-bar"><div id="progress" class="timer-progress"></div></div>
-            <p style="font-size: 11px; color: #64748b; margin-top: 8px; text-align: center;">Sedia dalam 3 saat...</p>
+            <h3 id="res-name" style="margin:0;">NAMA MURID</h3>
+            <p id="res-class" style="color:#38bdf8; margin:5px 0;">KELAS</p>
+            <p>🕒 Masa: <span id="res-time">--:--</span></p>
+            <p>📌 Status: <span id="res-status">--</span></p>
         </div>
     </div>
 
@@ -113,124 +111,105 @@
         import { db } from './js/firebase-config.js';
         import { doc, setDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-firestore.js";
 
-        const beep = new Audio('https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3');
         const html5QrCode = new Html5Qrcode("reader");
+        const cameraSelect = document.getElementById('cameraSelect');
+        const beep = new Audio('https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3');
 
-        const qrConfig = { 
-            fps: 25, 
-            qrbox: (vw, vh) => {
-                let size = Math.min(vw, vh) * 0.75;
-                return { width: size, height: size };
-            },
-            videoConstraints: {
-                width: { min: 640, ideal: 1280 },
-                height: { min: 480, ideal: 720 },
-                // 增加提示，告诉浏览器我们偏向后置
-                facingMode: "environment"
-            }
-        };
-
-        async function startScanner() {
-            const isMirror = localStorage.getItem('cameraMirror') === 'true';
-            const savedId = localStorage.getItem('preferredCameraId');
-            
-            if (html5QrCode.getState() === 2) await html5QrCode.stop();
-
+        // 初始化相机列表
+        async function initCameraList() {
             try {
-                // 1. 获取所有摄像头列表
                 const devices = await Html5Qrcode.getCameras();
-                let targetId = null;
-
+                cameraSelect.innerHTML = ''; // 清空
+                
                 if (devices && devices.length > 0) {
-                    // 2. 逻辑：如果 savedId 还在列表里，用它
-                    const idExists = devices.find(d => d.id === savedId);
-                    
-                    if (idExists) {
-                        targetId = savedId;
-                    } else {
-                        // 3. 核心突破：自动寻找带有 "back" 或 "rear" 字样的摄像头
-                        const backCamera = devices.find(d => 
-                            d.label.toLowerCase().includes('back') || 
-                            d.label.toLowerCase().includes('rear') ||
-                            d.label.toLowerCase().includes('environment')
-                        );
-                        // 如果没找到带名字的，强制选最后一个（移动端通常最后位是主摄）
-                        targetId = backCamera ? backCamera.id : devices[devices.length - 1].id;
-                    }
+                    devices.forEach(device => {
+                        const option = document.createElement('option');
+                        option.value = device.id;
+                        option.text = device.label || `Camera ${cameraSelect.length + 1}`;
+                        cameraSelect.appendChild(option);
+                    });
 
-                    // 4. 使用明确的 ID 启动，不使用 facingMode 对象
-                    html5QrCode.start(targetId, qrConfig, onScanSuccess)
-                        .then(() => {
-                            applyPostStartFixes(isMirror);
-                        })
-                        .catch(err => {
-                            console.error("ID start failed, trying environment mode", err);
-                            html5QrCode.start({ facingMode: "environment" }, qrConfig, onScanSuccess);
-                        });
+                    // 默认启动第一个（或之前存过的）
+                    const lastUsed = localStorage.getItem('preferredCameraId');
+                    if (lastUsed && devices.some(d => d.id === lastUsed)) {
+                        cameraSelect.value = lastUsed;
+                    }
+                    
+                    startScanner(cameraSelect.value);
                 }
             } catch (err) {
-                console.error("Gagal mendapatkan senarai kamera", err);
+                cameraSelect.innerHTML = '<option>Ralat Akses Kamera</option>';
             }
         }
 
-        function applyPostStartFixes(isMirror) {
-            const videoElem = document.querySelector('#reader video');
-            if (videoElem) {
-                videoElem.style.transform = isMirror ? "scaleX(-1)" : "scaleX(1)";
-                videoElem.style.webkitTransform = isMirror ? "scaleX(-1)" : "scaleX(1)";
+        // 启动/切换相机函数
+        async function startScanner(cameraId) {
+            if (html5QrCode.getState() === 2) {
+                await html5QrCode.stop();
             }
-            
-            // 完善对焦系统
-            try {
-                const track = html5QrCode.getRunningTrack();
-                const caps = track.getCapabilities();
-                if (caps.focusMode && caps.focusMode.includes('continuous')) {
-                    track.applyConstraints({ advanced: [{ focusMode: 'continuous' }] });
-                }
-            } catch (e) {}
+
+            const config = { 
+                fps: 20, 
+                qrbox: { width: 250, height: 250 },
+                aspectRatio: 1.0 
+            };
+
+            html5QrCode.start(cameraId, config, onScanSuccess)
+                .catch(err => console.error("Gagal start:", err));
         }
+
+        // 监听下拉菜单：用户一选，立刻切换
+        cameraSelect.addEventListener('change', (e) => {
+            const newId = e.target.value;
+            localStorage.setItem('preferredCameraId', newId); // 顺便存一下，下次开还是这个
+            startScanner(newId);
+        });
 
         async function onScanSuccess(decodedText) {
             await html5QrCode.stop();
-            beep.play().catch(() => {});
-
+            beep.play();
+            
             try {
                 const student = JSON.parse(decodedText);
                 const now = new Date();
-                const currentTime = now.getHours().toString().padStart(2, '0') + ":" + 
-                                    now.getMinutes().toString().padStart(2, '0');
+                const currentTime = now.getHours().toString().padStart(2,'0') + ":" + now.getMinutes().toString().padStart(2,'0');
                 
+                // 判断逻辑
                 const savedLateTime = localStorage.getItem('lateTimeLimit') || "07:35";
                 const [lH, lM] = savedLateTime.split(':').map(Number);
                 let status = (now.getHours() > lH || (now.getHours() === lH && now.getMinutes() > lM)) ? "Lewat" : "Hadir";
 
+                // UI更新
                 document.getElementById('res-name').innerText = student.name;
                 document.getElementById('res-class').innerText = student.kelas || student.class;
                 document.getElementById('res-time').innerText = currentTime;
                 document.getElementById('res-status').innerText = status.toUpperCase();
                 document.getElementById('res-status').className = status === "Hadir" ? "status-hadir" : "status-lewat";
-                
                 document.getElementById('result').style.display = "block";
-                document.getElementById('progress').style.width = "100%";
 
+                // 写入Firebase
                 const dateKey = now.toISOString().split('T')[0];
                 await setDoc(doc(db, "attendance", `${dateKey}_${student.ic}`), {
-                    name: student.name, ic: student.ic, class: student.kelas || student.class,
-                    time: currentTime, status: status, timestamp: serverTimestamp()
+                    name: student.name,
+                    ic: student.ic,
+                    class: student.kelas || student.class,
+                    time: currentTime,
+                    status: status,
+                    timestamp: serverTimestamp()
                 });
 
-                setTimeout(() => { document.getElementById('progress').style.width = "0%"; }, 50);
                 setTimeout(() => {
                     document.getElementById('result').style.display = "none";
-                    startScanner(); 
+                    startScanner(cameraSelect.value); 
                 }, 3000);
+
             } catch (e) {
-                console.error("Data Error:", e);
-                setTimeout(startScanner, 2000);
+                startScanner(cameraSelect.value);
             }
         }
 
-        startScanner();
+        // 运行初始化
+        initCameraList();
     </script>
 </body>
 </html>
