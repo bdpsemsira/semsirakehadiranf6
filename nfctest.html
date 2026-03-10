@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html lang="ms">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NFC System - SEMSIRA</title>
+    <style>
+        body { background: #020617; color: white; font-family: 'Poppins', sans-serif; margin: 0; display: flex; flex-direction: column; height: 100vh; align-items: center; justify-content: center; }
+        .btn { width: 80%; max-width: 300px; padding: 20px; margin: 10px; border-radius: 15px; border: none; font-size: 18px; font-weight: bold; cursor: pointer; transition: 0.3s; color: white; }
+        .btn-scan { background: #38bdf8; box-shadow: 0 0 20px rgba(56, 189, 248, 0.4); }
+        .btn-reg { background: #1e293b; border: 1px solid #334155; }
+        h1 { margin-bottom: 30px; letter-spacing: 2px; }
+    </style>
+</head>
+<body>
+    <h1>NFC MENU</h1>
+    <button class="btn btn-scan" onclick="location.href='nfc_read.html'">🔍 NFC SCAN</button>
+    <button class="btn btn-reg" onclick="location.href='nfc_register.html'">📝 REGISTER STUDENT</button>
+</body>
+</html>
