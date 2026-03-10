@@ -7,6 +7,7 @@
     <link rel="stylesheet" href="assets/style.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <style>
+        /* 网页端 UI - 深色模式 */
         body { background-color: #0f172a; background-image: radial-gradient(circle at top right, #1e293b, #0f172a); color: #f1f5f9; margin: 0; font-family: 'Poppins', sans-serif; min-height: 100vh; }
         header { background: #1e293b; border-bottom: 1px solid rgba(255, 255, 255, 0.05); padding: 15px; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 15px rgba(0,0,0,0.2); }
         .logo-small { width: 35px; }
@@ -23,9 +24,36 @@
         .btn-blue { background: linear-gradient(135deg, #38bdf8 0%, #0284c7 100%); color: white; }
         .btn-red { background: rgba(239, 68, 68, 0.1); color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.2); }
         .back-link { position: absolute; left: 20px; text-decoration: none; color: white; font-size: 20px; }
+
+        /* 打印/PDF 专用样式 */
+        @media print {
+            body { background: white !important; color: black !important; }
+            header, .btn-group, .back-link, #qrcode-outer, .btn-red { display: none !important; }
+            .container { max-width: 100%; padding: 0; }
+            .card { background: white !important; border: none !important; box-shadow: none !important; text-align: left !important; padding: 10px 0; }
+            
+            /* 学校页眉显示 */
+            #print-header { display: flex !important; flex-direction: column; align-items: center; border-bottom: 2px solid black; padding-bottom: 10px; margin-bottom: 20px; }
+            #print-logo { width: 80px; height: auto; margin-bottom: 10px; }
+            #print-title { font-size: 18px; font-weight: bold; text-align: center; color: black; }
+
+            h2 { color: black !important; font-size: 20px; margin-top: 10px; }
+            h4 { color: black !important; border-bottom: 1px solid black !important; }
+            .info-p, .highlight-ic { color: black !important; font-size: 12px; }
+            .record-item { border-bottom: 1px solid #ddd !important; color: black !important; }
+            #summary-box { display: block !important; margin-top: 15px; border: 1px solid black; padding: 10px; }
+        }
+
+        /* 默认隐藏打印页眉和统计框 */
+        #print-header, #summary-box { display: none; }
     </style>
 </head>
 <body>
+    <div id="print-header">
+        <img src="semsira.png" id="print-logo" alt="Logo">
+        <div id="print-title">LAPORAN KEHADIRAN MURID SEMSIRA</div>
+    </div>
+
     <header>
         <a href="javascript:history.back()" class="back-link">⬅️</a>
         <img src="semsira.png" alt="Logo" class="logo-small">
@@ -42,12 +70,21 @@
         </div>
 
         <div class="card" style="text-align: left;">
-            <h4>Rekod Kehadiran</h4>
+            <h4>Rekod Kehadiran Bulanan</h4>
+            
+            <div id="summary-box">
+                <b>RINGKASAN KEHADIRAN (BULAN INI):</b><br>
+                Hadir: <span id="count-hadir">0</span> | 
+                Lewat: <span id="count-lewat">0</span> | 
+                Tidak Hadir: <span id="count-tidak">0</span>
+            </div>
+
             <div id="attendanceHistory">
                 <p style="text-align:center; color:#64748b; padding: 20px;">Memuatkan rekod...</p>
             </div>
+
             <div class="btn-group">
-                <button class="btn btn-blue" onclick="window.print()">🖨️ CETAK KAD</button>
+                <button class="btn btn-blue" onclick="window.print()">🖨️ CETAK LAPORAN / PDF</button>
                 <button class="btn btn-red" id="deleteBtn">🗑️ HAPUS MURID</button>
             </div>
         </div>
@@ -55,9 +92,8 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-app.js";
-        import { getFirestore, doc, getDoc, collection, getDocs, query, where, deleteDoc, writeBatch } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-firestore.js";
+        import { getFirestore, doc, getDoc, collection, getDocs, query, where, deleteDoc } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-firestore.js";
 
-        // Firebase Config (与你其他页面一致)
         const firebaseConfig = {
             apiKey: "AIzaSyCdKtcJseBEcR5CXapiAmVb8TvOw30rN1Q",
             authDomain: "semsiraf6kehadiran.firebaseapp.com",
@@ -71,14 +107,14 @@
         const db = getFirestore(app);
 
         const urlParams = new URLSearchParams(window.location.search);
-        let studentID = urlParams.get('id'); // 这个 ID 可能是 IC，也可能是 NFC Code
+        let studentID = urlParams.get('id');
 
         async function loadProfile() {
             try {
                 let data = null;
                 let finalDocRef = null;
 
-                // 1. 尝试直接按 ID 查找 (适合新注册的 NFC ID)
+                // 优先查找 NFC ID，其次查找 IC
                 const docRef = doc(db, "students", studentID);
                 const docSnap = await getDoc(docRef);
 
@@ -86,7 +122,6 @@
                     data = docSnap.data();
                     finalDocRef = docSnap.ref;
                 } else {
-                    // 2. 如果找不到，尝试去搜索 ic 字段 (适合旧的 IC ID)
                     const q = query(collection(db, "students"), where("ic", "==", studentID));
                     const querySnapshot = await getDocs(q);
                     if (!querySnapshot.empty) {
@@ -101,23 +136,18 @@
                     document.getElementById('p-class').innerText = `Kelas: ${data.kelas}`;
                     document.getElementById('p-gender').innerText = `Jantina: ${data.gender}`;
                     
-                    // 生成预览 QR (包含 IC 资料)
+                    // 仅在网页端显示预览用的二维码
                     new QRCode(document.getElementById("qrcode"), {
                         text: JSON.stringify(data),
-                        width: 180, height: 180
+                        width: 150, height: 150
                     });
 
-                    // 加载出勤历史
                     loadAttendance(data.ic);
-
-                    // 绑定删除按钮
-                    document.getElementById('deleteBtn').onclick = () => deleteStudent(finalDocRef, data.ic);
+                    document.getElementById('deleteBtn').onclick = () => deleteStudent(finalDocRef);
                 } else {
                     document.getElementById('p-name').innerText = "Murid Tidak Ditemui";
                 }
-            } catch (e) {
-                console.error(e);
-            }
+            } catch (e) { console.error(e); }
         }
 
         async function loadAttendance(ic) {
@@ -126,24 +156,43 @@
             const historyDiv = document.getElementById('attendanceHistory');
             historyDiv.innerHTML = "";
 
+            let countHadir = 0;
+            let countLewat = 0;
+            let countTidak = 0;
+
             if (snap.empty) {
-                historyDiv.innerHTML = "<p style='text-align:center; color:#64748b;'>Tiada rekod.</p>";
+                historyDiv.innerHTML = "<p style='text-align:center; color:#64748b;'>Tiada rekod kehadiran.</p>";
                 return;
             }
 
-            snap.forEach(doc => {
+            // 按日期倒序排列数据
+            const sortedDocs = snap.docs.sort((a, b) => b.id.localeCompare(a.id));
+
+            sortedDocs.forEach(doc => {
                 const res = doc.data();
+                const status = res.status;
+                
+                // 统计次数
+                if (status === "Hadir") countHadir++;
+                else if (status === "Lewat") countLewat++;
+                else if (status === "Tidak Hadir") countTidak++;
+
                 const div = document.createElement('div');
                 div.className = "record-item";
-                div.innerHTML = `<span>${doc.id.split('_')[0]}</span> <b>${res.status}</b>`;
+                div.innerHTML = `<span>${doc.id.split('_')[0]}</span> <b>${status}</b>`;
                 historyDiv.appendChild(div);
             });
+
+            // 更新总结框
+            document.getElementById('count-hadir').innerText = countHadir;
+            document.getElementById('count-lewat').innerText = countLewat;
+            document.getElementById('count-tidak').innerText = countTidak;
         }
 
-        async function deleteStudent(docRef, ic) {
-            if (confirm("Padam murid ini?")) {
+        async function deleteStudent(docRef) {
+            if (confirm("Padam murid ini secara kekal?")) {
                 await deleteDoc(docRef);
-                alert("Dipadam!");
+                alert("Murid telah dipadam.");
                 location.href = 'dashboard.html';
             }
         }
