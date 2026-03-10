@@ -3,129 +3,52 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Daftar Murid NFC - SEMSIRA</title>
+    <title>Daftar Murid - SEMSIRA</title>
     <style>
-        /* UI 风格保持与你的 Automated Attendance 一致 */
-        body {
-            background-color: #0f172a;
-            background-image: radial-gradient(circle at top right, #1e293b, #0f172a);
-            color: #f1f5f9;
-            margin: 0;
-            font-family: 'Poppins', sans-serif;
-            min-height: 100vh;
-        }
-
-        header {
-            background: #1e293b;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-            padding: 15px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
-        }
-
-        .container {
-            padding: 20px;
-            max-width: 500px;
-            margin: 0 auto;
-        }
-
-        .card {
-            background: #1e293b;
-            border-radius: 20px;
-            padding: 25px;
-            border: 1px solid rgba(255, 255, 255, 0.05);
-            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
-            margin-bottom: 20px;
-        }
-
+        /* 保持你原有的 UI 风格 */
+        body { background-color: #0f172a; background-image: radial-gradient(circle at top right, #1e293b, #0f172a); color: #f1f5f9; margin: 0; font-family: 'Poppins', sans-serif; min-height: 100vh; }
+        header { background: #1e293b; border-bottom: 1px solid rgba(255, 255, 255, 0.05); padding: 15px; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 15px rgba(0,0,0,0.2); }
+        .container { padding: 20px; max-width: 500px; margin: 0 auto; }
+        .card { background: #1e293b; border-radius: 20px; padding: 25px; border: 1px solid rgba(255, 255, 255, 0.05); box-shadow: 0 10px 25px rgba(0,0,0,0.2); margin-bottom: 20px; }
         h3 { color: #38bdf8; margin-top: 0; text-align: center; }
-
-        label {
-            display: block;
-            font-size: 12px;
-            color: #94a3b8;
-            margin: 10px 0 5px 5px;
-        }
-
-        input, select {
-            width: 100%;
-            padding: 14px;
-            margin-bottom: 10px;
-            background: #0f172a;
-            border: 1px solid #334155;
-            border-radius: 12px;
-            color: white;
-            font-size: 14px;
-            box-sizing: border-box;
-            outline: none;
-        }
-
+        label { display: block; font-size: 12px; color: #94a3b8; margin: 10px 0 5px 5px; }
+        input, select { width: 100%; padding: 14px; margin-bottom: 10px; background: #0f172a; border: 1px solid #334155; border-radius: 12px; color: white; font-size: 14px; box-sizing: border-box; outline: none; }
         input:focus, select:focus { border-color: #38bdf8; }
-
-        .btn {
-            border: none;
-            border-radius: 12px;
-            font-weight: 600;
-            padding: 15px;
-            cursor: pointer;
-            transition: all 0.3s;
-            width: 100%;
-            font-size: 16px;
-        }
-
-        .btn-nfc {
-            background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%);
-            color: white;
-            box-shadow: 0 4px 12px rgba(2, 132, 199, 0.3);
-        }
-
-        .btn-save {
-            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-            color: white;
-            margin-top: 10px;
-        }
-
-        #status {
-            text-align: center;
-            font-size: 14px;
-            margin: 15px 0;
-            color: #38bdf8;
-            min-height: 20px;
-        }
-
+        .btn { border: none; border-radius: 12px; font-weight: 600; padding: 15px; cursor: pointer; transition: all 0.3s; width: 100%; font-size: 16px; }
+        .btn-nfc { background: rgba(56, 189, 248, 0.1); border: 1px dashed #38bdf8; color: #38bdf8; margin-bottom: 10px; }
+        .btn-save { background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white; margin-top: 10px; box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3); }
+        #status { text-align: center; font-size: 13px; margin: 10px 0; color: #94a3b8; }
         .back-btn { position: absolute; left: 20px; text-decoration: none; color: white; font-size: 20px; }
+        .optional-tag { float: right; color: #64748b; font-weight: normal; font-size: 11px; }
     </style>
 </head>
 <body>
 
     <header>
-        <a href="nfctest.html" class="back-btn">⬅️</a>
-        <span style="font-weight: 600;">Pendaftaran Murid NFC</span>
+        <a href="menu.html" class="back-btn">⬅️</a>
+        <span style="font-weight: 600;">Pendaftaran Murid</span>
     </header>
 
     <div class="container">
         <div class="card">
-            <h3>Langkah 1: Imbas Kad</h3>
-            <p id="status">Tekan butang di bawah dan dekatkan kad</p>
-            <button class="btn btn-nfc" onclick="startNfcScan()">🔍 SCAN NFC SERIES CODE</button>
-            
-            <label>NFC Series Code (Auto-fill)</label>
-            <input type="text" id="nfcID" placeholder="Kod siri akan muncul di sini" readonly style="color: #38bdf8; font-weight: bold;">
+            <h3>Kad NFC <span class="optional-tag">(Pilihan)</span></h3>
+            <p id="status">Boleh daftar sekarang, ikat kad kemudian.</p>
+            <button class="btn btn-nfc" onclick="startNfcScan()">🔍 SCAN KAD (JIKA ADA)</button>
+            <label>NFC Series Code</label>
+            <input type="text" id="nfcID" placeholder="Tiada kad (boleh dikemaskini nanti)" readonly>
         </div>
 
         <div class="card">
-            <h3>Langkah 2: Maklumat Peribadi</h3>
+            <h3>Maklumat Peribadi</h3>
             
             <label>Nama Penuh (Huruf Besar)</label>
-            <input type="text" id="name" placeholder="NAMA MURID">
+            <input type="text" id="name" placeholder="NAMA MURID" required>
 
-            <label>Nombor IC</label>
-            <input type="text" id="ic" placeholder="CONTOH: 05010102XXXX">
+            <label>Nombor IC (Guna sebagai ID)</label>
+            <input type="text" id="ic" placeholder="CONTOH: 05010102XXXX" required>
 
             <label>Pilih Kelas</label>
-            <select id="class">
+            <select id="class" required>
                 <option value="">-- Sila Pilih --</option>
                 <option value="SUMAYYAH">SUMAYYAH</option>
                 <option value="SARAH">SARAH</option>
@@ -138,7 +61,7 @@
             </select>
 
             <label>Jantina</label>
-            <select id="gender">
+            <select id="gender" required>
                 <option value="">-- Sila Pilih --</option>
                 <option value="Lelaki">Lelaki</option>
                 <option value="Perempuan">Perempuan</option>
@@ -152,7 +75,7 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-app.js";
-        import { getFirestore, doc, setDoc } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-firestore.js";
+        import { getFirestore, doc, setDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyCdKtcJseBEcR5CXapiAmVb8TvOw30rN1Q",
@@ -167,7 +90,6 @@
         const db = getFirestore(app);
         const beep = document.getElementById('beep');
 
-        // NFC 扫描逻辑
         window.startNfcScan = async () => {
             if ('NDEFReader' in window) {
                 try {
@@ -175,51 +97,52 @@
                     await ndef.scan();
                     document.getElementById('status').innerText = "📳 Sila dekatkan kad NFC...";
                     
-                    // 预解锁音频
-                    beep.play().then(() => { beep.pause(); beep.currentTime = 0; });
-
                     ndef.addEventListener("reading", ({ serialNumber }) => {
                         beep.currentTime = 0;
                         beep.play().catch(()=>{});
-                        
                         document.getElementById('nfcID').value = serialNumber;
-                        document.getElementById('status').innerText = "✅ Berjaya! Kod: " + serialNumber;
+                        document.getElementById('status').innerText = "✅ Kad dikesan: " + serialNumber;
                     });
                 } catch (error) {
                     alert("Ralat NFC: " + error.message);
                 }
             } else {
-                alert("Browser tidak menyokong NFC. Guna Chrome di Android.");
+                alert("Browser ini tidak menyokong NFC. Sila guna Chrome di Android.");
             }
         };
 
-        // 保存到 Firebase
         window.saveToFirebase = async () => {
-            const nfcCode = document.getElementById('nfcID').value;
-            const name = document.getElementById('name').value.toUpperCase();
-            const ic = document.getElementById('ic').value;
+            const ic = document.getElementById('ic').value.trim();
+            const name = document.getElementById('name').value.toUpperCase().trim();
+            const nfcCode = document.getElementById('nfcID').value || ""; // 如果没有，则是空字符串
             const kelas = document.getElementById('class').value;
             const gender = document.getElementById('gender').value;
 
-            if (!nfcCode) return alert("Sila scan kad NFC dahulu!");
-            if (!name || !ic || !kelas || !gender) return alert("Sila isi semua maklumat!");
+            if (!ic || !name || !kelas || !gender) {
+                return alert("Sila lengkapkan Nama, IC, Kelas dan Jantina!");
+            }
 
             try {
-                // 使用 NFC Series Code 作为文档 ID
-                await setDoc(doc(db, "students", nfcCode), {
-                    nfcSeries: nfcCode,
-                    name: name,
+                // 【重要】统一使用 IC 作为文档 ID，方便日后通过 IC 查找并更新卡号
+                await setDoc(doc(db, "students", ic), {
                     ic: ic,
+                    name: name,
+                    nfcSeries: nfcCode, // 可以为空
                     kelas: kelas,
                     gender: gender,
-                    timestamp: new Date()
+                    updatedAt: serverTimestamp()
                 });
 
-                alert("Rekod Berjaya Disimpan!");
-                location.href = 'nfctest.html';
+                alert("Rekod " + name + " berjaya disimpan!");
+                // 清空表格
+                document.getElementById('name').value = "";
+                document.getElementById('ic').value = "";
+                document.getElementById('nfcID').value = "";
+                document.getElementById('status').innerText = "Daftar murid seterusnya atau kembali ke menu.";
+                
             } catch (e) {
                 console.error(e);
-                alert("Gagal simpan rekod.");
+                alert("Gagal simpan: " + e.message);
             }
         };
     </script>
