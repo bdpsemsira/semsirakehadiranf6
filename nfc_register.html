@@ -3,11 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Jana QR - SEMSIRA</title>
-    <link rel="stylesheet" href="assets/style.css">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <title>Daftar Murid NFC - SEMSIRA</title>
     <style>
-        /* UI BEAUTIFICATION - DARK MODE */
+        /* UI 风格保持与你的 Automated Attendance 一致 */
         body {
             background-color: #0f172a;
             background-image: radial-gradient(circle at top right, #1e293b, #0f172a);
@@ -27,11 +25,6 @@
             box-shadow: 0 4px 15px rgba(0,0,0,0.2);
         }
 
-        .logo-small {
-            width: 35px;
-            filter: drop-shadow(0 0 5px rgba(255, 255, 255, 0.1));
-        }
-
         .container {
             padding: 20px;
             max-width: 500px;
@@ -47,16 +40,19 @@
             margin-bottom: 20px;
         }
 
-        h3, h4 {
-            color: #38bdf8;
-            margin-top: 0;
-            font-weight: 600;
+        h3 { color: #38bdf8; margin-top: 0; text-align: center; }
+
+        label {
+            display: block;
+            font-size: 12px;
+            color: #94a3b8;
+            margin: 10px 0 5px 5px;
         }
 
         input, select {
             width: 100%;
             padding: 14px;
-            margin: 10px 0;
+            margin-bottom: 10px;
             background: #0f172a;
             border: 1px solid #334155;
             border-radius: 12px;
@@ -64,72 +60,73 @@
             font-size: 14px;
             box-sizing: border-box;
             outline: none;
-            transition: border-color 0.3s;
         }
 
-        input:focus, select:focus {
-            border-color: #38bdf8;
-        }
+        input:focus, select:focus { border-color: #38bdf8; }
 
         .btn {
             border: none;
             border-radius: 12px;
             font-weight: 600;
+            padding: 15px;
             cursor: pointer;
             transition: all 0.3s;
-            padding: 15px;
+            width: 100%;
+            font-size: 16px;
         }
 
-        .btn-blue {
+        .btn-nfc {
             background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%);
             color: white;
             box-shadow: 0 4px 12px rgba(2, 132, 199, 0.3);
         }
 
-        .btn-green {
+        .btn-save {
             background: linear-gradient(135deg, #10b981 0%, #059669 100%);
             color: white;
-            box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+            margin-top: 10px;
         }
 
-        .btn:hover {
-            transform: translateY(-2px);
-            filter: brightness(1.1);
+        #status {
+            text-align: center;
+            font-size: 14px;
+            margin: 15px 0;
+            color: #38bdf8;
+            min-height: 20px;
         }
 
-        /* Container untuk QR Code agar nampak bersih */
-        #qrcode {
-            background: white;
-            padding: 15px;
-            border-radius: 15px;
-            display: inline-block;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
-        }
-
-        @media print {
-            header, .btn-blue, input, select, h3 { display: none !important; }
-            body { background: white; }
-            .card { border: none; box-shadow: none; background: white; color: black; }
-            #qr-result-card { display: block !important; margin-top: 50px; }
-            #display-name { color: black; font-size: 20px; }
-        }
+        .back-btn { position: absolute; left: 20px; text-decoration: none; color: white; font-size: 20px; }
     </style>
 </head>
 <body>
+
     <header>
-        <a href="menu.html" style="float: left; text-decoration: none; color: white; position: absolute; left: 20px; font-size: 20px;">⬅️</a>
-        <img src="semsira.png" alt="Logo" class="logo-small">
-        <span style="font-weight: 600; margin-left: 10px;">Pendaftaran Murid</span>
+        <a href="nfctest.html" class="back-btn">⬅️</a>
+        <span style="font-weight: 600;">Pendaftaran Murid NFC</span>
     </header>
 
     <div class="container">
         <div class="card">
-            <h3>Maklumat Murid</h3>
-            <input type="text" id="name" placeholder="Nama Penuh (Huruf Besar)" required>
-            <input type="text" id="ic" placeholder="Nombor IC (Contoh: 05010102XXXX)" required>
+            <h3>Langkah 1: Imbas Kad</h3>
+            <p id="status">Tekan butang di bawah dan dekatkan kad</p>
+            <button class="btn btn-nfc" onclick="startNfcScan()">🔍 SCAN NFC SERIES CODE</button>
             
-            <select id="class" required>
-                <option value="">Pilih Kelas</option>
+            <label>NFC Series Code (Auto-fill)</label>
+            <input type="text" id="nfcID" placeholder="Kod siri akan muncul di sini" readonly style="color: #38bdf8; font-weight: bold;">
+        </div>
+
+        <div class="card">
+            <h3>Langkah 2: Maklumat Peribadi</h3>
+            
+            <label>Nama Penuh (Huruf Besar)</label>
+            <input type="text" id="name" placeholder="NAMA MURID">
+
+            <label>Nombor IC</label>
+            <input type="text" id="ic" placeholder="CONTOH: 05010102XXXX">
+
+            <label>Pilih Kelas</label>
+            <select id="class">
+                <option value="">-- Sila Pilih --</option>
                 <option value="SUMAYYAH">SUMAYYAH</option>
                 <option value="SARAH">SARAH</option>
                 <option value="KHADIJAH">KHADIJAH</option>
@@ -137,74 +134,94 @@
                 <option value="FATIMAH">FATIMAH</option>
                 <option value="ZAINAB">ZAINAB</option>
                 <option value="RUQAYYAH">RUQAYYAH</option>
-                <option value="UMMU KALSOM">UMMU KALSOM</option> </select>
+                <option value="UMMU KALSOM">UMMU KALSOM</option>
+            </select>
 
-            <select id="gender" required>
-                <option value="">Jantina</option>
+            <label>Jantina</label>
+            <select id="gender">
+                <option value="">-- Sila Pilih --</option>
                 <option value="Lelaki">Lelaki</option>
                 <option value="Perempuan">Perempuan</option>
             </select>
-            <button class="btn btn-blue" onclick="generateAndSave()" style="width:100%; margin-top:10px;">💾 SIMPAN & JANA QR</button>
-        </div>
 
-        <div id="qr-result-card" class="card" style="display:none; text-align: center;">
-            <h4>QR Code Murid</h4>
-            <div id="qrcode-container" style="margin: 20px 0;">
-                <div id="qrcode"></div>
-            </div>
-            <p id="display-name" style="font-weight: bold; margin-bottom: 20px; font-size: 18px;"></p>
-            <button class="btn btn-green" onclick="window.print()" style="width: 100%;">🖨️ CETAK QR CODE</button>
+            <button class="btn btn-save" onclick="saveToFirebase()">💾 SIMPAN REKOD</button>
         </div>
     </div>
 
-    <script type="module">
-        import { db } from './js/firebase-config.js';
-        import { doc, setDoc } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-firestore.js";
+    <audio id="beep" src="beep.mp3" preload="auto"></audio>
 
-        window.generateAndSave = async () => {
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-app.js";
+        import { getFirestore, doc, setDoc } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyCdKtcJseBEcR5CXapiAmVb8TvOw30rN1Q",
+            authDomain: "semsiraf6kehadiran.firebaseapp.com",
+            projectId: "semsiraf6kehadiran",
+            storageBucket: "semsiraf6kehadiran.firebasestorage.app",
+            messagingSenderId: "410598658230",
+            appId: "1:410598658230:web:911046bf7a8d36260c9617"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        const beep = document.getElementById('beep');
+
+        // NFC 扫描逻辑
+        window.startNfcScan = async () => {
+            if ('NDEFReader' in window) {
+                try {
+                    const ndef = new NDEFReader();
+                    await ndef.scan();
+                    document.getElementById('status').innerText = "📳 Sila dekatkan kad NFC...";
+                    
+                    // 预解锁音频
+                    beep.play().then(() => { beep.pause(); beep.currentTime = 0; });
+
+                    ndef.addEventListener("reading", ({ serialNumber }) => {
+                        beep.currentTime = 0;
+                        beep.play().catch(()=>{});
+                        
+                        document.getElementById('nfcID').value = serialNumber;
+                        document.getElementById('status').innerText = "✅ Berjaya! Kod: " + serialNumber;
+                    });
+                } catch (error) {
+                    alert("Ralat NFC: " + error.message);
+                }
+            } else {
+                alert("Browser tidak menyokong NFC. Guna Chrome di Android.");
+            }
+        };
+
+        // 保存到 Firebase
+        window.saveToFirebase = async () => {
+            const nfcCode = document.getElementById('nfcID').value;
             const name = document.getElementById('name').value.toUpperCase();
             const ic = document.getElementById('ic').value;
             const kelas = document.getElementById('class').value;
             const gender = document.getElementById('gender').value;
 
-            if(!name || !ic || !kelas || !gender) {
-                alert("Sila isi semua maklumat!");
-                return;
-            }
-
-            const studentData = { 
-                name: name, 
-                ic: ic, 
-                kelas: kelas, 
-                gender: gender 
-            };
-            
-            const qrString = JSON.stringify(studentData);
+            if (!nfcCode) return alert("Sila scan kad NFC dahulu!");
+            if (!name || !ic || !kelas || !gender) return alert("Sila isi semua maklumat!");
 
             try {
-                await setDoc(doc(db, "students", ic), studentData);
-                
-                document.getElementById('qrcode').innerHTML = "";
-                new QRCode(document.getElementById("qrcode"), {
-                    text: qrString,
-                    width: 200,
-                    height: 200,
-                    colorDark : "#000000",
-                    colorLight : "#ffffff",
-                    correctLevel : QRCode.CorrectLevel.H
+                // 使用 NFC Series Code 作为文档 ID
+                await setDoc(doc(db, "students", nfcCode), {
+                    nfcSeries: nfcCode,
+                    name: name,
+                    ic: ic,
+                    kelas: kelas,
+                    gender: gender,
+                    timestamp: new Date()
                 });
 
-                document.getElementById('display-name').innerText = name;
-                document.getElementById('qr-result-card').style.display = "block";
-                
-                document.getElementById('qr-result-card').scrollIntoView({ behavior: 'smooth' });
-                
-                alert("Data berjaya disimpan dan QR Code telah dijana!");
+                alert("Rekod Berjaya Disimpan!");
+                location.href = 'nfctest.html';
             } catch (e) {
-                console.error("Ralat simpan data: ", e);
-                alert("Ralat sistem: Gagal menyimpan data.");
+                console.error(e);
+                alert("Gagal simpan rekod.");
             }
-        }
+        };
     </script>
 </body>
 </html>
