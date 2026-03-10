@@ -40,7 +40,7 @@
         .status-lewat { color: #f97316 !important; }
         .status-tidak { color: #ef4444 !important; font-weight: bold; }
 
-        /* BUTANG */
+        /* BUTTONS */
         .btn-group { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 20px; }
         .btn { border: none; padding: 12px; border-radius: 12px; font-weight: 600; cursor: pointer; transition: 0.3s; font-size: 13px; display: flex; align-items: center; justify-content: center; gap: 8px; }
         .btn-blue { background: #0284c7; color: white; }
@@ -48,14 +48,19 @@
         .btn-red { background: rgba(239, 68, 68, 0.1); color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.2); }
         .full-width { grid-column: span 2; }
 
-        /* FORMAT CETAKAN RASMI */
+        /* 打印格式优化 */
         #print-header, #print-footer { display: none; }
 
         @media print {
-            @page { margin: 1cm; size: auto; } /* Membuang header/footer pelayar (tarikh & URL) */
+            /* 核心修改：强制隐藏浏览器自带的页眉页脚 */
+            @page { 
+                margin: 0.5cm; 
+                size: auto; 
+            }
             
-            header, .btn-group, .back-link, .btn-red, .modal, #p-nfc-display, #qrcode-outer { display: none !important; }
             body { background: white; color: black; padding: 0; }
+            header, .btn-group, .back-link, .btn-red, .modal, #p-nfc-display, #qrcode-outer { display: none !important; }
+            
             .container { max-width: 100%; padding: 0; }
             .card { background: white; border: none; box-shadow: none; padding: 10px; color: black; }
             
@@ -65,24 +70,24 @@
             }
             .print-logo { width: 70px; margin-right: 20px; }
             .print-title { text-align: left; }
-            .print-title h1 { margin: 0; font-size: 18px; }
-            .print-title p { margin: 0; font-size: 12px; }
+            .print-title h1 { margin: 0; font-size: 18px; color: black; }
+            .print-title p { margin: 0; font-size: 12px; color: black; }
 
             .student-info-grid { 
                 border: 1px solid #000; padding: 15px; background: #f9f9f9; 
                 grid-template-columns: 1fr 1fr; margin-bottom: 20px;
             }
-            .info-item b { color: #000; }
+            .info-item b { color: black !important; }
             .record-item { border-bottom: 1px solid #ddd; color: black; }
             
-            /* Footer Cetakan (Muka Surat) */
+            /* 自定义页脚显示 1/1 */
             #print-footer { 
                 display: block; position: fixed; bottom: 0; width: 100%; 
-                text-align: center; font-size: 10px; border-top: 1px solid #ccc; padding-top: 5px; 
+                text-align: center; font-size: 10px; padding: 10px 0;
             }
         }
 
-        /* Modal */
+        /* Modal Simple */
         .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); }
         .modal-content { background: #1e293b; margin: 15% auto; padding: 20px; border-radius: 15px; width: 80%; max-width: 350px; }
         .modal-content input, .modal-content select { width: 100%; padding: 10px; margin: 10px 0; border-radius: 8px; border: 1px solid #334155; background: #0f172a; color: white; box-sizing: border-box; }
@@ -114,7 +119,7 @@
                 <div class="info-item"><b>No. Kad Pengenalan</b><span id="p-ic">-</span></div>
                 <div class="info-item"><b>Kelas</b><span id="p-class">-</span></div>
                 <div class="info-item"><b>Jantina</b><span id="p-gender">-</span></div>
-                <div class="info-item"><b>Status Murid</b><span>AKTIF</span></div>
+                <div class="info-item"><b>Status Murid</b><span>Aktif</span></div>
             </div>
             <div id="p-nfc-display" style="font-size: 10px; color: #64748b; margin-top: 15px; font-family: monospace;">ID KAD: -</div>
         </div>
@@ -140,9 +145,7 @@
         </div>
     </div>
 
-    <div id="print-footer">
-        Muka Surat 1/1
-    </div>
+    <div id="print-footer">1/1</div>
 
     <div id="editModal" class="modal">
         <div class="modal-content">
@@ -210,13 +213,9 @@
 
                     const monthNames = ["Januari", "Februari", "Mac", "April", "Mei", "Jun", "Julai", "Ogos", "September", "Oktober", "November", "Disember"];
                     const now = new Date();
-                    document.getElementById('print-date-range').innerText = `Bagi Bulan: ${monthNames[now.getMonth()]} ${now.getFullYear()}`;
+                    document.getElementById('print-date-range').innerText = `Bulan: ${monthNames[now.getMonth()]} ${now.getFullYear()}`;
 
                     loadAttendance(data.ic);
-                    
-                    // Button Actions
-                    document.getElementById('deleteBtn').onclick = () => deleteStudent(currentDocRef);
-                    document.getElementById('saveEditBtn').onclick = () => saveUpdate(currentDocRef);
                 }
             } catch (e) { console.error(e); }
         }
@@ -267,27 +266,7 @@
             document.getElementById('count-tidak').innerText = c_t;
         }
 
-        async function saveUpdate(docRef) {
-            const name = document.getElementById('edit-name').value.toUpperCase();
-            const kelas = document.getElementById('edit-class').value;
-            const cardID = document.getElementById('edit-nfc').value;
-            await updateDoc(docRef, { name, kelas, cardID });
-            alert("Profil berjaya dikemaskini!");
-            location.reload();
-        }
-
-        async function deleteStudent(docRef) {
-            if (confirm("Adakah anda pasti mahu menghapus rekod murid ini?")) {
-                await deleteDoc(docRef);
-                window.location.href = "index.html";
-            }
-        }
-
-        window.openModal = () => {
-            document.getElementById('edit-name').value = document.getElementById('p-name').innerText;
-            document.getElementById('edit-class').value = document.getElementById('p-class').innerText;
-            document.getElementById('editModal').style.display = 'block';
-        };
+        window.openModal = () => document.getElementById('editModal').style.display = 'block';
         window.closeModal = () => document.getElementById('editModal').style.display = 'none';
 
         window.onload = loadProfile;
