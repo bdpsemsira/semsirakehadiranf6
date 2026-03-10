@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="ms">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Register Student - NFC</title>
+    <style>
+        body { background: #020617; color: white; font-family: sans-serif; padding: 20px; text-align: center; }
+        input { width: 100%; padding: 15px; margin: 10px 0; border-radius: 10px; border: 1px solid #334155; background: #0f172a; color: white; box-sizing: border-box; font-size: 16px; }
+        .btn { width: 100%; padding: 15px; border-radius: 10px; border: none; font-weight: bold; cursor: pointer; margin-top: 10px; font-size: 16px; }
+        #status { color: #38bdf8; margin: 15px 0; min-height: 20px; font-size: 14px; }
+    </style>
+</head>
+<body>
+    <div style="text-align: left;"><button onclick="location.href='nfctest.html'" style="background:none; border:none; color:white; font-size:20px;">⬅️</button></div>
+    <h2>Register Student</h2>
+    
+    <div id="status">Sila klik butang di bawah untuk scan kad</div>
+    
+    <button class="btn" style="background:#38bdf8; color:white;" onclick="startNfcScan()">1. SCAN NFC CARD</button>
+    
+    <input type="text" id="nfcID" placeholder="NFC Serial Number" readonly style="color:#94a3b8;">
+    <input type="text" id="stuName" placeholder="Nama Murid">
+    <input type="text" id="stuClass" placeholder="Kelas">
+    
+    <button class="btn" style="background:#10b981; color:white;" onclick="uploadData()">4. UPLOAD TO FIREBASE</button>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-app.js";
+        import { getFirestore, doc, setDoc } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyCdKtcJseBEcR5CXapiAmVb8TvOw30rN1Q",
+            authDomain: "semsiraf6kehadiran.firebaseapp.com",
+            projectId: "semsiraf6kehadiran",
+            storageBucket: "semsiraf6kehadiran.firebasestorage.app",
+            messagingSenderId: "410598658230",
+            appId: "1:410598658230:web:911046bf7a8d36260c9617"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        window.startNfcScan = async () => {
+            if ('NDEFReader' in window) {
+                try {
+                    const ndef = new NDEFReader();
+                    await ndef.scan();
+                    document.getElementById('status').innerText = "📳 Sila dekatkan kad ke belakang telefon...";
+                    
+                    ndef.addEventListener("reading", ({ serialNumber }) => {
+                        document.getElementById('nfcID').value = serialNumber;
+                        document.getElementById('status').innerText = "✅ Kad dikesan!";
+                    });
+                } catch (error) { alert("Error: " + error); }
+            } else { alert("Browser anda tidak sokong NFC."); }
+        };
+
+        window.uploadData = async () => {
+            const id = document.getElementById('nfcID').value;
+            const name = document.getElementById('stuName').value;
+            const cls = document.getElementById('stuClass').value;
+
+            if(!id || !name || !cls) return alert("Sila lengkapkan maklumat!");
+
+            try {
+                await setDoc(doc(db, "students", id), {
+                    name: name,
+                    kelas: cls,
+                    timestamp: new Date()
+                });
+                alert("Data Berjaya Disimpan!");
+                location.href = 'nfctest.html';
+            } catch (e) { alert("Gagal simpan: " + e.message); }
+        };
+    </script>
+</body>
+</html>
