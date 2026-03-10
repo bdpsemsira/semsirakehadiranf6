@@ -5,30 +5,47 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Register Student - NFC</title>
     <style>
-        body { background: #020617; color: white; font-family: sans-serif; padding: 20px; text-align: center; }
+        body { background: #020617; color: white; font-family: sans-serif; padding: 20px; text-align: center; margin: 0; }
+        .container { max-width: 400px; margin: 0 auto; }
         input { width: 100%; padding: 15px; margin: 10px 0; border-radius: 10px; border: 1px solid #334155; background: #0f172a; color: white; box-sizing: border-box; font-size: 16px; }
-        .btn { width: 100%; padding: 15px; border-radius: 10px; border: none; font-weight: bold; cursor: pointer; margin-top: 10px; font-size: 16px; }
-        #status { color: #38bdf8; margin: 15px 0; min-height: 20px; font-size: 14px; }
+        .btn { width: 100%; padding: 15px; border-radius: 10px; border: none; font-weight: bold; cursor: pointer; margin-top: 10px; font-size: 16px; transition: 0.3s; }
+        .btn-nfc { background: #38bdf8; color: white; box-shadow: 0 0 15px rgba(56, 189, 248, 0.3); }
+        .btn-upload { background: #10b981; color: white; margin-top: 20px; }
+        #status { color: #38bdf8; margin: 15px 0; min-height: 20px; font-size: 14px; font-weight: bold; }
+        .header-bar { text-align: left; padding: 10px 0; }
     </style>
 </head>
 <body>
-    <div style="text-align: left;"><button onclick="location.href='nfctest.html'" style="background:none; border:none; color:white; font-size:20px;">⬅️</button></div>
-    <h2>Register Student</h2>
-    
-    <div id="status">Sila klik butang di bawah untuk scan kad</div>
-    
-    <button class="btn" style="background:#38bdf8; color:white;" onclick="startNfcScan()">1. SCAN NFC CARD</button>
-    
-    <input type="text" id="nfcID" placeholder="NFC Serial Number" readonly style="color:#94a3b8;">
-    <input type="text" id="stuName" placeholder="Nama Murid">
-    <input type="text" id="stuClass" placeholder="Kelas">
-    
-    <button class="btn" style="background:#10b981; color:white;" onclick="uploadData()">4. UPLOAD TO FIREBASE</button>
+    <div class="container">
+        <div class="header-bar">
+            <button onclick="location.href='nfctest.html'" style="background:none; border:none; color:white; font-size:24px; cursor:pointer;">⬅️</button>
+        </div>
+        
+        <h2>Daftar Murid Baru</h2>
+        
+        <div id="status">Sila klik butang Biru untuk mula</div>
+        
+        <button class="btn btn-nfc" onclick="handleNfcActivation()">1. AKTIFKAN & SCAN KAD</button>
+        
+        <div style="margin-top: 20px; text-align: left;">
+            <label style="font-size: 12px; color: #94a3b8; margin-left: 5px;">ID Kad (Autofill)</label>
+            <input type="text" id="nfcID" placeholder="NFC Serial Number" readonly>
+            
+            <label style="font-size: 12px; color: #94a3b8; margin-left: 5px;">Maklumat Murid</label>
+            <input type="text" id="stuName" placeholder="Nama Penuh Murid">
+            <input type="text" id="stuClass" placeholder="Kelas (Contoh: 6 ATOM)">
+        </div>
+        
+        <button class="btn btn-upload" onclick="uploadData()">4. SIMPAN KE FIREBASE</button>
+    </div>
+
+    <audio id="beep" src="beep.mp3" preload="auto"></audio>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-app.js";
         import { getFirestore, doc, setDoc } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-firestore.js";
 
+        // 你的 Firebase 配置
         const firebaseConfig = {
             apiKey: "AIzaSyCdKtcJseBEcR5CXapiAmVb8TvOw30rN1Q",
             authDomain: "semsiraf6kehadiran.firebaseapp.com",
@@ -40,38 +57,73 @@
 
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
+        const beep = document.getElementById('beep');
 
-        window.startNfcScan = async () => {
+        // 核心：处理 NFC 激活和扫描
+        window.handleNfcActivation = async () => {
             if ('NDEFReader' in window) {
                 try {
                     const ndef = new NDEFReader();
+                    // 1. 立即请求扫描权限（由点击触发）
                     await ndef.scan();
-                    document.getElementById('status').innerText = "📳 Sila dekatkan kad ke belakang telefon...";
                     
+                    document.getElementById('status').innerText = "📳 Sila dekatkan kad ke belakang telefon...";
+                    document.getElementById('status').style.color = "#fbbf24"; // 橙色提示等待中
+                    
+                    // 2. 同时解锁音频
+                    beep.play().then(() => { beep.pause(); beep.currentTime = 0; }).catch(e => console.log("Audio unlock fail"));
+
                     ndef.addEventListener("reading", ({ serialNumber }) => {
+                        // 扫描成功反馈
+                        beep.currentTime = 0;
+                        beep.play().catch(()=>{});
+                        
                         document.getElementById('nfcID').value = serialNumber;
-                        document.getElementById('status').innerText = "✅ Kad dikesan!";
+                        document.getElementById('status').innerText = "✅ Kad Dikesan: " + serialNumber;
+                        document.getElementById('status').style.color = "#10b981"; // 绿色提示成功
                     });
-                } catch (error) { alert("Error: " + error); }
-            } else { alert("Browser anda tidak sokong NFC."); }
+
+                    // 错误监听
+                    ndef.addEventListener("readingerror", () => {
+                        document.getElementById('status').innerText = "❌ Gagal membaca kad. Cuba lagi.";
+                        document.getElementById('status').style.color = "#f43f5e";
+                    });
+
+                } catch (error) {
+                    console.error(error);
+                    if (error.name === "NotAllowedError") {
+                        alert("Akses NFC ditolak. Sila benarkan NFC dalam tetapan Chrome.");
+                    } else {
+                        alert("Error: " + error.message);
+                    }
+                }
+            } else {
+                alert("Browser tidak menyokong NFC. Sila gunakan Chrome pada Android.");
+            }
         };
 
+        // 上传数据
         window.uploadData = async () => {
             const id = document.getElementById('nfcID').value;
             const name = document.getElementById('stuName').value;
             const cls = document.getElementById('stuClass').value;
 
-            if(!id || !name || !cls) return alert("Sila lengkapkan maklumat!");
+            if(!id) return alert("Sila scan kad NFC terlebih dahulu!");
+            if(!name || !cls) return alert("Sila masukkan Nama dan Kelas!");
 
             try {
+                document.getElementById('status').innerText = "⌛ Menghantar data...";
                 await setDoc(doc(db, "students", id), {
-                    name: name,
-                    kelas: cls,
-                    timestamp: new Date()
+                    name: name.toUpperCase(),
+                    kelas: cls.toUpperCase(),
+                    updatedAt: new Date()
                 });
-                alert("Data Berjaya Disimpan!");
+                alert("Pendaftaran Berjaya!");
                 location.href = 'nfctest.html';
-            } catch (e) { alert("Gagal simpan: " + e.message); }
+            } catch (e) {
+                alert("Gagal simpan: " + e.message);
+                document.getElementById('status').innerText = "❌ Ralat Firebase.";
+            }
         };
     </script>
 </body>
