@@ -9,8 +9,23 @@
     <style>
         /* 网页端 UI - 深色模式 */
         body { background-color: #0f172a; background-image: radial-gradient(circle at top right, #1e293b, #0f172a); color: #f1f5f9; margin: 0; font-family: 'Poppins', sans-serif; min-height: 100vh; }
-        header { background: #1e293b; border-bottom: 1px solid rgba(255, 255, 255, 0.05); padding: 15px; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 15px rgba(0,0,0,0.2); }
-        .logo-small { width: 35px; }
+        
+        header { 
+            background: #1e293b; 
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05); 
+            padding: 15px 25px; 
+            display: flex; 
+            align-items: center; 
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2); 
+        }
+
+        .header-title {
+            flex-grow: 1;
+            text-align: right; /* 标题贴着右边 */
+            font-weight: 600;
+        }
+
+        .logo-small { width: 35px; margin-right: 15px; }
         .container { padding: 20px; max-width: 500px; margin: 0 auto; }
         .card { background: #1e293b; border-radius: 20px; padding: 25px; border: 1px solid rgba(255, 255, 255, 0.05); box-shadow: 0 10px 25px rgba(0,0,0,0.2); margin-bottom: 20px; text-align: center; }
         #qrcode-outer { background: white; padding: 15px; border-radius: 15px; display: inline-block; margin: 15px 0; }
@@ -18,21 +33,26 @@
         h4 { color: #38bdf8; border-bottom: 1px solid #334155; padding-bottom: 10px; text-align: left; }
         .info-p { margin: 5px 0; color: #94a3b8; font-size: 14px; }
         .highlight-ic { font-weight: bold; color: #38bdf8; font-size: 16px; }
+        
+        /* 出席记录列表样式 */
         .record-item { display: flex; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid rgba(255, 255, 255, 0.05); font-size: 14px; }
+        .rec-date { color: #f1f5f9; }
+        .rec-time { color: #94a3b8; font-size: 12px; margin-left: 8px; }
+
         .btn-group { display: flex; flex-direction: column; gap: 10px; margin-top: 20px; }
         .btn { border: none; padding: 15px; border-radius: 12px; font-weight: 600; cursor: pointer; transition: 0.3s; }
         .btn-blue { background: linear-gradient(135deg, #38bdf8 0%, #0284c7 100%); color: white; }
         .btn-red { background: rgba(239, 68, 68, 0.1); color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.2); }
-        .back-link { position: absolute; left: 20px; text-decoration: none; color: white; font-size: 20px; }
+        .back-link { text-decoration: none; color: white; font-size: 20px; margin-right: 10px; }
 
         /* 打印/PDF 专用样式 */
         @media print {
-            body { background: white !important; color: black !important; }
+            @page { margin: 1cm; } /* 减少页边距防止出现网址 */
+            html, body { background: white !important; color: black !important; }
             header, .btn-group, .back-link, #qrcode-outer, .btn-red { display: none !important; }
             .container { max-width: 100%; padding: 0; }
             .card { background: white !important; border: none !important; box-shadow: none !important; text-align: left !important; padding: 10px 0; }
             
-            /* 学校页眉显示 */
             #print-header { display: flex !important; flex-direction: column; align-items: center; border-bottom: 2px solid black; padding-bottom: 10px; margin-bottom: 20px; }
             #print-logo { width: 80px; height: auto; margin-bottom: 10px; }
             #print-title { font-size: 18px; font-weight: bold; text-align: center; color: black; }
@@ -41,10 +61,10 @@
             h4 { color: black !important; border-bottom: 1px solid black !important; }
             .info-p, .highlight-ic { color: black !important; font-size: 12px; }
             .record-item { border-bottom: 1px solid #ddd !important; color: black !important; }
-            #summary-box { display: block !important; margin-top: 15px; border: 1px solid black; padding: 10px; }
+            .rec-time { color: #555 !important; }
+            #summary-box { display: block !important; margin-top: 15px; border: 1px solid black; padding: 10px; color: black; }
         }
 
-        /* 默认隐藏打印页眉和统计框 */
         #print-header, #summary-box { display: none; }
     </style>
 </head>
@@ -57,7 +77,7 @@
     <header>
         <a href="javascript:history.back()" class="back-link">⬅️</a>
         <img src="semsira.png" alt="Logo" class="logo-small">
-        <span style="font-weight: 600; margin-left: 10px;">Profil Murid</span>
+        <span class="header-title">Profil Murid - SEMSIRA</span>
     </header>
 
     <div class="container">
@@ -114,7 +134,6 @@
                 let data = null;
                 let finalDocRef = null;
 
-                // 优先查找 NFC ID，其次查找 IC
                 const docRef = doc(db, "students", studentID);
                 const docSnap = await getDoc(docRef);
 
@@ -136,7 +155,6 @@
                     document.getElementById('p-class').innerText = `Kelas: ${data.kelas}`;
                     document.getElementById('p-gender').innerText = `Jantina: ${data.gender}`;
                     
-                    // 仅在网页端显示预览用的二维码
                     new QRCode(document.getElementById("qrcode"), {
                         text: JSON.stringify(data),
                         width: 150, height: 150
@@ -156,34 +174,36 @@
             const historyDiv = document.getElementById('attendanceHistory');
             historyDiv.innerHTML = "";
 
-            let countHadir = 0;
-            let countLewat = 0;
-            let countTidak = 0;
+            let countHadir = 0, countLewat = 0, countTidak = 0;
 
             if (snap.empty) {
-                historyDiv.innerHTML = "<p style='text-align:center; color:#64748b;'>Tiada rekod kehadiran.</p>";
+                historyDiv.innerHTML = "<p style='text-align:center; color:#64748b;'>Tiada rekod.</p>";
                 return;
             }
 
-            // 按日期倒序排列数据
             const sortedDocs = snap.docs.sort((a, b) => b.id.localeCompare(a.id));
 
             sortedDocs.forEach(doc => {
                 const res = doc.data();
                 const status = res.status;
-                
-                // 统计次数
+                const time = res.time || "--:--"; // 获取时间字段
+
                 if (status === "Hadir") countHadir++;
                 else if (status === "Lewat") countLewat++;
                 else if (status === "Tidak Hadir") countTidak++;
 
                 const div = document.createElement('div');
                 div.className = "record-item";
-                div.innerHTML = `<span>${doc.id.split('_')[0]}</span> <b>${status}</b>`;
+                div.innerHTML = `
+                    <span class="rec-date">
+                        ${doc.id.split('_')[0]} 
+                        <span class="rec-time">${time}</span>
+                    </span> 
+                    <b>${status}</b>
+                `;
                 historyDiv.appendChild(div);
             });
 
-            // 更新总结框
             document.getElementById('count-hadir').innerText = countHadir;
             document.getElementById('count-lewat').innerText = countLewat;
             document.getElementById('count-tidak').innerText = countTidak;
