@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>NFC Attendance - SEMSIRA</title>
     <style>
-        /* UI UPGRADE - iOS GLASSMORPHISM */
+        /* UI UPGRADE - iOS GLASSMORPHISM (RETAINED) */
         body { 
             background: #020617; 
             background-image: radial-gradient(circle at 50% -20%, #1e293b, #020617);
@@ -19,10 +19,9 @@
             justify-content: center;
             height: 100vh; 
             overflow: hidden;
-            user-select: none; /* 防止误触选中文字 */
+            user-select: none;
         }
         
-        /* 启动遮罩层 */
         #start-overlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(2, 6, 23, 0.95); 
@@ -34,7 +33,6 @@
             transition: 0.5s ease;
         }
 
-        /* 结果卡片 - 极致毛玻璃 */
         .result-box { 
             background: rgba(255, 255, 255, 0.05); 
             backdrop-filter: blur(30px);
@@ -57,11 +55,9 @@
         .res-error { border: 2px solid rgba(239, 68, 68, 0.5) !important; }
         .res-success { border: 2px solid rgba(34, 197, 94, 0.5) !important; }
         
-        /* 扫描动画 */
         .loader { animation: pulse 1.5s infinite; color: #38bdf8; }
         @keyframes pulse { 0%, 100% { opacity: 0.4; transform: scale(0.95); } 50% { opacity: 1; transform: scale(1.05); } }
 
-        /* 隐藏的返回按钮 */
         .btn-back { 
             position: fixed; top: 20px; left: 20px; 
             background: rgba(255,255,255,0.15); 
@@ -70,7 +66,7 @@
             border: 1px solid rgba(255,255,255,0.1);
             color: white; padding: 12px 20px; border-radius: 15px; 
             cursor: pointer; z-index: 10000; 
-            display: none; /* 初始隐藏 */
+            display: none;
             font-weight: 600;
             transition: 0.3s;
         }
@@ -78,7 +74,6 @@
         .status-msg { font-weight: bold; margin-top: 15px; font-size: 1.2rem; }
         .time-label { font-size: 14px; color: #94a3b8; margin-top: 5px; }
 
-        /* 自动重置进度条 */
         .timer-bar {
             width: 0%; height: 4px; background: rgba(255,255,255,0.3);
             margin-top: 25px; border-radius: 2px; transition: width 3s linear;
@@ -133,19 +128,16 @@
         const beepS = document.getElementById('beepSuccess');
         const beepE = document.getElementById('beepError');
 
-        // 1. 自动隐藏/显示返回按钮功能 (双击屏幕)
         window.toggleBackButton = () => {
             const btn = document.getElementById('backBtn');
             if (btn.style.display === 'none' || btn.style.display === '') {
                 btn.style.display = 'block';
-                // 5秒后自动再次隐藏按钮
                 setTimeout(() => { btn.style.display = 'none'; }, 5000);
             } else {
                 btn.style.display = 'none';
             }
         };
 
-        // 2. NFC 激活
         window.activateNFC = async () => {
             if ('NDEFReader' in window) {
                 try {
@@ -162,9 +154,7 @@
             } else { alert("Sila gunakan Chrome di Android."); }
         };
 
-        // 3. 处理扫描结果
         async function handleScan(nfcId) {
-            // 清除之前的定时器（防止连续刷卡冲突）
             if(window.autoResetTimer) clearTimeout(window.autoResetTimer);
 
             document.getElementById('wait-ui').style.display = 'none';
@@ -173,7 +163,7 @@
             
             resultUI.style.display = 'block';
             resultUI.classList.remove('res-success', 'res-error');
-            progressBar.style.width = '0%'; // 重置进度条
+            progressBar.style.width = '0%'; 
             
             document.getElementById('resName').innerText = "Menyemak...";
 
@@ -197,11 +187,8 @@
                     document.getElementById('resID').innerText = "ID: " + nfcId;
                 }
 
-                // --- 4. 关键：3秒自动重置逻辑 ---
-                setTimeout(() => { progressBar.style.width = '100%'; }, 100); // 启动进度条动画
-                window.autoResetTimer = setTimeout(() => {
-                    resetUI();
-                }, 3000);
+                setTimeout(() => { progressBar.style.width = '100%'; }, 100); 
+                window.autoResetTimer = setTimeout(() => { resetUI(); }, 3000);
 
             } catch (e) {
                 console.error(e);
@@ -209,12 +196,17 @@
             }
         }
 
+        // --- 核心修复函数：获取本地日期 (YYYY-MM-DD) ---
+        function getLocalToday() {
+            return new Date().toLocaleDateString('en-CA'); 
+        }
+
         async function markAttendance(student) {
             const now = new Date();
-            const dateKey = now.toISOString().split('T')[0];
+            // 修复点：使用本地日期作为 Key，确保凌晨打卡不会跳到昨天
+            const dateKey = getLocalToday(); 
             const timeStr = now.toLocaleTimeString('ms-MY', { hour12: false, hour: '2-digit', minute: '2-digit' });
             
-            // 读取 Settings 里的延迟时间 (默认 07:35)
             const limit = localStorage.getItem('lateTimeLimit') || "07:35";
             const status = timeStr > limit ? "Lewat" : "Hadir";
             
