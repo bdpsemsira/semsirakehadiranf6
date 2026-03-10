@@ -8,72 +8,28 @@
     <script src="https://unpkg.com/html5-qrcode"></script>
     <style>
         body { background-color: #020617; color: #f1f5f9; margin: 0; font-family: 'Poppins', sans-serif; overflow: hidden; height: 100vh; }
-
-        header {
-            background: #1e293b; padding: 15px; display: flex; align-items: center; justify-content: space-between;
-            z-index: 1000; height: 60px; box-sizing: border-box; position: relative;
-        }
-
+        header { background: #1e293b; padding: 15px; display: flex; align-items: center; justify-content: space-between; z-index: 1000; height: 60px; box-sizing: border-box; position: relative; }
         .menu-btn { background: none; border: none; color: white; font-size: 24px; cursor: pointer; }
-
-        .dropdown-menu {
-            display: none; position: absolute; top: 60px; right: 15px;
-            background: #1e293b; border: 1px solid rgba(255,255,255,0.1);
-            border-radius: 12px; width: 220px; z-index: 2000; padding: 10px;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.5);
-        }
+        .dropdown-menu { display: none; position: absolute; top: 60px; right: 15px; background: #1e293b; border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; width: 220px; z-index: 2000; padding: 10px; box-shadow: 0 10px 25px rgba(0,0,0,0.5); }
         .dropdown-menu.show { display: block; }
-
         .scanner-container { position: relative; width: 100vw; height: calc(100vh - 60px); background: #000; overflow: hidden; }
-
-        /* 隐藏库自带的 UI，自定义视频样式 */
         #reader { width: 100% !important; height: 100% !important; border: none !important; }
-        #reader__scan_region, #reader__scan_region > div, #reader__dashboard { border: none !important; background: transparent !important; box-shadow: none !important; }
-        div[style*="border: 5px solid"], #reader__scan_region svg { display: none !important; }
         #reader video { object-fit: cover !important; width: 100% !important; height: 100% !important; }
-
-        /* 自定义扫描框 */
-        .qr-box {
-            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
-            width: 260px; height: 260px; border: 2px solid #38bdf8; border-radius: 30px;
-            box-shadow: 0 0 0 2000px rgba(0, 0, 0, 0.6); z-index: 50; pointer-events: none;
-            transition: border-color 0.3s;
-        }
-
+        .qr-box { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 260px; height: 260px; border: 2px solid #38bdf8; border-radius: 30px; box-shadow: 0 0 0 2000px rgba(0, 0, 0, 0.6); z-index: 50; pointer-events: none; }
         .qr-box.success { border-color: #10b981; border-width: 5px; }
-
-        .laser-line {
-            position: absolute; top: 5%; left: 10%; width: 80%; height: 2px;
-            background: #38bdf8; box-shadow: 0 0 15px #38bdf8;
-            animation: scanAnim 2.5s infinite ease-in-out;
-        }
-
+        .laser-line { position: absolute; top: 5%; left: 10%; width: 80%; height: 2px; background: #38bdf8; box-shadow: 0 0 15px #38bdf8; animation: scanAnim 2.5s infinite ease-in-out; }
         @keyframes scanAnim { 0%, 100% { top: 10%; opacity: 0; } 50% { top: 90%; opacity: 1; } }
-
-        /* 结果显示卡片 */
-        .result-card {
-            position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%);
-            width: 85%; max-width: 400px; background: #1e293b; border-radius: 20px;
-            padding: 25px; display: none; z-index: 3000; border-top: 5px solid #38bdf8; text-align: center;
-        }
-
+        .result-card { position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%); width: 85%; max-width: 400px; background: #1e293b; border-radius: 20px; padding: 25px; display: none; z-index: 3000; border-top: 5px solid #38bdf8; text-align: center; }
         #progress { width: 0%; height: 6px; background: #38bdf8; transition: width 3s linear; margin-top: 15px; border-radius: 10px; }
-
-        /* 初始启动层 */
-        #unlock-audio {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(15, 23, 42, 0.95); z-index: 9999;
-            display: flex; flex-direction: column; align-items: center; justify-content: center;
-            color: white; text-align: center; cursor: pointer;
-        }
+        #unlock-audio { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15, 23, 42, 0.95); z-index: 9999; display: flex; flex-direction: column; align-items: center; justify-content: center; color: white; cursor: pointer; }
     </style>
 </head>
 <body>
 
     <div id="unlock-audio" onclick="activateScanner()">
         <div style="font-size: 60px; margin-bottom: 20px;">🔔</div>
-        <h2 style="margin: 0;">Sila Klik untuk Mula</h2>
-        <p style="opacity: 0.8;">Ketuk skrin untuk aktifkan kamera & bunyi</p>
+        <h2>Sila Klik untuk Mula</h2>
+        <p>Aktifkan Kamera & Bunyi</p>
     </div>
 
     <header>
@@ -81,10 +37,7 @@
         <span style="font-weight: 600;">Attendance Scanner</span>
         <button class="menu-btn" onclick="toggleMenu()">⋮</button>
         <div id="dropMenu" class="dropdown-menu">
-            <div style="padding: 10px;">
-                <label style="font-size: 11px; color: #94a3b8;">KAMERA</label>
-                <select id="camSelect" onchange="changeCamera(this.value)" style="width:100%; background:#0f172a; color:white; border:1px solid #334155; padding:8px; border-radius:5px;"></select>
-            </div>
+            <select id="camSelect" onchange="changeCamera(this.value)" style="width:100%; background:#0f172a; color:white; border:1px solid #334155; padding:8px; border-radius:5px;"></select>
             <div style="padding: 10px; display: flex; justify-content: space-between; align-items: center;">
                 <span style="font-size: 13px;">Mirror View</span>
                 <input type="checkbox" id="mirrorCheck" onchange="toggleMirror(this.checked)">
@@ -98,15 +51,13 @@
     </div>
 
     <div id="result" class="result-card">
-        <h3 id="res-name" style="margin:0; text-transform: uppercase; font-size: 22px;">--</h3>
+        <h3 id="res-name" style="margin:0; text-transform: uppercase;">--</h3>
         <p id="res-class" style="margin:8px 0; color: #38bdf8; font-weight: 600;">--</p>
-        <p id="res-status-text" style="font-size: 14px;">Status: <span id="res-status">--</span></p>
+        <p id="res-status-text" style="font-size: 16px; font-weight: bold;">STATUS: <span id="res-status">--</span></p>
         <div style="background: rgba(255,255,255,0.1); border-radius: 10px;"><div id="progress"></div></div>
     </div>
 
-    <audio id="beepSound" preload="auto">
-        <source src="beep.mp3" type="audio/mpeg">
-    </audio>
+    <audio id="beepSound" preload="auto"><source src="beep.mp3" type="audio/mpeg"></audio>
 
     <script type="module">
         import { db } from './js/firebase-config.js';
@@ -145,15 +96,11 @@
                 const isMirror = localStorage.getItem('cameraMirror') === 'true';
                 document.getElementById('mirrorCheck').checked = isMirror;
 
-                // 优化扫描配置，提高识别率
-                const config = { 
-                    fps: 30, 
-                    qrbox: { width: 250, height: 250 },
-                    aspectRatio: 1.0 
-                };
-                const cameraId = localStorage.getItem('preferredCameraId') || { facingMode: "environment" };
-
-                await html5QrCode.start(cameraId, config, onScanSuccess);
+                await html5QrCode.start(
+                    localStorage.getItem('preferredCameraId') || { facingMode: "environment" },
+                    { fps: 20, qrbox: { width: 250, height: 250 } },
+                    onScanSuccess
+                );
                 
                 const video = document.querySelector('#reader video');
                 if(video) video.style.transform = isMirror ? "scaleX(-1)" : "scaleX(1)";
@@ -161,79 +108,82 @@
         }
 
         async function onScanSuccess(text) {
+            // 1. 停止扫描防止并发
             try { await html5QrCode.stop(); } catch(e) {}
             
             beep.currentTime = 0;
-            beep.play().catch(e => console.log("Audio play blocked"));
+            beep.play();
             box.classList.add('success');
 
             const now = new Date();
+            const dateStr = now.toISOString().split('T')[0]; // yyyy-mm-dd
             const timeStr = now.getHours().toString().padStart(2,'0') + ":" + now.getMinutes().toString().padStart(2,'0');
             const limit = localStorage.getItem('lateTimeLimit') || "07:35";
             const status = (timeStr > limit) ? "Lewat" : "Hadir";
 
-            let icClean = text.trim();
-            let studentData = { name: "PELAJAR", kelas: "-" };
+            let ic = text.trim();
+            let name = "PELAJAR";
+            let kelas = "-";
 
-            // 1. 兼容性逻辑：如果是 JSON 格式（旧版），先提取 IC
-            if (icClean.startsWith('{')) {
-                try {
-                    const parsed = JSON.parse(icClean);
-                    icClean = parsed.ic;
-                    studentData.name = parsed.name || "PELAJAR";
-                    studentData.kelas = parsed.kelas || parsed.class || "-";
-                } catch(e) { console.log("JSON Parse fail"); }
+            // 如果扫到的是旧版 JSON，解析出 IC
+            if (ic.startsWith('{')) {
+                try { 
+                    const p = JSON.parse(ic); 
+                    ic = p.ic; 
+                    name = p.name;
+                    kelas = p.kelas || p.class;
+                } catch(e) {}
             }
 
-            // 2. 显示临时 UI
-            const card = document.getElementById('result');
-            const bar = document.getElementById('progress');
-            document.getElementById('res-name').innerText = "Tunggu...";
-            card.style.display = "block";
-
             try {
-                // 3. 核心步骤：去数据库抓取实时资料（确保名字准确）
-                const studentDoc = await getDoc(doc(db, "students", icClean));
+                // 2. 从数据库获取学生真实信息
+                const studentDoc = await getDoc(doc(db, "students", ic));
                 if (studentDoc.exists()) {
-                    const d = studentDoc.data();
-                    studentData.name = d.name;
-                    studentData.kelas = d.kelas || d.class;
+                    name = studentDoc.data().name;
+                    kelas = studentDoc.data().kelas || studentDoc.data().class;
                 } else {
-                    // 如果库里没有，就显示扫到的内容
-                    studentData.name = "ID: " + icClean;
-                    studentData.kelas = "REKOD BARU";
+                    name = "ID: " + ic;
+                    kelas = "TIADA REKOD";
                 }
 
-                // 4. 更新 UI 最终结果
-                document.getElementById('res-name').innerText = studentData.name;
-                document.getElementById('res-class').innerText = studentData.kelas;
-                document.getElementById('res-status').innerText = status.toUpperCase();
-                document.getElementById('res-status').style.color = (status === "Hadir") ? "#10b981" : "#f43f5e";
-
-                // 5. 写入考勤记录到 Firebase
-                await setDoc(doc(db, "attendance", `${now.toISOString().split('T')[0]}_${icClean}`), {
-                    ic: icClean,
-                    name: studentData.name,
-                    kelas: studentData.kelas,
+                // 3. 【关键步】写入签到记录到 Firebase
+                // 路径：attendance / (日期_IC)
+                const attendanceRef = doc(db, "attendance", `${dateStr}_${ic}`);
+                await setDoc(attendanceRef, {
+                    ic: ic,
+                    name: name,
+                    kelas: kelas,
                     time: timeStr,
                     status: status,
                     timestamp: serverTimestamp()
                 });
 
+                console.log("Attendance recorded for:", name);
+
+                // 4. 更新 UI 显示
+                document.getElementById('res-name').innerText = name;
+                document.getElementById('res-class').innerText = kelas;
+                document.getElementById('res-status').innerText = status.toUpperCase() + " (" + timeStr + ")";
+                document.getElementById('res-status').style.color = (status === "Hadir") ? "#10b981" : "#f43f5e";
+
+                const card = document.getElementById('result');
+                const bar = document.getElementById('progress');
+                card.style.display = "block";
+                bar.style.transition = "none"; bar.style.width = "100%";
+                void bar.offsetWidth; 
+                bar.style.transition = "width 3s linear"; bar.style.width = "0%";
+
+                setTimeout(() => {
+                    card.style.display = "none";
+                    box.classList.remove('success');
+                    initScanner(); // 重新开始扫描
+                }, 3500);
+
             } catch (err) {
-                console.error("Firebase Error:", err);
-            }
-
-            // 进度条倒计时
-            bar.style.transition = "none"; bar.style.width = "100%";
-            void bar.offsetWidth; 
-            bar.style.transition = "width 3s linear"; bar.style.width = "0%";
-
-            setTimeout(() => {
-                card.style.display = "none";
-                box.classList.remove('success');
+                console.error("FIREBASE ERROR:", err);
+                alert("Gagal simpan! Sila semak internet/Firebase.");
                 initScanner();
-            }, 3000);
+            }
         }
     </script>
 </body>
