@@ -124,7 +124,6 @@
         #totalInfo {
             color: #94a3b8;
             font-weight: 500;
-            line-height: 1.6;
         }
     </style>
 </head>
@@ -141,7 +140,7 @@
             <div style="max-width: 220px; margin: 15px auto;">
                 <canvas id="attendanceChart"></canvas>
             </div>
-            <p id="totalInfo" style="text-align:center; font-size:12px; margin-top:10px;">Memuatkan statistik...</p>
+            <p id="totalInfo" style="text-align:center; font-size:12px; margin-top:10px;"></p>
         </div>
 
         <div class="card">
@@ -176,33 +175,14 @@
             await loadClassList();
         }
 
-        // --- 更新后的统计逻辑：包含逻辑生成的 Tidak Hadir ---
         async function loadStatistics() {
             const now = new Date();
-            const year = now.getFullYear();
-            const month = now.getMonth();
-            const todayDate = now.getDate();
-            const yearMonth = `${year}-${String(month + 1).padStart(2, '0')}`;
-            
-            // 1. 获取所有学生总数
-            const studentSnap = await getDocs(collection(db, "students"));
-            const totalStudents = studentSnap.size;
-
-            // 2. 计算本月至今的工作日天数 (跳过周日)
-            let workingDays = 0;
-            for (let i = 1; i <= todayDate; i++) {
-                const d = new Date(year, month, i);
-                if (d.getDay() !== 0) workingDays++; // 不计算周日
-            }
-
-            // 3. 应有的总签到次数 (学生人数 * 工作日天数)
-            const totalExpectedAttendance = totalStudents * workingDays;
-
-            // 4. 获取实际签到记录
-            const attendanceSnap = await getDocs(collection(db, "attendance"));
+            const yearMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+            const q = query(collection(db, "attendance"));
+            const querySnapshot = await getDocs(q);
             
             let hadir = 0, lewat = 0;
-            attendanceSnap.forEach((doc) => {
+            querySnapshot.forEach((doc) => {
                 if (doc.id.startsWith(yearMonth)) {
                     const data = doc.data();
                     if (data.status === "Hadir") hadir++;
@@ -210,48 +190,30 @@
                 }
             });
 
-            // 5. 剩下的就是 Tidak Hadir (逻辑生成)
-            let tidakHadir = totalExpectedAttendance - (hadir + lewat);
-            if (tidakHadir < 0) tidakHadir = 0; // 防止数据异常
-
-            updateChart(hadir, lewat, tidakHadir);
-            document.getElementById('totalInfo').innerHTML = `
-                Sesi Persekolahan (Bulan Ini): ${workingDays} Hari<br>
-                Hadir: ${hadir} | Lewat: ${lewat} | <span style="color:#ef4444">Tidak Hadir: ${tidakHadir}</span>
-            `;
+            updateChart(hadir, lewat);
+            document.getElementById('totalInfo').innerText = `Jumlah Rekod Bulan Ini: ${hadir + lewat}`;
         }
 
-        function updateChart(h, l, t) {
+        function updateChart(h, l) {
             const ctx = document.getElementById('attendanceChart').getContext('2d');
             if(myChart) myChart.destroy();
-            
             myChart = new Chart(ctx, {
                 type: 'doughnut',
                 data: {
-                    labels: ['Hadir', 'Lewat', 'Tidak Hadir'],
+                    labels: ['Hadir', 'Lewat'],
                     datasets: [{
-                        data: [h, l, t],
-                        backgroundColor: ['#10b981', '#f59e0b', '#ef4444'],
-                        borderWidth: 0,
-                        hoverOffset: 4
+                        data: [h, l],
+                        backgroundColor: ['#10b981', '#f59e0b'],
+                        borderWidth: 0
                     }]
                 },
-                options: { 
-                    cutout: '70%',
-                    plugins: { 
-                        legend: { 
-                            position: 'bottom',
-                            labels: { color: '#94a3b8', font: { family: 'Poppins', size: 10 } }
-                        } 
-                    } 
-                }
+                options: { cutout: '70%', plugins: { legend: { position: 'bottom', labels: { color: '#94a3b8' } } } }
             });
         }
 
         async function loadClassList() {
             const classListDiv = document.getElementById('classList');
             const classes = ["SUMAYYAH", "SARAH", "KHADIJAH", "AISHAH", "FATIMAH", "ZAINAB", "RUQAYYAH", "UMMU KALSOM"];
-            
             classListDiv.innerHTML = "";
             classes.forEach(className => {
                 const btn = document.createElement('a');
@@ -262,21 +224,25 @@
             });
         }
 
+        // --- 核心更新：专业格式的 PDF 生成逻辑 ---
         window.downloadReport = async (type) => {
             const { jsPDF } = window.jspdf;
-            const doc = new jsPDF();
+            const doc = new jsPDF('p', 'mm', 'a4'); // A4 比例
             const filterValue = type === 'month' ? document.getElementById('searchMonth').value : document.getElementById('searchDate').value;
 
             if(!filterValue) return alert("Sila pilih tarikh/bulan!");
 
-            // 获取所有学生，以便对照谁没签到
+            // 1. 获取所有学生（用于按班级排序和逻辑填充 Tidak Hadir）
             const studentSnap = await getDocs(collection(db, "students"));
-            const students = [];
+            let students = [];
             studentSnap.forEach(s => students.push(s.data()));
 
+            // 按班级名称排序
+            students.sort((a, b) => (a.kelas || a.class).localeCompare(b.kelas || b.class));
+
+            // 2. 获取考勤记录
             const q = query(collection(db, "attendance"));
             const attendanceSnap = await getDocs(q);
-            
             const attendanceMap = {};
             attendanceSnap.forEach(d => {
                 if (d.id.startsWith(filterValue)) {
@@ -284,46 +250,81 @@
                 }
             });
 
+            // 3. 构建表格数据并计算统计摘要
+            let statHadir = 0, statLewat = 0, statTidak = 0;
             const rows = [];
+
             students.forEach(s => {
                 const record = attendanceMap[s.ic];
-                if (type === 'day') {
-                    // 日报表逻辑：如果这天没记录，显示 Tidak Hadir
-                    rows.push([
-                        s.name, 
-                        s.kelas, 
-                        record ? record.time : "---", 
-                        record ? record.status : "Tidak Hadir"
-                    ]);
-                } else {
-                    // 月报表只列出已有的签到记录（避免数据量过大导致PDF崩溃）
-                    if (record) {
-                        rows.push([s.name, s.kelas, record.time, record.status]);
-                    }
-                }
+                const status = record ? record.status : "Tidak Hadir";
+                const time = record ? record.time : "---";
+                const className = s.kelas || s.class;
+
+                if (status === "Hadir") statHadir++;
+                else if (status === "Lewat") statLewat++;
+                else statTidak++;
+
+                rows.push([s.name, className, time, status]);
             });
 
-            if(rows.length === 0) return alert("Tiada data ditemui.");
-
-            doc.setFontSize(18);
-            doc.text(`LAPORAN KEHADIRAN SEMSIRA`, 14, 20);
-            doc.setFontSize(11);
-            doc.text(`${type === 'month' ? 'Bulan' : 'Tarikh'}: ${filterValue}`, 14, 28);
+            // 4. 绘制 PDF 头部 (Logo 和 标题)
+            // 注意：'semsira.png' 必须在同一目录下，且 jsPDF 支持图片需为 Base64 或已加载。
+            // 这里我们先绘制文字标题，模拟 Profil 里的 Header 格式
+            doc.setFillColor(30, 41, 59); // 深色背景
+            doc.rect(0, 0, 210, 40, 'F');
             
+            doc.setTextColor(255, 255, 255);
+            doc.setFontSize(20);
+            doc.setFont("helvetica", "bold");
+            doc.text("LAPORAN KEHADIRAN SEMSIRA", 105, 20, { align: "center" });
+            
+            doc.setFontSize(12);
+            doc.setFont("helvetica", "normal");
+            doc.text(`${type === 'month' ? 'LAPORAN BULANAN' : 'LAPORAN HARIAN'}: ${filterValue}`, 105, 30, { align: "center" });
+
+            // 5. 绘制统计摘要卡片
+            doc.setTextColor(0, 0, 0);
+            doc.setDrawColor(200, 200, 200);
+            doc.line(14, 45, 196, 45);
+            
+            doc.setFontSize(11);
+            doc.text(`RINGKASAN:`, 14, 55);
+            doc.setTextColor(34, 197, 94); // Green
+            doc.text(`Hadir: ${statHadir}`, 45, 55);
+            doc.setTextColor(245, 158, 11); // Orange
+            doc.text(`Lewat: ${statLewat}`, 85, 55);
+            doc.setTextColor(239, 68, 68); // Red
+            doc.text(`Tidak Hadir: ${statTidak}`, 125, 55);
+            doc.setTextColor(0, 0, 0);
+            doc.text(`Jumlah Murid: ${students.length}`, 165, 55);
+
+            // 6. 生成表格
             doc.autoTable({
                 head: [['Nama Murid', 'Kelas', 'Masa', 'Status']],
                 body: rows,
-                startY: 35,
+                startY: 65,
                 theme: 'striped',
-                headStyles: { fillColor: [2, 132, 199] },
+                headStyles: { fillColor: [2, 132, 199], halign: 'center' },
+                columnStyles: {
+                    0: { cellWidth: 80 }, // 名字宽一点
+                    1: { halign: 'center' },
+                    2: { halign: 'center' },
+                    3: { halign: 'center', fontStyle: 'bold' }
+                },
                 didDrawCell: (data) => {
+                    // 如果状态是 Tidak Hadir，把文字变成红色
                     if (data.section === 'body' && data.column.index === 3) {
                         if (data.cell.raw === "Tidak Hadir") {
                             doc.setTextColor(239, 68, 68);
+                        } else if (data.cell.raw === "Lewat") {
+                            doc.setTextColor(245, 158, 11);
+                        } else {
+                            doc.setTextColor(34, 197, 94);
                         }
                     }
                 }
             });
+
             doc.save(`Laporan_SEMSIRA_${filterValue}.pdf`);
         };
 
