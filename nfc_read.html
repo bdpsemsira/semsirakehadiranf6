@@ -7,7 +7,6 @@
     <style>
         body { background: #020617; color: white; font-family: sans-serif; text-align: center; padding: 20px; margin: 0; display: flex; flex-direction: column; height: 100vh; }
         
-        /* 启动界面遮罩 */
         #start-overlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(2, 6, 23, 0.95); z-index: 9999;
@@ -16,6 +15,7 @@
         }
 
         .result-box { background: #1e293b; padding: 30px; border-radius: 20px; margin-top: 50px; border-top: 5px solid #38bdf8; display: none; }
+        .res-error { border-top: 5px solid #ef4444 !important; }
         
         .loader { margin-top: 100px; animation: pulse 1.5s infinite; color: #38bdf8; }
         @keyframes pulse { 0%, 100% { opacity: 0.4; } 50% { opacity: 1; } }
@@ -31,7 +31,7 @@
         <p style="color: #38bdf8;">Sila klik di sini untuk aktifkan NFC</p>
     </div>
 
-    <button class="btn-back" onclick="location.href='nfctest.html'">⬅️</button>
+    <button class="btn-back" onclick="location.href='index.html'">⬅️</button>
     
     <div id="wait-ui" class="loader" style="display: none;">
         <div style="font-size: 60px;">📳</div>
@@ -49,7 +49,7 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-app.js";
-        import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-firestore.js";
+        import { getFirestore, collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyCdKtcJseBEcR5CXapiAmVb8TvOw30rN1Q",
@@ -64,56 +64,66 @@
         const db = getFirestore(app);
         const beep = document.getElementById('beep');
 
-        // 核心激活函数
         window.activateNFC = async () => {
             if ('NDEFReader' in window) {
                 try {
                     const ndef = new NDEFReader();
-                    // 此时用户刚刚点击，浏览器会允许弹出权限申请
                     await ndef.scan();
                     
-                    // 隐藏启动遮罩，显示扫描 UI
                     document.getElementById('start-overlay').style.display = 'none';
                     document.getElementById('wait-ui').style.display = 'block';
                     
-                    // 解锁音频
-                    beep.play().then(() => { beep.pause(); beep.currentTime = 0; });
+                    // 解锁声音
+                    beep.play().then(() => { beep.pause(); beep.currentTime = 0; }).catch(()=>{});
 
                     ndef.addEventListener("reading", async ({ serialNumber }) => {
+                        // 统一转为小写，确保与数据库匹配
+                        const standardizedID = serialNumber.toLowerCase();
+                        
                         beep.currentTime = 0;
                         beep.play().catch(()=>{});
-                        checkStudent(serialNumber);
+                        
+                        checkStudent(standardizedID);
                     });
 
                 } catch (error) {
-                    console.error(error);
-                    if (error.name === "NotAllowedError") {
-                        alert("Akses NFC ditolak. Sila benarkan dalam tetapan browser.");
-                    } else {
-                        alert("NFC Error: " + error.message);
-                    }
+                    alert("NFC Error: " + error.message);
                 }
             } else {
-                alert("Browser anda tidak menyokong Web NFC. Sila pastikan anda menggunakan Chrome di Android.");
+                alert("Sila gunakan Chrome di Android untuk NFC.");
             }
         };
 
-        async function checkStudent(id) {
-            const docRef = doc(db, "students", id);
-            const docSnap = await getDoc(docRef);
+        async function checkStudent(nfcId) {
+            // 核心修复：改用 query 搜索 cardID 字段，而不是直接找文档 ID
+            const q = query(collection(db, "students"), where("cardID", "==", nfcId));
+            
+            try {
+                const querySnapshot = await getDocs(q);
+                
+                document.getElementById('wait-ui').style.display = 'none';
+                const resultUI = document.getElementById('result-ui');
+                resultUI.style.display = 'block';
+                resultUI.classList.remove('res-error');
 
-            document.getElementById('wait-ui').style.display = 'none';
-            document.getElementById('result-ui').style.display = 'block';
-
-            if (docSnap.exists()) {
-                const data = docSnap.data();
-                document.getElementById('resName').innerText = data.name;
-                document.getElementById('resClass').innerText = data.kelas;
-                document.getElementById('resID').innerText = "NFC ID: " + id;
-            } else {
-                document.getElementById('resName').innerText = "KAD TIDAK BERDAFTAR";
-                document.getElementById('resClass').innerText = "Sila daftar kad dahulu";
-                document.getElementById('resID').innerText = "ID: " + id;
+                if (!querySnapshot.empty) {
+                    // 找到学生了
+                    const data = querySnapshot.docs[0].data();
+                    document.getElementById('resName').innerText = data.name;
+                    document.getElementById('resClass').innerText = data.kelas;
+                    document.getElementById('resID').innerText = "NFC ID: " + nfcId;
+                    
+                    // 这里可以添加签到逻辑（比如写入 attendance collection）
+                } else {
+                    // 没找到学生
+                    resultUI.classList.add('res-error');
+                    document.getElementById('resName').innerText = "KAD TIDAK BERDAFTAR";
+                    document.getElementById('resClass').innerText = "Sila daftar kad di Profil Murid";
+                    document.getElementById('resID').innerText = "ID: " + nfcId;
+                }
+            } catch (e) {
+                console.error(e);
+                alert("Ralat database: " + e.message);
             }
         }
     </script>
