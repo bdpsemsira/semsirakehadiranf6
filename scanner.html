@@ -26,7 +26,7 @@
 
         .scanner-container { position: relative; width: 100vw; height: calc(100vh - 60px); background: #000; overflow: hidden; }
 
-        /* 隐藏库自带的 UI */
+        /* 隐藏库自带的 UI，自定义视频样式 */
         #reader { width: 100% !important; height: 100% !important; border: none !important; }
         #reader__scan_region, #reader__scan_region > div, #reader__dashboard { border: none !important; background: transparent !important; box-shadow: none !important; }
         div[style*="border: 5px solid"], #reader__scan_region svg { display: none !important; }
@@ -40,7 +40,6 @@
             transition: border-color 0.3s;
         }
 
-        /* 成功时的闪烁效果 */
         .qr-box.success { border-color: #10b981; border-width: 5px; }
 
         .laser-line {
@@ -51,6 +50,7 @@
 
         @keyframes scanAnim { 0%, 100% { top: 10%; opacity: 0; } 50% { top: 90%; opacity: 1; } }
 
+        /* 结果显示卡片 */
         .result-card {
             position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%);
             width: 85%; max-width: 400px; background: #1e293b; border-radius: 20px;
@@ -59,7 +59,7 @@
 
         #progress { width: 0%; height: 6px; background: #38bdf8; transition: width 3s linear; margin-top: 15px; border-radius: 10px; }
 
-        /* 覆盖层：强制点击以激活音频 */
+        /* 初始启动层 */
         #unlock-audio {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(15, 23, 42, 0.95); z-index: 9999;
@@ -98,7 +98,7 @@
     </div>
 
     <div id="result" class="result-card">
-        <h3 id="res-name" style="margin:0; text-transform: uppercase;">--</h3>
+        <h3 id="res-name" style="margin:0; text-transform: uppercase; font-size: 22px;">--</h3>
         <p id="res-class" style="margin:8px 0; color: #38bdf8; font-weight: 600;">--</p>
         <p id="res-status-text" style="font-size: 14px;">Status: <span id="res-status">--</span></p>
         <div style="background: rgba(255,255,255,0.1); border-radius: 10px;"><div id="progress"></div></div>
@@ -145,7 +145,12 @@
                 const isMirror = localStorage.getItem('cameraMirror') === 'true';
                 document.getElementById('mirrorCheck').checked = isMirror;
 
-                const config = { fps: 25, aspectRatio: 1.0 };
+                // 优化扫描配置，提高识别率
+                const config = { 
+                    fps: 30, 
+                    qrbox: { width: 250, height: 250 },
+                    aspectRatio: 1.0 
+                };
                 const cameraId = localStorage.getItem('preferredCameraId') || { facingMode: "environment" };
 
                 await html5QrCode.start(cameraId, config, onScanSuccess);
@@ -159,65 +164,76 @@
             try { await html5QrCode.stop(); } catch(e) {}
             
             beep.currentTime = 0;
-            beep.play().catch(err => console.log("Audio play blocked"));
+            beep.play().catch(e => console.log("Audio play blocked"));
             box.classList.add('success');
 
-            try {
-                let studentData = null;
-                const now = new Date();
-                const timeStr = now.getHours().toString().padStart(2,'0') + ":" + now.getMinutes().toString().padStart(2,'0');
-                const limit = localStorage.getItem('lateTimeLimit') || "07:35";
-                const status = (timeStr > limit) ? "Lewat" : "Hadir";
+            const now = new Date();
+            const timeStr = now.getHours().toString().padStart(2,'0') + ":" + now.getMinutes().toString().padStart(2,'0');
+            const limit = localStorage.getItem('lateTimeLimit') || "07:35";
+            const status = (timeStr > limit) ? "Lewat" : "Hadir";
 
-                // --- 兼容逻辑：处理 JSON 或 纯 IC ---
-                if (text.trim().startsWith('{')) {
-                    studentData = JSON.parse(text);
+            let icClean = text.trim();
+            let studentData = { name: "PELAJAR", kelas: "-" };
+
+            // 1. 兼容性逻辑：如果是 JSON 格式（旧版），先提取 IC
+            if (icClean.startsWith('{')) {
+                try {
+                    const parsed = JSON.parse(icClean);
+                    icClean = parsed.ic;
+                    studentData.name = parsed.name || "PELAJAR";
+                    studentData.kelas = parsed.kelas || parsed.class || "-";
+                } catch(e) { console.log("JSON Parse fail"); }
+            }
+
+            // 2. 显示临时 UI
+            const card = document.getElementById('result');
+            const bar = document.getElementById('progress');
+            document.getElementById('res-name').innerText = "Tunggu...";
+            card.style.display = "block";
+
+            try {
+                // 3. 核心步骤：去数据库抓取实时资料（确保名字准确）
+                const studentDoc = await getDoc(doc(db, "students", icClean));
+                if (studentDoc.exists()) {
+                    const d = studentDoc.data();
+                    studentData.name = d.name;
+                    studentData.kelas = d.kelas || d.class;
                 } else {
-                    const icClean = text.trim();
-                    // 默认显示，防止查不到数据时报错
-                    studentData = { ic: icClean, name: "PELAJAR (REKOD BARU)", kelas: "-" };
-                    
-                    // 尝试从数据库获取该学生的真实姓名和班级
-                    const studentDoc = await getDoc(doc(db, "students", icClean));
-                    if (studentDoc.exists()) {
-                        studentData = studentDoc.data();
-                    }
+                    // 如果库里没有，就显示扫到的内容
+                    studentData.name = "ID: " + icClean;
+                    studentData.kelas = "REKOD BARU";
                 }
 
-                // 更新 UI
-                document.getElementById('res-name').innerText = studentData.name || "PELAJAR";
-                document.getElementById('res-class').innerText = studentData.kelas || studentData.class || "-";
+                // 4. 更新 UI 最终结果
+                document.getElementById('res-name').innerText = studentData.name;
+                document.getElementById('res-class').innerText = studentData.kelas;
                 document.getElementById('res-status').innerText = status.toUpperCase();
                 document.getElementById('res-status').style.color = (status === "Hadir") ? "#10b981" : "#f43f5e";
-                
-                const card = document.getElementById('result');
-                const bar = document.getElementById('progress');
-                
-                card.style.display = "block";
-                bar.style.transition = "none"; bar.style.width = "100%";
-                void bar.offsetWidth; 
-                bar.style.transition = "width 3s linear"; bar.style.width = "0%";
 
-                // 写入考勤记录到 Firebase
-                await setDoc(doc(db, "attendance", `${now.toISOString().split('T')[0]}_${studentData.ic}`), {
-                    ic: studentData.ic,
-                    name: studentData.name || "Unknown",
-                    kelas: studentData.kelas || "Unknown",
+                // 5. 写入考勤记录到 Firebase
+                await setDoc(doc(db, "attendance", `${now.toISOString().split('T')[0]}_${icClean}`), {
+                    ic: icClean,
+                    name: studentData.name,
+                    kelas: studentData.kelas,
                     time: timeStr,
                     status: status,
                     timestamp: serverTimestamp()
                 });
 
-                setTimeout(() => {
-                    card.style.display = "none";
-                    box.classList.remove('success');
-                    initScanner();
-                }, 3000);
-
-            } catch (e) { 
-                console.error("Data Error:", e);
-                initScanner(); 
+            } catch (err) {
+                console.error("Firebase Error:", err);
             }
+
+            // 进度条倒计时
+            bar.style.transition = "none"; bar.style.width = "100%";
+            void bar.offsetWidth; 
+            bar.style.transition = "width 3s linear"; bar.style.width = "0%";
+
+            setTimeout(() => {
+                card.style.display = "none";
+                box.classList.remove('success');
+                initScanner();
+            }, 3000);
         }
     </script>
 </body>
