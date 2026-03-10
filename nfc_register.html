@@ -86,6 +86,7 @@
                     await ndef.scan();
                     document.getElementById('status').innerText = "📳 Sila dekatkan kad NFC...";
                     ndef.addEventListener("reading", ({ serialNumber }) => {
+                        // Simpan dalam format lowercase untuk konsistensi
                         document.getElementById('nfcID').value = serialNumber.toLowerCase();
                         document.getElementById('status').innerText = "✅ Kad dikesan!";
                     });
@@ -103,10 +104,16 @@
             if (!ic || !name || !kelas) return alert("Lengkapkan maklumat!");
 
             try {
+                // KEMASKINI: Field cardID ditukar kepada nfcSeries
                 await setDoc(doc(db, "students", ic), {
-                    ic, name, cardID: nfcCode, kelas, gender, updatedAt: serverTimestamp()
+                    ic: ic,
+                    name: name,
+                    nfcSeries: nfcCode, // Field baru yang selaras
+                    kelas: kelas,
+                    gender: gender,
+                    updatedAt: serverTimestamp()
                 });
-                alert("Berjaya!");
+                alert("Berjaya disimpan!");
                 location.reload();
             } catch (e) { alert(e.message); }
         };
