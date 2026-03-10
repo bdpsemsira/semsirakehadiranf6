@@ -195,6 +195,7 @@
                     document.getElementById('p-class').innerText = data.kelas;
                     document.getElementById('p-gender').innerText = data.gender || "Lelaki";
                     
+                    // 读取时优先找 nfcSeries，兼容旧数据找 cardID
                     const cardID = data.nfcSeries || data.cardID || 'TIADA';
                     document.getElementById('p-nfc-display').innerText = `ID KAD: ${cardID}`;
                     
@@ -248,7 +249,6 @@
             document.getElementById('count-tidak').innerText = c_t;
         }
 
-        // 打开弹窗并填充数据
         window.openEditModal = () => {
             document.getElementById('edit-name').value = document.getElementById('p-name').innerText;
             document.getElementById('edit-class').value = document.getElementById('p-class').innerText;
@@ -261,7 +261,6 @@
             document.getElementById('editModal').style.display = 'none';
         };
 
-        // NFC 扫描逻辑
         window.scanNfcForEdit = async () => {
             if ('NDEFReader' in window) {
                 try {
@@ -271,7 +270,8 @@
                     document.getElementById('nfc-status-modal').style.color = "#38bdf8";
                     
                     ndef.addEventListener("reading", ({ serialNumber }) => {
-                        document.getElementById('edit-nfc').value = serialNumber;
+                        // 统一转为小写保存，增加识别稳定性
+                        document.getElementById('edit-nfc').value = serialNumber.toLowerCase();
                         document.getElementById('nfc-status-modal').innerText = "✅ Berjaya!";
                         document.getElementById('nfc-status-modal').style.color = "#22c55e";
                     });
@@ -279,29 +279,28 @@
             } else { alert("Guna Chrome di Android untuk NFC."); }
         };
 
-        // 保存更新
         document.getElementById('saveEditBtn').onclick = async () => {
             const name = document.getElementById('edit-name').value.toUpperCase();
             const kelas = document.getElementById('edit-class').value;
-            const nfc = document.getElementById('edit-nfc').value;
+            const nfc = document.getElementById('edit-nfc').value.toLowerCase();
 
             try {
+                // 核心修改点：保存到 nfcSeries 字段
                 await updateDoc(currentDocRef, {
                     name: name,
                     kelas: kelas,
-                    nfcSeries: nfc // 统一使用这个字段名
+                    nfcSeries: nfc 
                 });
                 alert("Berjaya dikemaskini!");
                 location.reload();
             } catch (e) { alert("Gagal: " + e); }
         };
 
-        // 删除逻辑
         document.getElementById('deleteBtn').onclick = async () => {
             if(confirm("Hapus rekod murid ini? Tindakan ini tidak boleh diundur.")){
                 await deleteDoc(currentDocRef);
                 alert("Murid dihapuskan.");
-                window.location.href = "senarai.html"; // 假设你有学生列表页
+                window.location.href = "senarai.html";
             }
         };
 
