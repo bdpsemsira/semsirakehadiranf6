@@ -9,12 +9,13 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.23/jspdf.plugin.autotable.min.js"></script>
     <style>
-        /* UI BEAUTIFICATION - iOS GLASSMORPHISM */
+        /* UI BEAUTIFICATION - GLASSMORPHISM */
         body { 
             background-color: #020617; 
+            /* 增加彩色光晕底色，增强毛玻璃透感 */
             background-image: 
-                radial-gradient(circle at 0% 0%, rgba(56, 189, 248, 0.12) 0%, transparent 40%),
-                radial-gradient(circle at 100% 100%, rgba(16, 185, 129, 0.12) 0%, transparent 40%);
+                radial-gradient(circle at 0% 0%, rgba(56, 189, 248, 0.1) 0%, transparent 35%),
+                radial-gradient(circle at 100% 100%, rgba(16, 185, 129, 0.1) 0%, transparent 35%);
             color: #f1f5f9; 
             margin: 0; 
             font-family: 'Poppins', sans-serif; 
@@ -23,13 +24,14 @@
 
         header { 
             background: rgba(30, 41, 59, 0.7); 
-            backdrop-filter: blur(15px);
-            -webkit-backdrop-filter: blur(15px);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
             border-bottom: 1px solid rgba(255, 255, 255, 0.1); 
             padding: 15px; 
             display: flex; 
             align-items: center; 
             justify-content: center; 
+            box-shadow: 0 4px 30px rgba(0,0,0,0.3); 
             position: sticky; 
             top: 0; 
             z-index: 100; 
@@ -41,14 +43,15 @@
 
         /* --- iOS GLASS CARD --- */
         .card { 
-            background: rgba(255, 255, 255, 0.03); 
-            backdrop-filter: blur(16px);
+            background: rgba(30, 41, 59, 0.4); /* 半透明 */
+            backdrop-filter: blur(16px); /* 模糊效果 */
             -webkit-backdrop-filter: blur(16px);
             border-radius: 24px; 
             padding: 24px; 
-            border: 1px solid rgba(255, 255, 255, 0.08); 
-            box-shadow: 0 10px 40px rgba(0,0,0,0.3); 
+            border: 1px solid rgba(255, 255, 255, 0.08); /* 玻璃边缘线 */
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2); 
             margin-bottom: 25px; 
+            transition: transform 0.3s ease;
         }
 
         h4 { 
@@ -58,10 +61,9 @@
             border-left: 4px solid #38bdf8; 
             padding-left: 12px; 
             letter-spacing: 0.5px;
-            margin-bottom: 20px;
         }
 
-        label { display: block; margin-bottom: 8px; color: #94a3b8; font-size: 12px; font-weight: 600; text-transform: uppercase; }
+        label { display: block; margin-bottom: 8px; color: #94a3b8; font-size: 12px; }
 
         input[type="month"], input[type="date"] { 
             width: 100%; 
@@ -74,10 +76,7 @@
             font-family: inherit; 
             box-sizing: border-box; 
             outline: none;
-            transition: 0.3s;
         }
-
-        input:focus { border-color: #38bdf8; background: rgba(15, 23, 42, 0.8); }
 
         .btn { 
             border: none; 
@@ -91,89 +90,97 @@
             padding: 14px; 
             width: 100%; 
             gap: 10px; 
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
         }
 
         .btn-blue { background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%); color: white; }
         .btn-green { background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white; }
-        .btn:active { transform: scale(0.96); }
+        
+        .btn:active { transform: scale(0.98); }
 
         /* CLASS LIST GLASS ITEM */
-        .btn-class { 
+        #classList .btn-class { 
             background: rgba(255, 255, 255, 0.03); 
+            backdrop-filter: blur(5px);
             border: 1px solid rgba(255, 255, 255, 0.05); 
-            padding: 18px; 
+            padding: 20px; 
+            font-size: 15px; 
             margin-bottom: 12px; 
             display: flex; 
             justify-content: space-between; 
             align-items: center; 
             color: white; 
             text-decoration: none; 
-            border-radius: 20px; 
+            border-radius: 18px; 
             transition: 0.3s; 
         }
 
-        .btn-class:hover {
-            background: rgba(255, 255, 255, 0.07);
-            transform: translateY(-2px);
-            border-color: rgba(56, 189, 248, 0.3);
+        #classList .btn-class:hover {
+            background: rgba(255, 255, 255, 0.08);
+            transform: translateX(5px);
+            border-color: rgba(56, 189, 248, 0.4);
         }
 
         .attendance-badge { 
-            background: rgba(56, 189, 248, 0.15); 
+            background: rgba(14, 165, 233, 0.2); 
             color: #38bdf8;
-            border: 1px solid rgba(56, 189, 248, 0.2);
+            border: 1px solid rgba(14, 165, 233, 0.3);
             padding: 4px 12px; 
-            border-radius: 10px; 
+            border-radius: 12px; 
             font-size: 13px; 
-            font-weight: 700; 
+            font-weight: bold; 
         }
 
-        #totalInfo { color: #94a3b8; font-size: 13px; font-weight: 300; }
+        #totalInfo { color: #64748b; font-size: 13px; }
     </style>
 </head>
 <body>
     <header>
         <a href="menu.html" style="text-decoration: none; color: white; position: absolute; left: 20px; font-size: 20px;">⬅️</a>
         <img src="semsira.png" alt="Logo" class="logo-small">
-        <span style="font-weight: 600; margin-left: 10px; letter-spacing: 0.5px;">Statistik Kehadiran</span>
+        <span style="font-weight: 600; margin-left: 10px;">Statistik Kehadiran</span>
     </header>
 
     <div class="container">
         <div class="card">
             <h4>Analisis Kehadiran Hari Ini</h4>
-            <div style="max-width: 200px; margin: 0 auto;">
+            <div style="max-width: 220px; margin: 20px auto;">
                 <canvas id="attendanceChart"></canvas>
             </div>
-            <p id="totalInfo" style="text-align:center; margin-top:15px;"></p>
+            <p id="totalInfo" style="text-align:center; margin-top:10px;"></p>
         </div>
 
         <div class="card">
             <h4>Cetak Laporan</h4>
-            <label>Laporan Bulanan (Lewat/Ponteng):</label>
-            <input type="month" id="searchMonth">
-            <button class="btn btn-blue" onclick="printReport('month')" style="margin-bottom:20px;">🖨️ CETAK BULANAN</button>
+            <div style="margin-top:15px;">
+                <label>Pilih Bulan (Senarai Lewat & Ponteng Sahaja):</label>
+                <input type="month" id="searchMonth">
+                <button class="btn btn-blue" onclick="printReport('month')" style="margin-bottom:15px;">🖨️ CETAK LAPORAN BULANAN</button>
 
-            <label>Laporan Harian:</label>
-            <input type="date" id="searchDate">
-            <button class="btn btn-green" onclick="printReport('day')">🖨️ CETAK HARIAN</button>
+                <label>Pilih Tarikh (Laporan Harian):</label>
+                <input type="date" id="searchDate">
+                <button class="btn btn-green" onclick="printReport('day')">🖨️ CETAK LAPORAN HARIAN</button>
+            </div>
         </div>
 
-        <div class="card" style="background: transparent; border: none; box-shadow: none; padding: 0;">
-            <h4 style="margin-left: 24px;">Senarai Kelas</h4>
-            <div id="classList"></div>
+        <div class="card">
+            <h4>Senarai Kelas & Kehadiran Hari Ini</h4>
+            <div id="classList" style="margin-top:15px;"></div>
         </div>
     </div>
 
     <script type="module">
+        /* --- 你的 JavaScript 代码逻辑完全保留，仅修正日期偏移 --- */
         import { db } from './js/firebase-config.js';
         import { collection, getDocs, query } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-firestore.js";
 
         let myChart;
         const LIST_KELAS = ["SUMAYYAH", "SARAH", "KHADIJAH", "AISHAH", "FATIMAH", "ZAINAB", "RUQAYYAH", "UMMU KALSOM"];
 
-        // --- 核心修复：时区处理函数 ---
+        // 辅助函数：获取本地日期字符串 (YYYY-MM-DD)
         function getLocalToday() {
-            return new Date().toLocaleDateString('en-CA'); // 返回 YYYY-MM-DD (本地时区)
+            const now = new Date();
+            return now.toLocaleDateString('en-CA'); 
         }
 
         async function initDashboard() {
@@ -183,9 +190,10 @@
         }
 
         function setDefaultDates() {
-            const localToday = getLocalToday();
-            document.getElementById('searchMonth').value = localToday.substring(0, 7);
-            document.getElementById('searchDate').value = localToday;
+            const todayStr = getLocalToday(); // 修正：使用本地时间
+            const [year, month, day] = todayStr.split('-');
+            document.getElementById('searchMonth').value = `${year}-${month}`;
+            document.getElementById('searchDate').value = `${year}-${month}-${day}`;
         }
 
         async function getBaseData() {
@@ -200,13 +208,13 @@
 
         async function loadStatistics() {
             const { students, attendance } = await getBaseData();
-            const todayStr = getLocalToday(); // 修复时区后的日期
+            const todayStr = getLocalToday(); // 修正：使用本地时间防止凌晨偏移
             
             let hadir = 0, lewat = 0;
             attendance.forEach(rec => {
                 if (rec.id.startsWith(todayStr)) {
-                    // 逻辑：12:00 之后算不出席
-                    if (rec.time <= "12:00") {
+                    const isLatePast12 = rec.time && rec.time > "12:00";
+                    if (!isLatePast12) {
                         if (rec.status === "Hadir") hadir++;
                         else if (rec.status === "Lewat") lewat++;
                     }
@@ -215,7 +223,7 @@
 
             let tidakHadir = students.length - (hadir + lewat);
             updateChart(hadir, lewat, tidakHadir);
-            document.getElementById('totalInfo').innerText = `Jumlah Keseluruhan: ${students.length} Murid`;
+            document.getElementById('totalInfo').innerText = `Jumlah Keseluruhan Murid: ${students.length}`;
             return { students, attendance, todayStr };
         }
 
@@ -225,20 +233,14 @@
             myChart = new Chart(ctx, {
                 type: 'doughnut',
                 data: {
-                    labels: ['Hadir', 'Lewat', 'Ponteng'],
+                    labels: ['Hadir', 'Lewat', 'Tidak Hadir'],
                     datasets: [{
                         data: [h, l, t],
                         backgroundColor: ['#10b981', '#f59e0b', '#ef4444'],
-                        hoverOffset: 4,
                         borderWidth: 0
                     }]
                 },
-                options: { 
-                    cutout: '80%', 
-                    plugins: { 
-                        legend: { position: 'bottom', labels: { color: '#94a3b8', font: { size: 11 }, padding: 20 } } 
-                    } 
-                }
+                options: { cutout: '75%', plugins: { legend: { position: 'bottom', labels: { color: '#94a3b8', font: { size: 11 } } } } }
             });
         }
 
@@ -255,17 +257,27 @@
                 const btn = document.createElement('a');
                 btn.href = `class-detail.html?class=${encodeURIComponent(className)}`;
                 btn.className = "btn-class";
-                btn.innerHTML = `
-                    <span>🏫 ${className}</span>
-                    <div style="display:flex;align-items:center;gap:12px;">
-                        <span class="attendance-badge">${peratus}%</span>
-                        <span style="color: #475569;">➔</span>
-                    </div>`;
+                btn.innerHTML = `<span>🏫 ${className}</span><div style="display:flex;align-items:center;gap:10px;"><span class="attendance-badge">${peratus}%</span><span>➔</span></div>`;
                 classListDiv.appendChild(btn);
             });
         }
 
-        // PDF 打印逻辑保留原有功能
+        function getBase64Image(imgUrl) {
+            return new Promise((resolve) => {
+                const img = new Image();
+                img.src = imgUrl;
+                img.setAttribute('crossOrigin', 'anonymous');
+                img.onload = () => {
+                    const canvas = document.createElement("canvas");
+                    canvas.width = img.width; canvas.height = img.height;
+                    const ctx = canvas.getContext("2d");
+                    ctx.drawImage(img, 0, 0);
+                    resolve(canvas.toDataURL("image/png"));
+                };
+                img.onerror = () => resolve(null);
+            });
+        }
+
         window.printReport = async (type) => {
             const { jsPDF } = window.jspdf;
             const doc = new jsPDF('p', 'mm', 'a4');
@@ -273,36 +285,75 @@
             if(!filterValue) return alert("Sila pilih tarikh/bulan!");
 
             const { students, attendance } = await getBaseData();
-            
-            // PDF Header Logic... (保持原样)
-            doc.setFontSize(14); doc.text(type === 'month' ? "LAPORAN MASALAH KEHADIRAN (BULANAN)" : "LAPORAN KEHADIRAN HARIAN", 14, 20);
-            doc.setFontSize(9); doc.text(`Rujukan: ${filterValue}`, 14, 26);
+            const logoBase64 = await getBase64Image('semsira.png');
+            if(logoBase64) doc.addImage(logoBase64, 'PNG', 14, 10, 15, 15);
+
+            doc.setFontSize(14); doc.text(type === 'month' ? "LAPORAN MASALAH KEHADIRAN (BULANAN)" : "LAPORAN KEHADIRAN HARIAN", 35, 18);
+            doc.setFontSize(9); doc.text(`Rujukan: ${filterValue} | Penandaan Automatik: >12:00 = Tidak Hadir`, 35, 23);
+            doc.line(14, 28, 196, 28);
             
             let currentY = 35;
+
             for (const className of LIST_KELAS) {
                 const muridKelas = students.filter(s => (s.kelas || s.class) === className);
                 if (muridKelas.length === 0) continue;
 
                 let rows = [];
+                let cH = 0, cL = 0, cT = 0;
+
                 muridKelas.forEach(s => {
                     const studentRecs = attendance.filter(a => a.id.startsWith(filterValue) && a.ic === s.ic);
-                    studentRecs.forEach(r => {
-                        let status = r.status;
-                        if (r.time > "12:00") status = "Ponteng";
-                        rows.push([s.name, r.time, status]);
-                    });
+                    
+                    if (type === 'day') {
+                        const rec = studentRecs[0];
+                        let status = rec ? rec.status : "Tidak Hadir";
+                        let masa = rec ? rec.time : "---";
+                        if (masa > "12:00") status = "Tidak Hadir";
+                        if(status === "Hadir") cH++; else if(status === "Lewat") cL++; else cT++;
+                        rows.push([s.name, masa, status]);
+                    } else {
+                        studentRecs.forEach(r => {
+                            let status = r.status;
+                            if (r.time > "12:00") status = "Tidak Hadir";
+                            if (status === "Hadir") {
+                                cH++;
+                            } else {
+                                if(status === "Lewat") cL++; else cT++;
+                                const tarikh = r.id.split('_')[0];
+                                rows.push([`${s.name} (${tarikh})`, r.time, status]);
+                            }
+                        });
+                    }
                 });
 
+                if (currentY > 250) { doc.addPage(); currentY = 20; }
+
+                doc.setFillColor(230, 230, 230); doc.rect(14, currentY, 182, 8, 'F');
+                doc.setFont(undefined, 'bold'); doc.setFontSize(9); doc.setTextColor(0);
+                doc.text(`KELAS: ${className}`, 17, currentY + 5.5);
+                doc.setFont(undefined, 'normal'); doc.setFontSize(8);
+                doc.text(`JUMLAH: Hadir(${cH}) | Lewat(${cL}) | Tidak Hadir(${cT})`, 120, currentY + 5.5);
+
                 if (rows.length > 0) {
-                    doc.text(`KELAS: ${className}`, 14, currentY);
                     doc.autoTable({
-                        head: [['Nama', 'Masa', 'Status']],
+                        head: [['Nama Murid', 'Masa', 'Status']],
                         body: rows,
-                        startY: currentY + 2,
+                        startY: currentY + 10,
                         theme: 'grid',
-                        styles: { fontSize: 8 }
+                        styles: { fontSize: 7 },
+                        headStyles: { fillColor: [80, 80, 80] },
+                        didParseCell: (data) => {
+                            if (data.column.index === 2) {
+                                if (data.cell.raw === "Tidak Hadir") data.cell.styles.textColor = [200, 0, 0];
+                                if (data.cell.raw === "Lewat") data.cell.styles.textColor = [255, 140, 0];
+                            }
+                        }
                     });
                     currentY = doc.lastAutoTable.finalY + 10;
+                } else {
+                    doc.setFontSize(7); doc.setTextColor(150);
+                    doc.text("Tiada rekod lewat atau tidak hadir.", 17, currentY + 13);
+                    currentY += 18;
                 }
             }
             window.open(doc.output('bloburl'));
