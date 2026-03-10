@@ -72,7 +72,7 @@
         const beepS = document.getElementById('beepSuccess');
         const beepE = document.getElementById('beepError');
 
-        // 激活 NFC 扫描
+        // Mengaktifkan NFC
         window.activateNFC = async () => {
             if ('NDEFReader' in window) {
                 try {
@@ -83,7 +83,7 @@
                     document.getElementById('system-status').innerText = "Pembaca NFC Aktif";
 
                     ndef.addEventListener("reading", async ({ serialNumber }) => {
-                        // 统一转为小写并去空格，确保与数据库匹配
+                        // Konsisten guna lowercase untuk padanan tepat
                         const nfcId = serialNumber.toLowerCase().trim();
                         handleScan(nfcId);
                     });
@@ -97,40 +97,37 @@
         };
 
         async function handleScan(nfcId) {
-            // 显示加载状态
             document.getElementById('wait-ui').style.display = 'none';
             const resultUI = document.getElementById('result-ui');
             resultUI.style.display = 'block';
-            resultUI.classList.remove('res-success', 'res-error'); // 重置颜色状态
+            resultUI.classList.remove('res-success', 'res-error');
             document.getElementById('resName').innerText = "Menyemak...";
-            document.getElementById('resClass').innerText = "--";
-            document.getElementById('attendance-status').innerText = "--";
 
             try {
-                // 重要：查询 cardID 字段
-                const q = query(collection(db, "students"), where("cardID", "==", nfcId));
+                // KEMASKINI: Sekarang mencari di bawah padanan field 'nfcSeries'
+                const q = query(collection(db, "students"), where("nfcSeries", "==", nfcId));
                 const querySnapshot = await getDocs(q);
 
                 if (!querySnapshot.empty) {
                     const studentDoc = querySnapshot.docs[0];
                     const data = studentDoc.data();
                     
-                    // 识别成功
+                    // Berjaya jumpa murid
                     beepS.play();
                     resultUI.classList.add('res-success');
                     document.getElementById('resName').innerText = data.name;
                     document.getElementById('resClass').innerText = data.kelas;
                     document.getElementById('resID').innerText = "ID: " + nfcId;
 
-                    // 自动记录考勤
+                    // Simpan rekod kehadiran
                     markAttendance(data);
 
                 } else {
-                    // 识别失败
+                    // Kad tidak didaftarkan
                     beepE.play();
                     resultUI.classList.add('res-error');
                     document.getElementById('resName').innerText = "KAD TIDAK BERDAFTAR";
-                    document.getElementById('resClass').innerText = "Sila daftar kad di Profil Murid";
+                    document.getElementById('resClass').innerText = "Sila kemaskini ID Kad di Profil Murid";
                     document.getElementById('attendance-status').innerText = "❌ Gagal";
                     document.getElementById('resID').innerText = "ID: " + nfcId;
                 }
@@ -142,13 +139,12 @@
 
         async function markAttendance(student) {
             const now = new Date();
-            const dateKey = now.toISOString().split('T')[0]; // yyyy-mm-dd
+            const dateKey = now.toISOString().split('T')[0];
             const timeStr = now.toLocaleTimeString('ms-MY', { hour12: false, hour: '2-digit', minute: '2-digit' });
 
-            // 考勤逻辑：7:30 以后算 lewat
+            // Syarat lewat: Selepas 7:30 pagi
             const status = (now.getHours() > 7 || (now.getHours() === 7 && now.getMinutes() > 30)) ? "Lewat" : "Hadir";
             
-            // 文档ID格式：日期_IC
             const attID = `${dateKey}_${student.ic}`;
             
             try {
