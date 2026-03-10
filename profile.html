@@ -38,38 +38,31 @@
         .rec-time { color: #94a3b8; font-size: 12px; margin-left: 8px; }
 
         .btn-group { display: flex; flex-direction: column; gap: 10px; margin-top: 20px; }
-        .btn { border: none; padding: 15px; border-radius: 12px; font-weight: 600; cursor: pointer; transition: 0.3s; font-size: 14px; }
+        .btn { border: none; padding: 15px; border-radius: 12px; font-weight: 600; cursor: pointer; transition: 0.3s; font-size: 14px; display: flex; align-items: center; justify-content: center; gap: 8px; }
         .btn-blue { background: linear-gradient(135deg, #38bdf8 0%, #0284c7 100%); color: white; }
         .btn-orange { background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); color: white; }
+        .btn-green { background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white; }
         .btn-red { background: rgba(239, 68, 68, 0.1); color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.2); }
         .back-link { text-decoration: none; color: white; font-size: 20px; margin-right: 10px; }
 
         /* Modal Style */
         .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); backdrop-filter: blur(5px); }
-        .modal-content { background: #1e293b; margin: 15% auto; padding: 25px; border-radius: 20px; width: 85%; max-width: 400px; border: 1px solid #334155; }
+        .modal-content { background: #1e293b; margin: 10% auto; padding: 25px; border-radius: 20px; width: 85%; max-width: 400px; border: 1px solid #334155; }
         .modal-content h3 { margin-top: 0; color: #38bdf8; }
         .modal-content input, .modal-content select { width: 100%; padding: 12px; margin: 10px 0; border-radius: 10px; border: 1px solid #334155; background: #0f172a; color: white; box-sizing: border-box; }
         .modal-content label { font-size: 12px; color: #94a3b8; }
 
         @media print {
-            @page { margin: 0; size: auto; }
-            body { margin: 1.5cm; background: white !important; color: black !important; }
-            header, .btn-group, .back-link, #qrcode-outer, .btn-red, .modal { display: none !important; }
-            .container { max-width: 100%; padding: 0; }
-            .card { background: white !important; border: none !important; box-shadow: none !important; text-align: left !important; padding: 10px 0; }
-            #print-header { display: flex !important; flex-direction: column; align-items: center; border-bottom: 2px solid black; padding-bottom: 10px; margin-bottom: 20px; }
-            #print-logo { width: 80px; height: auto; margin-bottom: 10px; }
-            #print-title { font-size: 18px; font-weight: bold; text-align: center; color: black; }
-            h2 { color: black !important; font-size: 20px; margin-top: 10px; }
-            h4 { color: black !important; border-bottom: 1px solid black !important; }
-            .info-p, .highlight-ic { color: black !important; font-size: 12px; }
-            .record-item { border-bottom: 1px solid #ddd !important; color: black !important; }
-            #summary-box { display: block !important; margin-top: 15px; border: 1px solid black; padding: 10px; color: black; }
+            header, .btn-group, .back-link, #qrcode-outer, .btn-red, .modal, #scanNfcBtn { display: none !important; }
+            body { background: white; color: black; }
+            .card { background: white; border: 1px solid #eee; color: black; }
+            #summary-box { display: block !important; border: 1px solid #000; padding: 10px; margin-top: 10px; }
         }
-        #print-header, #summary-box { display: none; }
+        #summary-box { display: none; }
     </style>
 </head>
 <body>
+
     <div id="editModal" class="modal">
         <div class="modal-content">
             <h3>Kemaskini Profil</h3>
@@ -91,19 +84,17 @@
                 <option value="UMMU KALSOM">UMMU KALSOM</option>
             </select>
 
-            <label>NFC Card ID (Sila letak kad pada pembaca)</label>
-            <input type="text" id="edit-nfc" placeholder="Menunggu imbasan...">
+            <label>NFC Card ID (Siri Kad)</label>
+            <div style="display: flex; gap: 8px;">
+                <input type="text" id="edit-nfc" placeholder="Scan atau taip ID..." style="margin:0;">
+                <button type="button" class="btn btn-blue" id="scanNfcBtn" style="width: auto; padding: 0 15px; white-space: nowrap;">📡 IMBAS</button>
+            </div>
 
-            <div style="display: flex; gap: 10px; margin-top: 10px;">
-                <button class="btn btn-blue" id="saveEditBtn" style="flex: 2;">SIMPAN</button>
+            <div style="display: flex; gap: 10px; margin-top: 20px;">
+                <button class="btn btn-green" id="saveEditBtn" style="flex: 2;">💾 SIMPAN</button>
                 <button class="btn btn-red" onclick="closeModal()" style="flex: 1;">BATAL</button>
             </div>
         </div>
-    </div>
-
-    <div id="print-header">
-        <img src="semsira.png" id="print-logo" alt="Logo">
-        <div id="print-title">LAPORAN KEHADIRAN MURID SEMSIRA</div>
     </div>
 
     <header>
@@ -119,17 +110,17 @@
             <p id="p-ic" class="info-p highlight-ic">IC: -</p>
             <p id="p-class" class="info-p">Kelas: -</p>
             <p id="p-gender" class="info-p">Jantina: -</p>
-            <div id="p-nfc-display" style="font-size: 10px; color: #475569; margin-top: 5px;">NFC: -</div>
+            <div id="p-nfc-display" style="font-size: 11px; color: #64748b; margin-top: 5px; font-family: monospace;">NFC: -</div>
         </div>
 
         <div class="card" style="text-align: left;">
             <h4>Rekod Kehadiran Bulanan</h4>
             
             <div id="summary-box">
-                <b>RINGKASAN KEHADIRAN:</b><br>
-                Hadir: <span id="count-hadir" class="status-hadir">0</span> | 
-                Lewat: <span id="count-lewat" class="status-lewat">0</span> | 
-                Tidak Hadir: <span id="count-tidak" class="status-tidak">0</span>
+                <b>RINGKASAN KEHADIRAN (BULAN INI):</b><br>
+                Hadir: <span id="count-hadir">0</span> | 
+                Lewat: <span id="count-lewat">0</span> | 
+                Tidak Hadir: <span id="count-tidak">0</span>
             </div>
 
             <div id="attendanceHistory">
@@ -138,7 +129,7 @@
 
             <div class="btn-group">
                 <button class="btn btn-orange" onclick="openModal()">✏️ KEMASKINI PROFIL</button>
-                <button class="btn btn-blue" onclick="window.print()">🖨️ CETAK LAPORAN / PDF</button>
+                <button class="btn btn-blue" onclick="window.print()">🖨️ CETAK LAPORAN</button>
                 <button class="btn btn-red" id="deleteBtn">🗑️ HAPUS MURID</button>
             </div>
         </div>
@@ -187,15 +178,15 @@
                     document.getElementById('p-ic').innerText = `IC: ${data.ic}`;
                     document.getElementById('p-class').innerText = `Kelas: ${data.kelas}`;
                     document.getElementById('p-gender').innerText = `Jantina: ${data.gender}`;
-                    document.getElementById('p-nfc-display').innerText = `NFC UID: ${data.cardID || 'Belum didaftar'}`;
+                    document.getElementById('p-nfc-display').innerText = `NFC UID: ${data.cardID || 'Tiada Kad'}`;
                     
                     document.getElementById("qrcode").innerHTML = "";
                     new QRCode(document.getElementById("qrcode"), {
-                        text: JSON.stringify({ic: data.ic, name: data.name, kelas: data.kelas}),
+                        text: data.ic,
                         width: 150, height: 150
                     });
 
-                    // 预填 Modal 数据
+                    // Pre-fill Modal
                     document.getElementById('edit-ic').value = data.ic;
                     document.getElementById('edit-name').value = data.name;
                     document.getElementById('edit-class').value = data.kelas;
@@ -209,11 +200,11 @@
         }
 
         async function saveProfileUpdate(docRef) {
-            const newName = document.getElementById('edit-name').value;
+            const newName = document.getElementById('edit-name').value.toUpperCase();
             const newClass = document.getElementById('edit-class').value;
             const newNfc = document.getElementById('edit-nfc').value;
 
-            if (!newName) return alert("Nama tidak boleh kosong!");
+            if (!newName) return alert("Sila masukkan nama!");
 
             try {
                 await updateDoc(docRef, {
@@ -221,12 +212,40 @@
                     kelas: newClass,
                     cardID: newNfc
                 });
-                alert("Profil Berjaya Dikemaskini!");
+                alert("Berjaya dikemaskini!");
                 closeModal();
-                loadProfile(); // 刷新页面数据
-            } catch (e) {
-                alert("Ralat mengemaskini: " + e.message);
+                loadProfile();
+            } catch (e) { alert("Ralat: " + e.message); }
+        }
+
+        async function initNfcScanner() {
+            const scanBtn = document.getElementById('scanNfcBtn');
+            const nfcInput = document.getElementById('edit-nfc');
+
+            if (!('NDEFReader' in window)) {
+                scanBtn.innerHTML = "❌ NFC";
+                scanBtn.disabled = true;
+                return;
             }
+
+            scanBtn.onclick = async () => {
+                try {
+                    const ndef = new NDEFReader();
+                    await ndef.scan();
+                    scanBtn.innerText = "Sila Sentuh...";
+                    scanBtn.classList.replace('btn-blue', 'btn-orange');
+
+                    ndef.onreading = event => {
+                        nfcInput.value = event.serialNumber;
+                        scanBtn.innerText = "Siap!";
+                        scanBtn.classList.replace('btn-orange', 'btn-green');
+                        setTimeout(() => {
+                            scanBtn.innerText = "📡 IMBAS";
+                            scanBtn.className = "btn btn-blue";
+                        }, 2000);
+                    };
+                } catch (e) { alert("NFC Ralat: " + e); }
+            };
         }
 
         async function loadAttendance(ic) {
@@ -235,63 +254,54 @@
             const historyDiv = document.getElementById('attendanceHistory');
             historyDiv.innerHTML = "";
 
-            let countHadir = 0, countLewat = 0, countTidak = 0;
-            const existingRecords = {};
-            snap.forEach(doc => {
-                const datePart = doc.id.split('_')[0]; 
-                existingRecords[datePart] = doc.data();
-            });
+            let c_h = 0, c_l = 0, c_t = 0;
+            const records = {};
+            snap.forEach(d => records[d.id.split('_')[0]] = d.data());
 
             const now = new Date();
             const year = now.getFullYear();
             const month = now.getMonth();
-            const todayDate = now.getDate();
-            const dayNames = ["Ahad", "Isnin", "Selasa", "Rabu", "Khamis", "Jumaat", "Sabtu"];
+            const today = now.getDate();
+            const names = ["Ahad", "Isnin", "Selasa", "Rabu", "Khamis", "Jumaat", "Sabtu"];
 
-            for (let i = todayDate; i >= 1; i--) {
+            for (let i = today; i >= 1; i--) {
                 const d = new Date(year, month, i);
-                const dayOfWeek = d.getDay();
-                if (dayOfWeek === 0 || dayOfWeek === 6) continue;
+                if (d.getDay() === 0 || d.getDay() === 6) continue;
 
-                const yyyy = d.getFullYear();
-                const mm = String(d.getMonth() + 1).padStart(2, '0');
-                const dd = String(d.getDate()).padStart(2, '0');
-                const dateKey = `${yyyy}-${mm}-${dd}`;
-                
-                let status, time, colorClass;
-                if (existingRecords[dateKey]) {
-                    const res = existingRecords[dateKey];
-                    status = res.status;
-                    time = res.time || "--:--";
-                    if (status === "Hadir") { countHadir++; colorClass = "status-hadir"; }
-                    else if (status === "Lewat") { countLewat++; colorClass = "status-lewat"; }
-                } else {
-                    status = "Tidak Hadir"; time = "---"; countTidak++; colorClass = "status-tidak";
-                }
+                const key = `${year}-${String(month+1).padStart(2,'0')}-${String(i).padStart(2,'0')}`;
+                let s = "Tidak Hadir", t = "---", cls = "status-tidak";
 
-                const div = document.createElement('div');
-                div.className = "record-item";
-                div.innerHTML = `<span><b>${dateKey} (${dayNames[dayOfWeek]})</b><span class="rec-time">${time}</span></span> <b class="${colorClass}">${status}</b>`;
-                historyDiv.appendChild(div);
+                if (records[key]) {
+                    s = records[key].status;
+                    t = records[key].time || "--:--";
+                    if (s === "Hadir") { c_h++; cls = "status-hadir"; }
+                    else { c_l++; cls = "status-lewat"; }
+                } else { c_t++; }
+
+                const item = document.createElement('div');
+                item.className = "record-item";
+                item.innerHTML = `<span><b>${key} (${names[d.getDay()]})</b><br><small>${t}</small></span><b class="${cls}">${s}</b>`;
+                historyDiv.appendChild(item);
             }
-            document.getElementById('count-hadir').innerText = countHadir;
-            document.getElementById('count-lewat').innerText = countLewat;
-            document.getElementById('count-tidak').innerText = countTidak;
+            document.getElementById('count-hadir').innerText = c_h;
+            document.getElementById('count-lewat').innerText = c_l;
+            document.getElementById('count-tidak').innerText = c_t;
         }
 
         async function deleteStudent(docRef) {
-            if (confirm("Padam murid ini secara kekal?")) {
+            if (confirm("Hapus murid ini?")) {
                 await deleteDoc(docRef);
-                alert("Murid telah dipadam.");
                 location.href = 'dashboard.html';
             }
         }
 
-        // Modal 控制
         window.openModal = () => document.getElementById('editModal').style.display = 'block';
         window.closeModal = () => document.getElementById('editModal').style.display = 'none';
 
-        window.onload = loadProfile;
+        window.onload = () => {
+            loadProfile();
+            initNfcScanner();
+        };
     </script>
 </body>
 </html>
