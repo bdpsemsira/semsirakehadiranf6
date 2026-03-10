@@ -22,6 +22,7 @@
         .btn-green { background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white; }
         .btn:hover { transform: translateY(-2px); filter: brightness(1.1); }
         #classList .btn-class { background: #334155; border: 1px solid rgba(255,255,255,0.05); padding: 18px; font-size: 15px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; color: white; text-decoration: none; border-radius: 12px; transition: 0.3s; }
+        .attendance-badge { background: #0ea5e9; padding: 2px 8px; border-radius: 20px; font-size: 12px; font-weight: bold; }
         #totalInfo { color: #94a3b8; font-weight: 500; }
     </style>
 </head>
@@ -44,18 +45,18 @@
         <div class="card">
             <h4>Cetak Laporan</h4>
             <div style="margin-top:15px;">
-                <label>Pilih Bulan:</label>
+                <label>Pilih Bulan (Laporan Terperinci):</label>
                 <input type="month" id="searchMonth">
                 <button class="btn btn-blue" onclick="printReport('month')" style="margin-bottom:15px;">🖨️ CETAK LAPORAN BULANAN</button>
 
-                <label>Pilih Tarikh:</label>
+                <label>Pilih Tarikh (Laporan Harian):</label>
                 <input type="date" id="searchDate">
                 <button class="btn btn-green" onclick="printReport('day')">🖨️ CETAK LAPORAN HARIAN</button>
             </div>
         </div>
 
         <div class="card">
-            <h4>Senarai Kelas</h4>
+            <h4>Senarai Kelas & Kehadiran Hari Ini</h4>
             <div id="classList" style="margin-top:15px;"></div>
         </div>
     </div>
@@ -82,28 +83,33 @@
             document.getElementById('searchDate').value = `${year}-${month}-${day}`;
         }
 
-        async function loadStatistics() {
-            const now = new Date();
-            const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
-            
+        // 获取基础数据以便复用
+        async function getBaseData() {
             const studentSnap = await getDocs(collection(db, "students"));
-            const totalStudents = studentSnap.size;
+            const attendanceSnap = await getDocs(collection(db, "attendance"));
+            let students = [];
+            studentSnap.forEach(doc => students.push(doc.data()));
+            let attendance = [];
+            attendanceSnap.forEach(doc => attendance.push({id: doc.id, ...doc.data()}));
+            return { students, attendance };
+        }
 
-            const q = query(collection(db, "attendance"));
-            const querySnapshot = await getDocs(q);
+        async function loadStatistics() {
+            const { students, attendance } = await getBaseData();
+            const todayStr = new Date().toISOString().split('T')[0];
             
             let hadir = 0, lewat = 0;
-            querySnapshot.forEach((doc) => {
-                if (doc.id.startsWith(todayStr)) {
-                    const data = doc.data();
-                    if (data.status === "Hadir") hadir++;
-                    else if (data.status === "Lewat") lewat++;
+            attendance.forEach(rec => {
+                if (rec.id.startsWith(todayStr)) {
+                    if (rec.status === "Hadir") hadir++;
+                    else if (rec.status === "Lewat") lewat++;
                 }
             });
 
-            let tidakHadir = totalStudents - (hadir + lewat);
+            let tidakHadir = students.length - (hadir + lewat);
             updateChart(hadir, lewat, tidakHadir);
-            document.getElementById('totalInfo').innerText = `Jumlah Murid: ${totalStudents}`;
+            document.getElementById('totalInfo').innerText = `Jumlah Keseluruhan Murid: ${students.length}`;
+            return { students, attendance, todayStr };
         }
 
         function updateChart(h, l, t) {
@@ -124,19 +130,32 @@
         }
 
         async function loadClassList() {
+            const { students, attendance, todayStr } = await loadStatistics();
             const classListDiv = document.getElementById('classList');
             classListDiv.innerHTML = "";
+
             LIST_KELAS.forEach(className => {
+                const muridKelas = students.filter(s => (s.kelas || s.class) === className);
+                const hadirKelas = attendance.filter(a => a.id.startsWith(todayStr) && muridKelas.some(m => m.ic === a.ic)).length;
+                
+                // 计算出席率
+                const peratus = muridKelas.length > 0 ? Math.round((hadirKelas / muridKelas.length) * 100) : 0;
+
                 const btn = document.createElement('a');
                 btn.href = `class-detail.html?class=${encodeURIComponent(className)}`;
                 btn.className = "btn-class";
-                btn.innerHTML = `<span>🏫 ${className}</span> <span>➔</span>`;
+                btn.innerHTML = `
+                    <span>🏫 ${className}</span> 
+                    <div style="display:flex; align-items:center; gap:10px;">
+                        <span class="attendance-badge">${peratus}%</span>
+                        <span>➔</span>
+                    </div>`;
                 classListDiv.appendChild(btn);
             });
         }
 
         function getBase64Image(imgUrl) {
-            return new Promise((resolve, reject) => {
+            return new Promise((resolve) => {
                 const img = new Image();
                 img.src = imgUrl;
                 img.setAttribute('crossOrigin', 'anonymous');
@@ -147,7 +166,7 @@
                     ctx.drawImage(img, 0, 0);
                     resolve(canvas.toDataURL("image/png"));
                 };
-                img.onerror = error => resolve(null); // Resolve null instead of reject to keep running
+                img.onerror = () => resolve(null);
             });
         }
 
@@ -155,83 +174,78 @@
             const { jsPDF } = window.jspdf;
             const doc = new jsPDF('p', 'mm', 'a4');
             const filterValue = type === 'month' ? document.getElementById('searchMonth').value : document.getElementById('searchDate').value;
+            if(!filterValue) return alert("Sila pilih tarikh/bulan!");
 
-            if(!filterValue) return alert("Sila pilih tarikh!");
+            const { students, attendance } = await getBaseData();
 
-            // 1. Ambil Data
-            const studentSnap = await getDocs(collection(db, "students"));
-            let students = [];
-            studentSnap.forEach(s => students.push(s.data()));
-
-            const attendanceSnap = await getDocs(collection(db, "attendance"));
-            const attendanceMap = {};
-            attendanceSnap.forEach(d => { 
-                if (d.id.startsWith(filterValue)) attendanceMap[d.data().ic] = d.data(); 
-            });
-
-            // 2. Header PDF
-            let currentY = 15;
+            // PDF Header
             const logoBase64 = await getBase64Image('semsira.png');
             if(logoBase64) doc.addImage(logoBase64, 'PNG', 14, 10, 15, 15);
-
-            doc.setFontSize(16); doc.setTextColor(40);
-            doc.text("LAPORAN KEHADIRAN MENGIKUT KELAS", 35, 18);
-            doc.setFontSize(10); doc.setTextColor(100);
-            doc.text(`Tarikh/Bulan: ${filterValue} | Dijana pada: ${new Date().toLocaleString()}`, 35, 23);
+            doc.setFontSize(16); doc.text(type === 'month' ? "LAPORAN TERPERINCI BULANAN" : "LAPORAN KEHADIRAN HARIAN", 35, 18);
+            doc.setFontSize(10); doc.text(`Rujukan: ${filterValue}`, 35, 23);
             doc.line(14, 28, 196, 28);
             
-            currentY = 35;
+            let currentY = 35;
 
-            // 3. Proses Mengikut Kelas
             for (const className of LIST_KELAS) {
                 const muridKelas = students.filter(s => (s.kelas || s.class) === className);
                 if (muridKelas.length === 0) continue;
-
                 muridKelas.sort((a, b) => a.name.localeCompare(b.name));
 
+                let rows = [];
                 let cH = 0, cL = 0, cT = 0;
-                const rows = muridKelas.map(s => {
-                    const rec = attendanceMap[s.ic];
-                    const status = rec ? rec.status : "Tidak Hadir";
-                    if(status === "Hadir") cH++; else if(status === "Lewat") cL++; else cT++;
-                    return [s.name, rec ? rec.time : "---", status];
+
+                muridKelas.forEach(s => {
+                    // 找出该学生在选定时间段内的所有记录
+                    const studentRecs = attendance.filter(a => a.id.startsWith(filterValue) && a.ic === s.ic);
+                    
+                    if (type === 'day') {
+                        // 日报：显示一行
+                        const rec = studentRecs[0];
+                        const status = rec ? rec.status : "Tidak Hadir";
+                        if(status === "Hadir") cH++; else if(status === "Lewat") cL++; else cT++;
+                        rows.push([s.name, rec ? rec.time : "---", status]);
+                    } else {
+                        // 月报：显示该月内所有迟到和缺席的记录 (或者你可以显示所有记录)
+                        // 这里逻辑：如果学生该月有异常记录，则列出
+                        if (studentRecs.length > 0) {
+                            studentRecs.forEach(r => {
+                                if(r.status === "Hadir") cH++; else cL++;
+                                const tarikh = r.id.split('_')[0];
+                                rows.push([`${s.name} (${tarikh})`, r.time, r.status]);
+                            });
+                        }
+                        // 补充：即使没有打卡记录，也计入 Tidak Hadir (简单化处理，月报通常看异常名单)
+                    }
                 });
 
-                // Cek ruang kertas
                 if (currentY > 240) { doc.addPage(); currentY = 20; }
 
-                // Kotak Info Kelas
                 doc.setFillColor(240, 247, 255);
                 doc.rect(14, currentY, 182, 10, 'F');
-                doc.setFontSize(10); doc.setFont(undefined, 'bold'); doc.setTextColor(0);
+                doc.setFontSize(10); doc.setFont(undefined, 'bold');
                 doc.text(`KELAS: ${className}`, 18, currentY + 7);
-                
                 doc.setFontSize(8); doc.setFont(undefined, 'normal');
-                doc.text(`Hadir: ${cH} | Lewat: ${cL} | Tidak Hadir: ${cT} | Jumlah: ${muridKelas.length}`, 120, currentY + 7);
+                doc.text(`Statistik: Hadir(${cH}) | Lewat(${cL})`, 130, currentY + 7);
 
-                // Jadual Murid
                 doc.autoTable({
-                    head: [['Nama Murid', 'Masa', 'Status']],
+                    head: [['Nama Murid (Tarikh)', 'Masa', 'Status']],
                     body: rows,
                     startY: currentY + 12,
                     theme: 'grid',
-                    styles: { fontSize: 8 },
+                    styles: { fontSize: 7 },
                     headStyles: { fillColor: [51, 65, 85] },
                     didParseCell: (data) => {
                         if (data.section === 'body' && data.column.index === 2) {
                             const val = data.cell.raw;
                             if (val === "Tidak Hadir") data.cell.styles.textColor = [200, 0, 0];
                             else if (val === "Lewat") data.cell.styles.textColor = [255, 140, 0];
-                            else data.cell.styles.textColor = [0, 150, 0];
                         }
                     }
                 });
-
-                currentY = doc.lastAutoTable.finalY + 12;
+                currentY = doc.lastAutoTable.finalY + 10;
             }
-
-            const string = doc.output('bloburl');
-            window.open(string);
+            window.open(doc.output('bloburl'));
         };
 
         initDashboard();
