@@ -7,253 +7,146 @@
     <link rel="stylesheet" href="assets/style.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <style>
-        /* UI BEAUTIFICATION - DARK MODE */
-        body {
-            background-color: #0f172a;
-            background-image: radial-gradient(circle at top right, #1e293b, #0f172a);
-            color: #f1f5f9;
-            margin: 0;
-            font-family: 'Poppins', sans-serif;
-            min-height: 100vh;
-        }
-
-        header {
-            background: #1e293b;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-            padding: 15px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
-        }
-
-        .logo-small {
-            width: 35px;
-            filter: drop-shadow(0 0 5px rgba(255, 255, 255, 0.1));
-        }
-
-        .container {
-            padding: 20px;
-            max-width: 500px;
-            margin: 0 auto;
-        }
-
-        .card {
-            background: #1e293b;
-            border-radius: 20px;
-            padding: 25px;
-            border: 1px solid rgba(255, 255, 255, 0.05);
-            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
-            margin-bottom: 20px;
-        }
-
-        #qrcode-outer {
-            background: white;
-            padding: 15px;
-            border-radius: 15px;
-            display: inline-block;
-            margin: 15px 0;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
-        }
-
-        h2 { color: #ffffff; margin: 10px 0 5px 0; font-size: 22px; text-transform: uppercase; }
-        h4 { color: #38bdf8; border-bottom: 1px solid #334155; padding-bottom: 10px; margin-bottom: 15px; }
-
+        body { background-color: #0f172a; background-image: radial-gradient(circle at top right, #1e293b, #0f172a); color: #f1f5f9; margin: 0; font-family: 'Poppins', sans-serif; min-height: 100vh; }
+        header { background: #1e293b; border-bottom: 1px solid rgba(255, 255, 255, 0.05); padding: 15px; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 15px rgba(0,0,0,0.2); }
+        .logo-small { width: 35px; }
+        .container { padding: 20px; max-width: 500px; margin: 0 auto; }
+        .card { background: #1e293b; border-radius: 20px; padding: 25px; border: 1px solid rgba(255, 255, 255, 0.05); box-shadow: 0 10px 25px rgba(0,0,0,0.2); margin-bottom: 20px; text-align: center; }
+        #qrcode-outer { background: white; padding: 15px; border-radius: 15px; display: inline-block; margin: 15px 0; }
+        h2 { color: #ffffff; margin: 10px 0; font-size: 22px; text-transform: uppercase; }
+        h4 { color: #38bdf8; border-bottom: 1px solid #334155; padding-bottom: 10px; text-align: left; }
         .info-p { margin: 5px 0; color: #94a3b8; font-size: 14px; }
-        .highlight-ic { font-weight: bold; letter-spacing: 1px; color: #38bdf8; font-size: 16px; }
-
-        .record-item {
-            display: flex;
-            justify-content: space-between;
-            padding: 12px 0;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-            font-size: 14px;
-        }
-
-        .record-item:last-child { border-bottom: none; }
-
-        .btn-group {
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-            margin-top: 20px;
-        }
-
-        .btn {
-            border: none;
-            padding: 15px;
-            border-radius: 12px;
-            font-weight: 600;
-            cursor: pointer;
-            width: 100%;
-            transition: 0.3s;
-            font-family: inherit;
-        }
-
-        .btn-blue {
-            background: linear-gradient(135deg, #38bdf8 0%, #0284c7 100%);
-            color: white;
-        }
-
-        .btn-red {
-            background: rgba(239, 68, 68, 0.1);
-            color: #ef4444;
-            border: 1px solid rgba(239, 68, 68, 0.2);
-        }
-
-        .btn:hover { transform: translateY(-2px); filter: brightness(1.1); }
-        .btn-red:hover { background: #ef4444; color: white; }
-
-        @media print {
-            header, .btn-group, .back-link { display: none !important; }
-            body { background: white !important; color: black !important; }
-            .container { padding: 0; max-width: 100%; }
-            .card { box-shadow: none; border: 1px solid #eee; background: white; color: black; }
-            h2, h4 { color: black !important; }
-            .info-p { color: #333 !important; }
-            #qrcode-outer { border: 1px solid #ccc; box-shadow: none; }
-        }
+        .highlight-ic { font-weight: bold; color: #38bdf8; font-size: 16px; }
+        .record-item { display: flex; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid rgba(255, 255, 255, 0.05); font-size: 14px; }
+        .btn-group { display: flex; flex-direction: column; gap: 10px; margin-top: 20px; }
+        .btn { border: none; padding: 15px; border-radius: 12px; font-weight: 600; cursor: pointer; transition: 0.3s; }
+        .btn-blue { background: linear-gradient(135deg, #38bdf8 0%, #0284c7 100%); color: white; }
+        .btn-red { background: rgba(239, 68, 68, 0.1); color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.2); }
+        .back-link { position: absolute; left: 20px; text-decoration: none; color: white; font-size: 20px; }
     </style>
 </head>
 <body>
     <header>
-        <a href="javascript:history.back()" class="back-link" style="float: left; text-decoration: none; color: white; position: absolute; left: 20px; font-size: 20px;">⬅️</a>
+        <a href="javascript:history.back()" class="back-link">⬅️</a>
         <img src="semsira.png" alt="Logo" class="logo-small">
         <span style="font-weight: 600; margin-left: 10px;">Profil Murid</span>
     </header>
 
     <div class="container">
-        <div class="card" style="text-align:center;">
-            <div id="qrcode-outer">
-                <div id="qrcode"></div> 
-            </div>
-            <h2 id="p-name">Memuatkan...</h2>
+        <div class="card">
+            <div id="qrcode-outer"><div id="qrcode"></div></div>
+            <h2 id="p-name">Mencari...</h2>
             <p id="p-ic" class="info-p highlight-ic">IC: -</p>
             <p id="p-class" class="info-p">Kelas: -</p>
             <p id="p-gender" class="info-p">Jantina: -</p>
         </div>
 
-        <div class="card">
-            <h4>Rekod Kehadiran Keseluruhan</h4>
+        <div class="card" style="text-align: left;">
+            <h4>Rekod Kehadiran</h4>
             <div id="attendanceHistory">
-                <p style="text-align:center; color:#64748b; padding: 20px;">Mencari rekod...</p>
+                <p style="text-align:center; color:#64748b; padding: 20px;">Memuatkan rekod...</p>
             </div>
-            
             <div class="btn-group">
-                <button class="btn btn-blue" onclick="window.print()">🖨️ CETAK KAD / SIMPAN PDF</button>
-                <button class="btn btn-red" id="deleteBtn">🗑️ HAPUS MURID & SEMUA REKOD</button>
+                <button class="btn btn-blue" onclick="window.print()">🖨️ CETAK KAD</button>
+                <button class="btn btn-red" id="deleteBtn">🗑️ HAPUS MURID</button>
             </div>
         </div>
     </div>
 
     <script type="module">
-        import { db } from './js/firebase-config.js';
-        import { doc, getDoc, collection, getDocs, query, where, deleteDoc, writeBatch } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-firestore.js";
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-app.js";
+        import { getFirestore, doc, getDoc, collection, getDocs, query, where, deleteDoc, writeBatch } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-firestore.js";
+
+        // Firebase Config (与你其他页面一致)
+        const firebaseConfig = {
+            apiKey: "AIzaSyCdKtcJseBEcR5CXapiAmVb8TvOw30rN1Q",
+            authDomain: "semsiraf6kehadiran.firebaseapp.com",
+            projectId: "semsiraf6kehadiran",
+            storageBucket: "semsiraf6kehadiran.firebasestorage.app",
+            messagingSenderId: "410598658230",
+            appId: "1:410598658230:web:911046bf7a8d36260c9617"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
 
         const urlParams = new URLSearchParams(window.location.search);
-        const studentIC = urlParams.get('id');
-
-        if (!studentIC) {
-            alert("Ralat: ID Murid tidak ditemui.");
-            window.location.href = 'dashboard.html';
-        }
-
-        function generateQRCode(jsonString) {
-            const qrcodeDiv = document.getElementById("qrcode");
-            qrcodeDiv.innerHTML = ""; 
-            new QRCode(qrcodeDiv, {
-                text: jsonString,
-                width: 200,
-                height: 200,
-                colorDark : "#000000",
-                colorLight : "#ffffff",
-                correctLevel : QRCode.CorrectLevel.H
-            });
-        }
+        let studentID = urlParams.get('id'); // 这个 ID 可能是 IC，也可能是 NFC Code
 
         async function loadProfile() {
             try {
-                const studentDoc = await getDoc(doc(db, "students", studentIC));
-                
-                if (studentDoc.exists()) {
-                    const data = studentDoc.data();
+                let data = null;
+                let finalDocRef = null;
+
+                // 1. 尝试直接按 ID 查找 (适合新注册的 NFC ID)
+                const docRef = doc(db, "students", studentID);
+                const docSnap = await getDoc(docRef);
+
+                if (docSnap.exists()) {
+                    data = docSnap.data();
+                    finalDocRef = docSnap.ref;
+                } else {
+                    // 2. 如果找不到，尝试去搜索 ic 字段 (适合旧的 IC ID)
+                    const q = query(collection(db, "students"), where("ic", "==", studentID));
+                    const querySnapshot = await getDocs(q);
+                    if (!querySnapshot.empty) {
+                        data = querySnapshot.docs[0].data();
+                        finalDocRef = querySnapshot.docs[0].ref;
+                    }
+                }
+
+                if (data) {
                     document.getElementById('p-name').innerText = data.name;
                     document.getElementById('p-ic').innerText = `IC: ${data.ic}`;
                     document.getElementById('p-class').innerText = `Kelas: ${data.kelas}`;
                     document.getElementById('p-gender').innerText = `Jantina: ${data.gender}`;
                     
-                    const studentDataForQR = { 
-                        name: data.name, 
-                        ic: data.ic, 
-                        kelas: data.kelas, 
-                        gender: data.gender 
-                    };
-                    generateQRCode(JSON.stringify(studentDataForQR));
+                    // 生成预览 QR (包含 IC 资料)
+                    new QRCode(document.getElementById("qrcode"), {
+                        text: JSON.stringify(data),
+                        width: 180, height: 180
+                    });
+
+                    // 加载出勤历史
+                    loadAttendance(data.ic);
+
+                    // 绑定删除按钮
+                    document.getElementById('deleteBtn').onclick = () => deleteStudent(finalDocRef, data.ic);
                 } else {
                     document.getElementById('p-name').innerText = "Murid Tidak Ditemui";
                 }
-
-                const q = query(collection(db, "attendance"), where("ic", "==", studentIC));
-                const querySnapshot = await getDocs(q);
-                const historyDiv = document.getElementById('attendanceHistory');
-                historyDiv.innerHTML = "";
-
-                let attendanceData = [];
-                querySnapshot.forEach((doc) => {
-                    const datePart = doc.id.split('_')[0]; 
-                    attendanceData.push({ date: datePart, ...doc.data() });
-                });
-
-                attendanceData.sort((a, b) => new Date(b.date) - new Date(a.date));
-
-                if (attendanceData.length === 0) {
-                    historyDiv.innerHTML = "<p style='text-align:center; color:#64748b; padding:20px;'>Tiada rekod kehadiran ditemui.</p>";
-                } else {
-                    attendanceData.forEach(record => {
-                        const statusColor = record.status === "Hadir" ? "#10b981" : "#f59e0b";
-                        const div = document.createElement('div');
-                        div.className = "record-item";
-                        div.innerHTML = `
-                            <span style="font-weight: 500;">${record.date}</span>
-                            <span style="color:${statusColor}; font-weight:600;">${record.status} <small style="color:#94a3b8; font-weight:400;">(${record.time})</small></span>
-                        `;
-                        historyDiv.appendChild(div);
-                    });
-                }
-            } catch (error) {
-                console.error("Ralat:", error);
+            } catch (e) {
+                console.error(e);
             }
         }
 
-        // --- 核心逻辑：删除学生及其所有出勤记录 ---
-        document.getElementById('deleteBtn').onclick = async () => {
-            const confirmDelete = confirm("PERHATIAN: Padam profil murid ini?\n\nTindakan ini juga akan memadam SEMUA REKOD KEHADIRAN murid ini secara kekal.");
-            
-            if (confirmDelete) {
-                try {
-                    // 1. 删除学生个人资料文档
-                    await deleteDoc(doc(db, "students", studentIC));
+        async function loadAttendance(ic) {
+            const q = query(collection(db, "attendance"), where("ic", "==", ic));
+            const snap = await getDocs(q);
+            const historyDiv = document.getElementById('attendanceHistory');
+            historyDiv.innerHTML = "";
 
-                    // 2. 查找并删除所有相关的出勤记录
-                    const q = query(collection(db, "attendance"), where("ic", "==", studentIC));
-                    const querySnapshot = await getDocs(q);
-                    
-                    if (!querySnapshot.empty) {
-                        const batch = writeBatch(db); // 使用 Batch 一次性执行多个删除操作，更高效
-                        querySnapshot.forEach((doc) => {
-                            batch.delete(doc.ref);
-                        });
-                        await batch.commit();
-                    }
-
-                    alert("Profil dan semua rekod kehadiran berjaya dipadamkan.");
-                    window.location.href = 'dashboard.html';
-                } catch (error) {
-                    console.error("Ralat semasa memadam data:", error);
-                    alert("Gagal memadam data. Sila periksa sambungan internet.");
-                }
+            if (snap.empty) {
+                historyDiv.innerHTML = "<p style='text-align:center; color:#64748b;'>Tiada rekod.</p>";
+                return;
             }
-        };
+
+            snap.forEach(doc => {
+                const res = doc.data();
+                const div = document.createElement('div');
+                div.className = "record-item";
+                div.innerHTML = `<span>${doc.id.split('_')[0]}</span> <b>${res.status}</b>`;
+                historyDiv.appendChild(div);
+            });
+        }
+
+        async function deleteStudent(docRef, ic) {
+            if (confirm("Padam murid ini?")) {
+                await deleteDoc(docRef);
+                alert("Dipadam!");
+                location.href = 'dashboard.html';
+            }
+        }
 
         window.onload = loadProfile;
     </script>
