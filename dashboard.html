@@ -9,122 +9,20 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.23/jspdf.plugin.autotable.min.js"></script>
     <style>
-        /* UI BEAUTIFICATION - DARK MODE */
-        body {
-            background-color: #0f172a;
-            background-image: radial-gradient(circle at top right, #1e293b, #0f172a);
-            color: #f1f5f9;
-            margin: 0;
-            font-family: 'Poppins', sans-serif;
-            min-height: 100vh;
-        }
-
-        header {
-            background: #1e293b;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-            padding: 15px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
-            position: sticky;
-            top: 0;
-            z-index: 100;
-        }
-
-        .logo-small {
-            width: 35px;
-            filter: drop-shadow(0 0 5px rgba(255, 255, 255, 0.1));
-        }
-
-        .container {
-            padding: 20px;
-            max-width: 600px;
-            margin: 0 auto;
-        }
-
-        .card {
-            background: #1e293b;
-            border-radius: 20px;
-            padding: 20px;
-            border: 1px solid rgba(255, 255, 255, 0.05);
-            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
-            margin-bottom: 20px;
-        }
-
-        h4 {
-            margin-top: 0;
-            color: #38bdf8;
-            font-size: 16px;
-            border-left: 4px solid #38bdf8;
-            padding-left: 10px;
-        }
-
-        label {
-            display: block;
-            margin-bottom: 5px;
-            color: #94a3b8;
-            font-size: 11px;
-        }
-
-        input[type="month"], input[type="date"] {
-            width: 100%;
-            padding: 12px;
-            background: #0f172a;
-            border: 1px solid #334155;
-            border-radius: 10px;
-            color: white;
-            margin-bottom: 10px;
-            font-family: inherit;
-            box-sizing: border-box;
-        }
-
-        .btn {
-            border: none;
-            border-radius: 12px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 12px;
-            width: 100%;
-        }
-
+        body { background-color: #0f172a; background-image: radial-gradient(circle at top right, #1e293b, #0f172a); color: #f1f5f9; margin: 0; font-family: 'Poppins', sans-serif; min-height: 100vh; }
+        header { background: #1e293b; border-bottom: 1px solid rgba(255, 255, 255, 0.05); padding: 15px; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 15px rgba(0,0,0,0.2); position: sticky; top: 0; z-index: 100; }
+        .logo-small { width: 35px; filter: drop-shadow(0 0 5px rgba(255, 255, 255, 0.1)); }
+        .container { padding: 20px; max-width: 600px; margin: 0 auto; }
+        .card { background: #1e293b; border-radius: 20px; padding: 20px; border: 1px solid rgba(255, 255, 255, 0.05); box-shadow: 0 10px 25px rgba(0,0,0,0.2); margin-bottom: 20px; }
+        h4 { margin-top: 0; color: #38bdf8; font-size: 16px; border-left: 4px solid #38bdf8; padding-left: 10px; }
+        label { display: block; margin-bottom: 5px; color: #94a3b8; font-size: 11px; }
+        input[type="month"], input[type="date"] { width: 100%; padding: 12px; background: #0f172a; border: 1px solid #334155; border-radius: 10px; color: white; margin-bottom: 10px; font-family: inherit; box-sizing: border-box; }
+        .btn { border: none; border-radius: 12px; font-weight: 600; cursor: pointer; transition: all 0.3s; display: flex; align-items: center; justify-content: center; padding: 12px; width: 100%; gap: 10px; }
         .btn-blue { background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%); color: white; }
         .btn-green { background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white; }
-
-        .btn:hover {
-            transform: translateY(-2px);
-            filter: brightness(1.1);
-            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
-        }
-
-        #classList .btn-class {
-            background: #334155;
-            border: 1px solid rgba(255,255,255,0.05);
-            padding: 18px;
-            font-size: 15px;
-            margin-bottom: 10px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            color: white;
-            text-decoration: none;
-            border-radius: 12px;
-            transition: 0.3s;
-        }
-
-        #classList .btn-class:hover {
-            background: #475569;
-            transform: translateX(5px);
-        }
-
-        #totalInfo {
-            color: #94a3b8;
-            font-weight: 500;
-        }
+        .btn:hover { transform: translateY(-2px); filter: brightness(1.1); }
+        #classList .btn-class { background: #334155; border: 1px solid rgba(255,255,255,0.05); padding: 18px; font-size: 15px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; color: white; text-decoration: none; border-radius: 12px; transition: 0.3s; }
+        #totalInfo { color: #94a3b8; font-weight: 500; }
     </style>
 </head>
 <body>
@@ -136,7 +34,7 @@
 
     <div class="container">
         <div class="card">
-            <h4>Analisis Kehadiran Bulan Ini</h4>
+            <h4>Analisis Kehadiran Hari Ini</h4>
             <div style="max-width: 220px; margin: 15px auto;">
                 <canvas id="attendanceChart"></canvas>
             </div>
@@ -144,66 +42,80 @@
         </div>
 
         <div class="card">
-            <h4>Carian & Muat Turun Laporan</h4>
+            <h4>Cetak Laporan</h4>
             <div style="margin-top:15px;">
-                <label>Pilih Bulan (Laporan Bulanan):</label>
+                <label>Pilih Bulan:</label>
                 <input type="month" id="searchMonth">
-                <button class="btn btn-blue" onclick="downloadReport('month')" style="margin-bottom:15px;">📥 MUAT TURUN PDF BULANAN</button>
+                <button class="btn btn-blue" onclick="printReport('month')" style="margin-bottom:15px;">🖨️ CETAK LAPORAN BULANAN</button>
 
-                <label>Pilih Tarikh (Laporan Harian):</label>
+                <label>Pilih Tarikh:</label>
                 <input type="date" id="searchDate">
-                <button class="btn btn-green" onclick="downloadReport('day')">📅 MUAT TURUN PDF HARIAN</button>
+                <button class="btn btn-green" onclick="printReport('day')">🖨️ CETAK LAPORAN HARIAN</button>
             </div>
         </div>
 
         <div class="card">
             <h4>Senarai Kelas</h4>
-            <div id="classList" style="margin-top:15px;">
-                <p style="text-align:center; color:#64748b;">Memuatkan senarai kelas...</p>
-            </div>
+            <div id="classList" style="margin-top:15px;"></div>
         </div>
     </div>
 
     <script type="module">
         import { db } from './js/firebase-config.js';
-        import { collection, getDocs, query, where } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-firestore.js";
+        import { collection, getDocs, query } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-firestore.js";
 
         let myChart;
 
         async function initDashboard() {
+            setDefaultDates();
             await loadStatistics();
             await loadClassList();
         }
 
+        function setDefaultDates() {
+            const now = new Date();
+            const year = now.getFullYear();
+            const month = String(now.getMonth() + 1).padStart(2, '0');
+            const day = String(now.getDate()).padStart(2, '0');
+            document.getElementById('searchMonth').value = `${year}-${month}`;
+            document.getElementById('searchDate').value = `${year}-${month}-${day}`;
+        }
+
         async function loadStatistics() {
             const now = new Date();
-            const yearMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+            const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+            
+            // 获取总人数来计算 Tidak Hadir
+            const studentSnap = await getDocs(collection(db, "students"));
+            const totalStudents = studentSnap.size;
+
             const q = query(collection(db, "attendance"));
             const querySnapshot = await getDocs(q);
             
             let hadir = 0, lewat = 0;
             querySnapshot.forEach((doc) => {
-                if (doc.id.startsWith(yearMonth)) {
+                if (doc.id.startsWith(todayStr)) {
                     const data = doc.data();
                     if (data.status === "Hadir") hadir++;
                     else if (data.status === "Lewat") lewat++;
                 }
             });
 
-            updateChart(hadir, lewat);
-            document.getElementById('totalInfo').innerText = `Jumlah Rekod Bulan Ini: ${hadir + lewat}`;
+            let tidakHadir = totalStudents - (hadir + lewat);
+            updateChart(hadir, lewat, tidakHadir);
+            document.getElementById('totalInfo').innerText = `Jumlah Murid: ${totalStudents}`;
         }
 
-        function updateChart(h, l) {
+        function updateChart(h, l, t) {
             const ctx = document.getElementById('attendanceChart').getContext('2d');
             if(myChart) myChart.destroy();
             myChart = new Chart(ctx, {
                 type: 'doughnut',
                 data: {
-                    labels: ['Hadir', 'Lewat'],
+                    labels: ['Hadir', 'Lewat', 'Tidak Hadir'],
                     datasets: [{
-                        data: [h, l],
-                        backgroundColor: ['#10b981', '#f59e0b'],
+                        data: [h, l, t],
+                        backgroundColor: ['#10b981', '#f59e0b', '#ef4444'],
                         borderWidth: 0
                     }]
                 },
@@ -219,113 +131,88 @@
                 const btn = document.createElement('a');
                 btn.href = `class-detail.html?class=${encodeURIComponent(className)}`;
                 btn.className = "btn-class";
-                btn.innerHTML = `<span>🏫 ${className}</span> <span style='font-size:10px; opacity:0.6;'>LIHAT ➔</span>`;
+                btn.innerHTML = `<span>🏫 ${className}</span> <span>➔</span>`;
                 classListDiv.appendChild(btn);
             });
         }
 
-        // --- 核心更新：专业格式的 PDF 生成逻辑 ---
-        window.downloadReport = async (type) => {
+        // 辅助函数：将图片转为 Base64 以便在 PDF 中显示 Logo
+        function getBase64Image(imgUrl) {
+            return new Promise((resolve, reject) => {
+                const img = new Image();
+                img.src = imgUrl;
+                img.setAttribute('crossOrigin', 'anonymous');
+                img.onload = () => {
+                    const canvas = document.createElement("canvas");
+                    canvas.width = img.width;
+                    canvas.height = img.height;
+                    const ctx = canvas.getContext("2d");
+                    ctx.drawImage(img, 0, 0);
+                    resolve(canvas.toDataURL("image/png"));
+                };
+                img.onerror = error => reject(error);
+            });
+        }
+
+        window.printReport = async (type) => {
             const { jsPDF } = window.jspdf;
-            const doc = new jsPDF('p', 'mm', 'a4'); // A4 比例
+            const doc = new jsPDF('p', 'mm', 'a4');
             const filterValue = type === 'month' ? document.getElementById('searchMonth').value : document.getElementById('searchDate').value;
 
-            if(!filterValue) return alert("Sila pilih tarikh/bulan!");
+            if(!filterValue) return alert("Sila pilih tarikh!");
 
-            // 1. 获取所有学生（用于按班级排序和逻辑填充 Tidak Hadir）
+            // 1. 获取数据
             const studentSnap = await getDocs(collection(db, "students"));
             let students = [];
             studentSnap.forEach(s => students.push(s.data()));
-
-            // 按班级名称排序
             students.sort((a, b) => (a.kelas || a.class).localeCompare(b.kelas || b.class));
 
-            // 2. 获取考勤记录
-            const q = query(collection(db, "attendance"));
-            const attendanceSnap = await getDocs(q);
+            const attendanceSnap = await getDocs(collection(db, "attendance"));
             const attendanceMap = {};
-            attendanceSnap.forEach(d => {
-                if (d.id.startsWith(filterValue)) {
-                    attendanceMap[d.data().ic] = d.data();
-                }
+            attendanceSnap.forEach(d => { if (d.id.startsWith(filterValue)) attendanceMap[d.data().ic] = d.data(); });
+
+            let sH = 0, sL = 0, sT = 0;
+            const rows = students.map(s => {
+                const rec = attendanceMap[s.ic];
+                const status = rec ? rec.status : "Tidak Hadir";
+                if(status === "Hadir") sH++; else if(status === "Lewat") sL++; else sT++;
+                return [s.name, s.kelas || s.class, rec ? rec.time : "---", status];
             });
 
-            // 3. 构建表格数据并计算统计摘要
-            let statHadir = 0, statLewat = 0, statTidak = 0;
-            const rows = [];
+            // 2. 绘制 Header (含 Logo)
+            try {
+                const logoBase64 = await getBase64Image('semsira.png');
+                doc.addImage(logoBase64, 'PNG', 14, 10, 15, 15);
+            } catch (e) { console.log("Logo not found, skipping..."); }
 
-            students.forEach(s => {
-                const record = attendanceMap[s.ic];
-                const status = record ? record.status : "Tidak Hadir";
-                const time = record ? record.time : "---";
-                const className = s.kelas || s.class;
+            doc.setFontSize(18); doc.setTextColor(40);
+            doc.text("LAPORAN KEHADIRAN SEMSIRA", 35, 18);
+            doc.setFontSize(11); doc.text(`Tarikh/Bulan: ${filterValue}`, 35, 24);
 
-                if (status === "Hadir") statHadir++;
-                else if (status === "Lewat") statLewat++;
-                else statTidak++;
+            // 3. 统计摘要
+            doc.setDrawColor(200); doc.line(14, 30, 196, 30);
+            doc.text(`Ringkasan: Hadir(${sH}) | Lewat(${sL}) | Tidak Hadir(${sT})`, 14, 38);
 
-                rows.push([s.name, className, time, status]);
-            });
-
-            // 4. 绘制 PDF 头部 (Logo 和 标题)
-            // 注意：'semsira.png' 必须在同一目录下，且 jsPDF 支持图片需为 Base64 或已加载。
-            // 这里我们先绘制文字标题，模拟 Profil 里的 Header 格式
-            doc.setFillColor(30, 41, 59); // 深色背景
-            doc.rect(0, 0, 210, 40, 'F');
-            
-            doc.setTextColor(255, 255, 255);
-            doc.setFontSize(20);
-            doc.setFont("helvetica", "bold");
-            doc.text("LAPORAN KEHADIRAN SEMSIRA", 105, 20, { align: "center" });
-            
-            doc.setFontSize(12);
-            doc.setFont("helvetica", "normal");
-            doc.text(`${type === 'month' ? 'LAPORAN BULANAN' : 'LAPORAN HARIAN'}: ${filterValue}`, 105, 30, { align: "center" });
-
-            // 5. 绘制统计摘要卡片
-            doc.setTextColor(0, 0, 0);
-            doc.setDrawColor(200, 200, 200);
-            doc.line(14, 45, 196, 45);
-            
-            doc.setFontSize(11);
-            doc.text(`RINGKASAN:`, 14, 55);
-            doc.setTextColor(34, 197, 94); // Green
-            doc.text(`Hadir: ${statHadir}`, 45, 55);
-            doc.setTextColor(245, 158, 11); // Orange
-            doc.text(`Lewat: ${statLewat}`, 85, 55);
-            doc.setTextColor(239, 68, 68); // Red
-            doc.text(`Tidak Hadir: ${statTidak}`, 125, 55);
-            doc.setTextColor(0, 0, 0);
-            doc.text(`Jumlah Murid: ${students.length}`, 165, 55);
-
-            // 6. 生成表格
+            // 4. 表格
             doc.autoTable({
                 head: [['Nama Murid', 'Kelas', 'Masa', 'Status']],
                 body: rows,
-                startY: 65,
-                theme: 'striped',
-                headStyles: { fillColor: [2, 132, 199], halign: 'center' },
-                columnStyles: {
-                    0: { cellWidth: 80 }, // 名字宽一点
-                    1: { halign: 'center' },
-                    2: { halign: 'center' },
-                    3: { halign: 'center', fontStyle: 'bold' }
-                },
+                startY: 45,
+                theme: 'grid',
+                headStyles: { fillColor: [44, 62, 80] },
                 didDrawCell: (data) => {
-                    // 如果状态是 Tidak Hadir，把文字变成红色
                     if (data.section === 'body' && data.column.index === 3) {
-                        if (data.cell.raw === "Tidak Hadir") {
-                            doc.setTextColor(239, 68, 68);
-                        } else if (data.cell.raw === "Lewat") {
-                            doc.setTextColor(245, 158, 11);
-                        } else {
-                            doc.setTextColor(34, 197, 94);
-                        }
+                        const val = data.cell.raw;
+                        if (val === "Tidak Hadir") doc.setTextColor(200, 0, 0);
+                        else if (val === "Lewat") doc.setTextColor(255, 140, 0);
+                        else doc.setTextColor(0, 150, 0);
                     }
                 }
             });
 
-            doc.save(`Laporan_SEMSIRA_${filterValue}.pdf`);
+            // 5. 预览并打印 (不直接下载)
+            const string = doc.output('bloburl');
+            window.open(string);
         };
 
         initDashboard();
