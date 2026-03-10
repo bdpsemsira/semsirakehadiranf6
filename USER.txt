@@ -1,0 +1,3 @@
+#For change the class name
+dashboard.html
+generator.html
