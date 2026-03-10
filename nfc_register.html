@@ -3,128 +3,208 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Register Student - NFC</title>
+    <title>Jana QR - SEMSIRA</title>
+    <link rel="stylesheet" href="assets/style.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <style>
-        body { background: #020617; color: white; font-family: sans-serif; padding: 20px; text-align: center; margin: 0; }
-        .container { max-width: 400px; margin: 0 auto; }
-        input { width: 100%; padding: 15px; margin: 10px 0; border-radius: 10px; border: 1px solid #334155; background: #0f172a; color: white; box-sizing: border-box; font-size: 16px; }
-        .btn { width: 100%; padding: 15px; border-radius: 10px; border: none; font-weight: bold; cursor: pointer; margin-top: 10px; font-size: 16px; transition: 0.3s; }
-        .btn-nfc { background: #38bdf8; color: white; box-shadow: 0 0 15px rgba(56, 189, 248, 0.3); }
-        .btn-upload { background: #10b981; color: white; margin-top: 20px; }
-        #status { color: #38bdf8; margin: 15px 0; min-height: 20px; font-size: 14px; font-weight: bold; }
-        .header-bar { text-align: left; padding: 10px 0; }
+        /* UI BEAUTIFICATION - DARK MODE */
+        body {
+            background-color: #0f172a;
+            background-image: radial-gradient(circle at top right, #1e293b, #0f172a);
+            color: #f1f5f9;
+            margin: 0;
+            font-family: 'Poppins', sans-serif;
+            min-height: 100vh;
+        }
+
+        header {
+            background: #1e293b;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            padding: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        }
+
+        .logo-small {
+            width: 35px;
+            filter: drop-shadow(0 0 5px rgba(255, 255, 255, 0.1));
+        }
+
+        .container {
+            padding: 20px;
+            max-width: 500px;
+            margin: 0 auto;
+        }
+
+        .card {
+            background: #1e293b;
+            border-radius: 20px;
+            padding: 25px;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+            margin-bottom: 20px;
+        }
+
+        h3, h4 {
+            color: #38bdf8;
+            margin-top: 0;
+            font-weight: 600;
+        }
+
+        input, select {
+            width: 100%;
+            padding: 14px;
+            margin: 10px 0;
+            background: #0f172a;
+            border: 1px solid #334155;
+            border-radius: 12px;
+            color: white;
+            font-size: 14px;
+            box-sizing: border-box;
+            outline: none;
+            transition: border-color 0.3s;
+        }
+
+        input:focus, select:focus {
+            border-color: #38bdf8;
+        }
+
+        .btn {
+            border: none;
+            border-radius: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            padding: 15px;
+        }
+
+        .btn-blue {
+            background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%);
+            color: white;
+            box-shadow: 0 4px 12px rgba(2, 132, 199, 0.3);
+        }
+
+        .btn-green {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            color: white;
+            box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            filter: brightness(1.1);
+        }
+
+        /* Container untuk QR Code agar nampak bersih */
+        #qrcode {
+            background: white;
+            padding: 15px;
+            border-radius: 15px;
+            display: inline-block;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+        }
+
+        @media print {
+            header, .btn-blue, input, select, h3 { display: none !important; }
+            body { background: white; }
+            .card { border: none; box-shadow: none; background: white; color: black; }
+            #qr-result-card { display: block !important; margin-top: 50px; }
+            #display-name { color: black; font-size: 20px; }
+        }
     </style>
 </head>
 <body>
+    <header>
+        <a href="menu.html" style="float: left; text-decoration: none; color: white; position: absolute; left: 20px; font-size: 20px;">⬅️</a>
+        <img src="semsira.png" alt="Logo" class="logo-small">
+        <span style="font-weight: 600; margin-left: 10px;">Pendaftaran Murid</span>
+    </header>
+
     <div class="container">
-        <div class="header-bar">
-            <button onclick="location.href='nfctest.html'" style="background:none; border:none; color:white; font-size:24px; cursor:pointer;">⬅️</button>
-        </div>
-        
-        <h2>Daftar Murid Baru</h2>
-        
-        <div id="status">Sila klik butang Biru untuk mula</div>
-        
-        <button class="btn btn-nfc" onclick="handleNfcActivation()">1. AKTIFKAN & SCAN KAD</button>
-        
-        <div style="margin-top: 20px; text-align: left;">
-            <label style="font-size: 12px; color: #94a3b8; margin-left: 5px;">ID Kad (Autofill)</label>
-            <input type="text" id="nfcID" placeholder="NFC Serial Number" readonly>
+        <div class="card">
+            <h3>Maklumat Murid</h3>
+            <input type="text" id="name" placeholder="Nama Penuh (Huruf Besar)" required>
+            <input type="text" id="ic" placeholder="Nombor IC (Contoh: 05010102XXXX)" required>
             
-            <label style="font-size: 12px; color: #94a3b8; margin-left: 5px;">Maklumat Murid</label>
-            <input type="text" id="stuName" placeholder="Nama Penuh Murid">
-            <input type="text" id="stuClass" placeholder="Kelas (Contoh: 6 ATOM)">
+            <select id="class" required>
+                <option value="">Pilih Kelas</option>
+                <option value="SUMAYYAH">SUMAYYAH</option>
+                <option value="SARAH">SARAH</option>
+                <option value="KHADIJAH">KHADIJAH</option>
+                <option value="AISHAH">AISHAH</option>
+                <option value="FATIMAH">FATIMAH</option>
+                <option value="ZAINAB">ZAINAB</option>
+                <option value="RUQAYYAH">RUQAYYAH</option>
+                <option value="UMMU KALSOM">UMMU KALSOM</option> </select>
+
+            <select id="gender" required>
+                <option value="">Jantina</option>
+                <option value="Lelaki">Lelaki</option>
+                <option value="Perempuan">Perempuan</option>
+            </select>
+            <button class="btn btn-blue" onclick="generateAndSave()" style="width:100%; margin-top:10px;">💾 SIMPAN & JANA QR</button>
         </div>
-        
-        <button class="btn btn-upload" onclick="uploadData()">4. SIMPAN KE FIREBASE</button>
+
+        <div id="qr-result-card" class="card" style="display:none; text-align: center;">
+            <h4>QR Code Murid</h4>
+            <div id="qrcode-container" style="margin: 20px 0;">
+                <div id="qrcode"></div>
+            </div>
+            <p id="display-name" style="font-weight: bold; margin-bottom: 20px; font-size: 18px;"></p>
+            <button class="btn btn-green" onclick="window.print()" style="width: 100%;">🖨️ CETAK QR CODE</button>
+        </div>
     </div>
 
-    <audio id="beep" src="beep.mp3" preload="auto"></audio>
-
     <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-app.js";
-        import { getFirestore, doc, setDoc } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-firestore.js";
+        import { db } from './js/firebase-config.js';
+        import { doc, setDoc } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-firestore.js";
 
-        // 你的 Firebase 配置
-        const firebaseConfig = {
-            apiKey: "AIzaSyCdKtcJseBEcR5CXapiAmVb8TvOw30rN1Q",
-            authDomain: "semsiraf6kehadiran.firebaseapp.com",
-            projectId: "semsiraf6kehadiran",
-            storageBucket: "semsiraf6kehadiran.firebasestorage.app",
-            messagingSenderId: "410598658230",
-            appId: "1:410598658230:web:911046bf7a8d36260c9617"
-        };
+        window.generateAndSave = async () => {
+            const name = document.getElementById('name').value.toUpperCase();
+            const ic = document.getElementById('ic').value;
+            const kelas = document.getElementById('class').value;
+            const gender = document.getElementById('gender').value;
 
-        const app = initializeApp(firebaseConfig);
-        const db = getFirestore(app);
-        const beep = document.getElementById('beep');
-
-        // 核心：处理 NFC 激活和扫描
-        window.handleNfcActivation = async () => {
-            if ('NDEFReader' in window) {
-                try {
-                    const ndef = new NDEFReader();
-                    // 1. 立即请求扫描权限（由点击触发）
-                    await ndef.scan();
-                    
-                    document.getElementById('status').innerText = "📳 Sila dekatkan kad ke belakang telefon...";
-                    document.getElementById('status').style.color = "#fbbf24"; // 橙色提示等待中
-                    
-                    // 2. 同时解锁音频
-                    beep.play().then(() => { beep.pause(); beep.currentTime = 0; }).catch(e => console.log("Audio unlock fail"));
-
-                    ndef.addEventListener("reading", ({ serialNumber }) => {
-                        // 扫描成功反馈
-                        beep.currentTime = 0;
-                        beep.play().catch(()=>{});
-                        
-                        document.getElementById('nfcID').value = serialNumber;
-                        document.getElementById('status').innerText = "✅ Kad Dikesan: " + serialNumber;
-                        document.getElementById('status').style.color = "#10b981"; // 绿色提示成功
-                    });
-
-                    // 错误监听
-                    ndef.addEventListener("readingerror", () => {
-                        document.getElementById('status').innerText = "❌ Gagal membaca kad. Cuba lagi.";
-                        document.getElementById('status').style.color = "#f43f5e";
-                    });
-
-                } catch (error) {
-                    console.error(error);
-                    if (error.name === "NotAllowedError") {
-                        alert("Akses NFC ditolak. Sila benarkan NFC dalam tetapan Chrome.");
-                    } else {
-                        alert("Error: " + error.message);
-                    }
-                }
-            } else {
-                alert("Browser tidak menyokong NFC. Sila gunakan Chrome pada Android.");
+            if(!name || !ic || !kelas || !gender) {
+                alert("Sila isi semua maklumat!");
+                return;
             }
-        };
 
-        // 上传数据
-        window.uploadData = async () => {
-            const id = document.getElementById('nfcID').value;
-            const name = document.getElementById('stuName').value;
-            const cls = document.getElementById('stuClass').value;
-
-            if(!id) return alert("Sila scan kad NFC terlebih dahulu!");
-            if(!name || !cls) return alert("Sila masukkan Nama dan Kelas!");
+            const studentData = { 
+                name: name, 
+                ic: ic, 
+                kelas: kelas, 
+                gender: gender 
+            };
+            
+            const qrString = JSON.stringify(studentData);
 
             try {
-                document.getElementById('status').innerText = "⌛ Menghantar data...";
-                await setDoc(doc(db, "students", id), {
-                    name: name.toUpperCase(),
-                    kelas: cls.toUpperCase(),
-                    updatedAt: new Date()
+                await setDoc(doc(db, "students", ic), studentData);
+                
+                document.getElementById('qrcode').innerHTML = "";
+                new QRCode(document.getElementById("qrcode"), {
+                    text: qrString,
+                    width: 200,
+                    height: 200,
+                    colorDark : "#000000",
+                    colorLight : "#ffffff",
+                    correctLevel : QRCode.CorrectLevel.H
                 });
-                alert("Pendaftaran Berjaya!");
-                location.href = 'nfctest.html';
+
+                document.getElementById('display-name').innerText = name;
+                document.getElementById('qr-result-card').style.display = "block";
+                
+                document.getElementById('qr-result-card').scrollIntoView({ behavior: 'smooth' });
+                
+                alert("Data berjaya disimpan dan QR Code telah dijana!");
             } catch (e) {
-                alert("Gagal simpan: " + e.message);
-                document.getElementById('status').innerText = "❌ Ralat Firebase.";
+                console.error("Ralat simpan data: ", e);
+                alert("Ralat sistem: Gagal menyimpan data.");
             }
-        };
+        }
     </script>
 </body>
 </html>
