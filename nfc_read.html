@@ -3,53 +3,59 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NFC Scan - SEMSIRA</title>
+    <title>NFC Attendance - SEMSIRA</title>
     <style>
-        body { background: #020617; color: white; font-family: sans-serif; text-align: center; padding: 20px; margin: 0; display: flex; flex-direction: column; height: 100vh; }
+        body { background: #020617; color: white; font-family: 'Poppins', sans-serif; text-align: center; padding: 20px; margin: 0; display: flex; flex-direction: column; height: 100vh; }
         
         #start-overlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(2, 6, 23, 0.95); z-index: 9999;
+            background: rgba(2, 6, 23, 0.98); z-index: 9999;
             display: flex; flex-direction: column; align-items: center; justify-content: center;
             cursor: pointer;
         }
 
-        .result-box { background: #1e293b; padding: 30px; border-radius: 20px; margin-top: 50px; border-top: 5px solid #38bdf8; display: none; }
+        .result-box { background: #1e293b; padding: 30px; border-radius: 20px; margin-top: 50px; border-top: 5px solid #38bdf8; display: none; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
         .res-error { border-top: 5px solid #ef4444 !important; }
+        .res-success { border-top: 5px solid #22c55e !important; }
         
         .loader { margin-top: 100px; animation: pulse 1.5s infinite; color: #38bdf8; }
         @keyframes pulse { 0%, 100% { opacity: 0.4; } 50% { opacity: 1; } }
 
-        .btn-back { position: absolute; top: 20px; left: 20px; background: none; border: none; color: white; font-size: 24px; cursor: pointer; z-index: 10000; }
+        .btn-back { position: absolute; top: 20px; left: 20px; background: rgba(255,255,255,0.1); border: none; color: white; padding: 10px 15px; border-radius: 10px; cursor: pointer; z-index: 10000; }
+        .status-msg { font-weight: bold; margin-top: 10px; display: block; }
+        .time-label { font-size: 14px; color: #94a3b8; }
     </style>
 </head>
 <body>
 
     <div id="start-overlay" onclick="activateNFC()">
-        <div style="font-size: 70px; margin-bottom: 20px;">📡</div>
-        <h2>Ketuk untuk Mula Scan</h2>
-        <p style="color: #38bdf8;">Sila klik di sini untuk aktifkan NFC</p>
+        <div style="font-size: 80px; margin-bottom: 20px;">📡</div>
+        <h2>KETUK UNTUK MULA</h2>
+        <p style="color: #38bdf8;">Klik skrin untuk mengaktifkan pembaca NFC</p>
     </div>
 
-    <button class="btn-back" onclick="location.href='index.html'">⬅️</button>
+    <button class="btn-back" onclick="history.back()">⬅️ KEMBALI</button>
     
-    <div id="wait-ui" class="loader" style="display: none;">
+    <div id="wait-ui" class="loader">
         <div style="font-size: 60px;">📳</div>
         <h3>Sila dekatkan kad NFC...</h3>
+        <p id="system-status" style="font-size: 12px; color: #64748b;">Sistem sedia</p>
     </div>
 
     <div id="result-ui" class="result-box">
         <h1 id="resName">--</h1>
         <h2 id="resClass" style="color: #38bdf8;">--</h2>
-        <p id="resID" style="font-size: 12px; color: #64748b;"></p>
-        <button onclick="location.reload()" style="background:#38bdf8; border:none; color:white; padding:12px 25px; border-radius:10px; margin-top:20px; font-weight:bold;">SCAN LAGI</button>
+        <div id="attendance-status" class="status-msg">--</div>
+        <p id="resID" style="font-size: 11px; color: #64748b; margin-top: 15px; font-family: monospace;"></p>
+        <button onclick="resetUI()" style="background:#38bdf8; border:none; color:white; padding:12px 25px; border-radius:10px; margin-top:20px; font-weight:bold; cursor:pointer;">SCAN SETERUSNYA</button>
     </div>
 
-    <audio id="beep" src="beep.mp3" preload="auto"></audio>
+    <audio id="beepSuccess" src="https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3"></audio>
+    <audio id="beepError" src="https://assets.mixkit.co/active_storage/sfx/2571/2571-preview.mp3"></audio>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-app.js";
-        import { getFirestore, collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-firestore.js";
+        import { getFirestore, collection, query, where, getDocs, doc, setDoc } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyCdKtcJseBEcR5CXapiAmVb8TvOw30rN1Q",
@@ -62,8 +68,11 @@
 
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
-        const beep = document.getElementById('beep');
 
+        const beepS = document.getElementById('beepSuccess');
+        const beepE = document.getElementById('beepError');
+
+        // 激活 NFC 扫描
         window.activateNFC = async () => {
             if ('NDEFReader' in window) {
                 try {
@@ -71,61 +80,96 @@
                     await ndef.scan();
                     
                     document.getElementById('start-overlay').style.display = 'none';
-                    document.getElementById('wait-ui').style.display = 'block';
-                    
-                    // 解锁声音
-                    beep.play().then(() => { beep.pause(); beep.currentTime = 0; }).catch(()=>{});
+                    document.getElementById('system-status').innerText = "Pembaca NFC Aktif";
 
                     ndef.addEventListener("reading", async ({ serialNumber }) => {
-                        // 统一转为小写，确保与数据库匹配
-                        const standardizedID = serialNumber.toLowerCase();
-                        
-                        beep.currentTime = 0;
-                        beep.play().catch(()=>{});
-                        
-                        checkStudent(standardizedID);
+                        const nfcId = serialNumber.toLowerCase().trim();
+                        handleScan(nfcId);
                     });
 
                 } catch (error) {
-                    alert("NFC Error: " + error.message);
+                    alert("Ralat NFC: " + error.message);
                 }
             } else {
-                alert("Sila gunakan Chrome di Android untuk NFC.");
+                alert("Browser tidak menyokong NFC. Gunakan Chrome di Android.");
             }
         };
 
-        async function checkStudent(nfcId) {
-            // 核心修复：改用 query 搜索 cardID 字段，而不是直接找文档 ID
-            const q = query(collection(db, "students"), where("cardID", "==", nfcId));
-            
+        async function handleScan(nfcId) {
+            // 显示加载状态
+            document.getElementById('wait-ui').style.display = 'none';
+            const resultUI = document.getElementById('result-ui');
+            resultUI.style.display = 'block';
+            resultUI.className = "result-box"; // 重置样式
+            document.getElementById('resName').innerText = "Menyemak...";
+
             try {
+                // 1. 在 students 集合中查找 cardID 字段匹配的学生
+                const q = query(collection(db, "students"), where("cardID", "==", nfcId));
                 const querySnapshot = await getDocs(q);
-                
-                document.getElementById('wait-ui').style.display = 'none';
-                const resultUI = document.getElementById('result-ui');
-                resultUI.style.display = 'block';
-                resultUI.classList.remove('res-error');
 
                 if (!querySnapshot.empty) {
-                    // 找到学生了
-                    const data = querySnapshot.docs[0].data();
+                    const studentDoc = querySnapshot.docs[0];
+                    const data = studentDoc.data();
+                    
+                    // 2. 识别成功
+                    beepS.play();
+                    resultUI.classList.add('res-success');
                     document.getElementById('resName').innerText = data.name;
                     document.getElementById('resClass').innerText = data.kelas;
-                    document.getElementById('resID').innerText = "NFC ID: " + nfcId;
-                    
-                    // 这里可以添加签到逻辑（比如写入 attendance collection）
+                    document.getElementById('resID').innerText = "ID: " + nfcId;
+
+                    // 3. 自动记录考勤 (Attendance)
+                    markAttendance(data);
+
                 } else {
-                    // 没找到学生
+                    // 4. 识别失败
+                    beepE.play();
                     resultUI.classList.add('res-error');
                     document.getElementById('resName').innerText = "KAD TIDAK BERDAFTAR";
                     document.getElementById('resClass').innerText = "Sila daftar kad di Profil Murid";
+                    document.getElementById('attendance-status').innerText = "❌ Gagal";
                     document.getElementById('resID').innerText = "ID: " + nfcId;
                 }
             } catch (e) {
                 console.error(e);
-                alert("Ralat database: " + e.message);
+                document.getElementById('resName').innerText = "RALAT SISTEM";
             }
         }
+
+        async function markAttendance(student) {
+            const now = new Date();
+            const dateKey = now.toISOString().split('T')[0]; // yyyy-mm-dd
+            const timeStr = now.toLocaleTimeString('ms-MY', { hour12: false, hour: '2-digit', minute: '2-digit' });
+
+            // 简单逻辑：7:30 以后算 lewat
+            const status = (now.getHours() > 7 || (now.getHours() === 7 && now.getMinutes() > 30)) ? "Lewat" : "Hadir";
+            
+            // 存入考勤集合，文档ID格式：日期_IC
+            const attID = `${dateKey}_${student.ic}`;
+            
+            try {
+                await setDoc(doc(db, "attendance", attID), {
+                    ic: student.ic,
+                    name: student.name,
+                    kelas: student.kelas,
+                    status: status,
+                    time: timeStr,
+                    timestamp: now
+                });
+
+                document.getElementById('attendance-status').innerHTML = 
+                    `<span style="color:#22c55e">✅ Rekod Disimpan!</span><br><span class="time-label">Status: ${status} (${timeStr})</span>`;
+            } catch (e) {
+                document.getElementById('attendance-status').innerText = "⚠️ Gagal simpan rekod";
+            }
+        }
+
+        window.resetUI = () => {
+            document.getElementById('result-ui').style.display = 'none';
+            document.getElementById('wait-ui').style.display = 'block';
+            document.getElementById('attendance-status').innerText = "--";
+        };
     </script>
 </body>
 </html>
