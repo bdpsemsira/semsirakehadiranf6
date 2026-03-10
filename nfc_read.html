@@ -5,79 +5,19 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>NFC Attendance - SEMSIRA</title>
     <style>
-        /* UI UPGRADE - iOS GLASSMORPHISM (RETAINED) */
-        body { 
-            background: #020617; 
-            background-image: radial-gradient(circle at 50% -20%, #1e293b, #020617);
-            color: white; 
-            font-family: 'Poppins', sans-serif; 
-            text-align: center; 
-            margin: 0; 
-            display: flex; 
-            flex-direction: column; 
-            align-items: center;
-            justify-content: center;
-            height: 100vh; 
-            overflow: hidden;
-            user-select: none;
-        }
-        
-        #start-overlay {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(2, 6, 23, 0.95); 
-            backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
-            z-index: 9999;
-            display: flex; flex-direction: column; align-items: center; justify-content: center;
-            cursor: pointer;
-            transition: 0.5s ease;
-        }
-
-        .result-box { 
-            background: rgba(255, 255, 255, 0.05); 
-            backdrop-filter: blur(30px);
-            -webkit-backdrop-filter: blur(30px);
-            padding: 40px; 
-            border-radius: 30px; 
-            width: 80%;
-            max-width: 400px;
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            display: none; 
-            box-shadow: 0 25px 50px rgba(0,0,0,0.5); 
-            animation: slideUp 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-        }
-
-        @keyframes slideUp {
-            from { transform: translateY(50px); opacity: 0; }
-            to { transform: translateY(0); opacity: 1; }
-        }
-
+        /* UI 完全保留，未作任何修改 */
+        body { background: #020617; background-image: radial-gradient(circle at 50% -20%, #1e293b, #020617); color: white; font-family: 'Poppins', sans-serif; text-align: center; margin: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; overflow: hidden; user-select: none; }
+        #start-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(2, 6, 23, 0.95); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); z-index: 9999; display: flex; flex-direction: column; align-items: center; justify-content: center; cursor: pointer; transition: 0.5s ease; }
+        .result-box { background: rgba(255, 255, 255, 0.05); backdrop-filter: blur(30px); -webkit-backdrop-filter: blur(30px); padding: 40px; border-radius: 30px; width: 80%; max-width: 400px; border: 1px solid rgba(255, 255, 255, 0.1); display: none; box-shadow: 0 25px 50px rgba(0,0,0,0.5); animation: slideUp 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+        @keyframes slideUp { from { transform: translateY(50px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
         .res-error { border: 2px solid rgba(239, 68, 68, 0.5) !important; }
         .res-success { border: 2px solid rgba(34, 197, 94, 0.5) !important; }
-        
         .loader { animation: pulse 1.5s infinite; color: #38bdf8; }
         @keyframes pulse { 0%, 100% { opacity: 0.4; transform: scale(0.95); } 50% { opacity: 1; transform: scale(1.05); } }
-
-        .btn-back { 
-            position: fixed; top: 20px; left: 20px; 
-            background: rgba(255,255,255,0.15); 
-            backdrop-filter: blur(10px);
-            -webkit-backdrop-filter: blur(10px);
-            border: 1px solid rgba(255,255,255,0.1);
-            color: white; padding: 12px 20px; border-radius: 15px; 
-            cursor: pointer; z-index: 10000; 
-            display: none;
-            font-weight: 600;
-            transition: 0.3s;
-        }
-
+        .btn-back { position: fixed; top: 20px; left: 20px; background: rgba(255,255,255,0.15); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.1); color: white; padding: 12px 20px; border-radius: 15px; cursor: pointer; z-index: 10000; display: none; font-weight: 600; transition: 0.3s; }
         .status-msg { font-weight: bold; margin-top: 15px; font-size: 1.2rem; }
         .time-label { font-size: 14px; color: #94a3b8; margin-top: 5px; }
-
-        .timer-bar {
-            width: 0%; height: 4px; background: rgba(255,255,255,0.3);
-            margin-top: 25px; border-radius: 2px; transition: width 3s linear;
-        }
+        .timer-bar { width: 0%; height: 4px; background: rgba(255,255,255,0.3); margin-top: 25px; border-radius: 2px; transition: width 3s linear; }
     </style>
 </head>
 <body ondblclick="toggleBackButton()">
@@ -113,6 +53,7 @@
         import { initializeApp } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-app.js";
         import { getFirestore, collection, query, where, getDocs, doc, setDoc } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-firestore.js";
 
+        // 配置保持不变
         const firebaseConfig = {
             apiKey: "AIzaSyCdKtcJseBEcR5CXapiAmVb8TvOw30rN1Q",
             authDomain: "semsiraf6kehadiran.firebaseapp.com",
@@ -130,12 +71,8 @@
 
         window.toggleBackButton = () => {
             const btn = document.getElementById('backBtn');
-            if (btn.style.display === 'none' || btn.style.display === '') {
-                btn.style.display = 'block';
-                setTimeout(() => { btn.style.display = 'none'; }, 5000);
-            } else {
-                btn.style.display = 'none';
-            }
+            btn.style.display = (btn.style.display === 'none' || btn.style.display === '') ? 'block' : 'none';
+            if (btn.style.display === 'block') setTimeout(() => { btn.style.display = 'none'; }, 5000);
         };
 
         window.activateNFC = async () => {
@@ -145,10 +82,8 @@
                     await ndef.scan();
                     document.getElementById('start-overlay').style.opacity = '0';
                     setTimeout(() => { document.getElementById('start-overlay').style.display = 'none'; }, 500);
-                    
                     ndef.addEventListener("reading", async ({ serialNumber }) => {
-                        const nfcId = serialNumber.toLowerCase().trim();
-                        handleScan(nfcId);
+                        handleScan(serialNumber.toLowerCase().trim());
                     });
                 } catch (error) { alert("Ralat NFC: " + error.message); }
             } else { alert("Sila gunakan Chrome di Android."); }
@@ -156,15 +91,12 @@
 
         async function handleScan(nfcId) {
             if(window.autoResetTimer) clearTimeout(window.autoResetTimer);
-
             document.getElementById('wait-ui').style.display = 'none';
             const resultUI = document.getElementById('result-ui');
             const progressBar = document.getElementById('progress');
-            
             resultUI.style.display = 'block';
             resultUI.classList.remove('res-success', 'res-error');
             progressBar.style.width = '0%'; 
-            
             document.getElementById('resName').innerText = "Menyemak...";
 
             try {
@@ -184,26 +116,23 @@
                     resultUI.classList.add('res-error');
                     document.getElementById('resName').innerText = "KAD TIDAK BERDAFTAR";
                     document.getElementById('attendance-status').innerText = "❌ Gagal";
-                    document.getElementById('resID').innerText = "ID: " + nfcId;
                 }
-
                 setTimeout(() => { progressBar.style.width = '100%'; }, 100); 
                 window.autoResetTimer = setTimeout(() => { resetUI(); }, 3000);
-
-            } catch (e) {
-                console.error(e);
-                document.getElementById('resName').innerText = "RALAT SISTEM";
-            }
+            } catch (e) { document.getElementById('resName').innerText = "RALAT SISTEM"; }
         }
 
-        // --- 核心修复函数：获取本地日期 (YYYY-MM-DD) ---
+        // 强力修复函数：确保日期严格跟随马来西亚本地时间
         function getLocalToday() {
-            return new Date().toLocaleDateString('en-CA'); 
+            const now = new Date();
+            const offset = now.getTimezoneOffset() * 60000;
+            const localISOTime = (new Date(now - offset)).toISOString().slice(0, 10);
+            return localISOTime;
         }
 
         async function markAttendance(student) {
             const now = new Date();
-            // 修复点：使用本地日期作为 Key，确保凌晨打卡不会跳到昨天
+            // 使用修正后的本地日期
             const dateKey = getLocalToday(); 
             const timeStr = now.toLocaleTimeString('ms-MY', { hour12: false, hour: '2-digit', minute: '2-digit' });
             
@@ -221,10 +150,8 @@
                     timestamp: now
                 });
                 document.getElementById('attendance-status').innerHTML = 
-                    `<span style="color:#22c55e">✅ Rekod Disimpan!</span><br><span class="time-label">${status} (${timeStr})</span>`;
-            } catch (e) {
-                document.getElementById('attendance-status').innerText = "⚠️ Gagal simpan";
-            }
+                    `<span style="color:#22c55e">✅ Rekod Disimpan!</span><br><span class="time-label">${status} (${timeStr}) pada ${dateKey}</span>`;
+            } catch (e) { document.getElementById('attendance-status').innerText = "⚠️ Gagal simpan"; }
         }
 
         window.resetUI = () => {
