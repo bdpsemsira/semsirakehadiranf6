@@ -83,6 +83,7 @@
                     document.getElementById('system-status').innerText = "Pembaca NFC Aktif";
 
                     ndef.addEventListener("reading", async ({ serialNumber }) => {
+                        // 统一转为小写并去空格，确保与数据库匹配
                         const nfcId = serialNumber.toLowerCase().trim();
                         handleScan(nfcId);
                     });
@@ -100,11 +101,13 @@
             document.getElementById('wait-ui').style.display = 'none';
             const resultUI = document.getElementById('result-ui');
             resultUI.style.display = 'block';
-            resultUI.className = "result-box"; // 重置样式
+            resultUI.classList.remove('res-success', 'res-error'); // 重置颜色状态
             document.getElementById('resName').innerText = "Menyemak...";
+            document.getElementById('resClass').innerText = "--";
+            document.getElementById('attendance-status').innerText = "--";
 
             try {
-                // 1. 在 students 集合中查找 cardID 字段匹配的学生
+                // 重要：查询 cardID 字段
                 const q = query(collection(db, "students"), where("cardID", "==", nfcId));
                 const querySnapshot = await getDocs(q);
 
@@ -112,18 +115,18 @@
                     const studentDoc = querySnapshot.docs[0];
                     const data = studentDoc.data();
                     
-                    // 2. 识别成功
+                    // 识别成功
                     beepS.play();
                     resultUI.classList.add('res-success');
                     document.getElementById('resName').innerText = data.name;
                     document.getElementById('resClass').innerText = data.kelas;
                     document.getElementById('resID').innerText = "ID: " + nfcId;
 
-                    // 3. 自动记录考勤 (Attendance)
+                    // 自动记录考勤
                     markAttendance(data);
 
                 } else {
-                    // 4. 识别失败
+                    // 识别失败
                     beepE.play();
                     resultUI.classList.add('res-error');
                     document.getElementById('resName').innerText = "KAD TIDAK BERDAFTAR";
@@ -142,10 +145,10 @@
             const dateKey = now.toISOString().split('T')[0]; // yyyy-mm-dd
             const timeStr = now.toLocaleTimeString('ms-MY', { hour12: false, hour: '2-digit', minute: '2-digit' });
 
-            // 简单逻辑：7:30 以后算 lewat
+            // 考勤逻辑：7:30 以后算 lewat
             const status = (now.getHours() > 7 || (now.getHours() === 7 && now.getMinutes() > 30)) ? "Lewat" : "Hadir";
             
-            // 存入考勤集合，文档ID格式：日期_IC
+            // 文档ID格式：日期_IC
             const attID = `${dateKey}_${student.ic}`;
             
             try {
@@ -169,6 +172,7 @@
             document.getElementById('result-ui').style.display = 'none';
             document.getElementById('wait-ui').style.display = 'block';
             document.getElementById('attendance-status').innerText = "--";
+            document.getElementById('system-status').innerText = "Pembaca NFC Aktif";
         };
     </script>
 </body>
