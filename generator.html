@@ -5,116 +5,167 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Daftar Murid - SEMSIRA</title>
     <style>
-        /* UI UPGRADE - iOS GLASSMORPHISM */
+        /* UI UPGRADE - iOS GLASSMORPHISM & HIGH-CLASS UI */
         body { 
-            background-color: #020617; /* 更深邃的底色 */
+            background-color: #020617; 
+            /* 增强多层径向渐变，模拟高端环境光 */
             background-image: 
-                radial-gradient(circle at top right, #1e293b, #0f172a),
-                radial-gradient(circle at bottom left, rgba(56, 189, 248, 0.1), transparent);
+                radial-gradient(circle at 20% 20%, rgba(56, 189, 248, 0.15), transparent 40%),
+                radial-gradient(circle at 80% 80%, rgba(16, 185, 129, 0.1), transparent 40%),
+                radial-gradient(circle at top right, #1e293b, #020617);
             color: #f1f5f9; 
             margin: 0; 
             font-family: 'Poppins', sans-serif; 
             min-height: 100vh; 
+            overflow-x: hidden;
         }
 
         header { 
             background: rgba(30, 41, 59, 0.7); 
-            backdrop-filter: blur(15px); /* 核心毛玻璃效果 */
-            -webkit-backdrop-filter: blur(15px);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
             border-bottom: 1px solid rgba(255, 255, 255, 0.1); 
-            padding: 15px; 
+            padding: 12px 20px; 
             display: flex; 
             align-items: center; 
             justify-content: center; 
-            box-shadow: 0 4px 15px rgba(0,0,0,0.3); 
+            box-shadow: 0 4px 30px rgba(0,0,0,0.3); 
             position: sticky;
             top: 0;
             z-index: 100;
         }
 
-        .container { padding: 20px; max-width: 500px; margin: 0 auto; }
+        .logo-small { 
+            width: 32px; 
+            height: auto; 
+            margin-right: 12px;
+            filter: drop-shadow(0 0 8px rgba(56, 189, 248, 0.4));
+        }
 
-        /* 高级感卡片设计 */
+        .container { padding: 25px 20px; max-width: 500px; margin: 0 auto; }
+
+        /* 高级感毛玻璃卡片 */
         .card { 
-            background: rgba(255, 255, 255, 0.03); /* 极低透明度背景 */
-            backdrop-filter: blur(20px); /* 强力模糊 */
-            -webkit-backdrop-filter: blur(20px);
-            border-radius: 24px; 
+            background: rgba(255, 255, 255, 0.04); 
+            backdrop-filter: blur(25px);
+            -webkit-backdrop-filter: blur(25px);
+            border-radius: 28px; 
             padding: 25px; 
-            border: 1px solid rgba(255, 255, 255, 0.1); /* 像玻璃边缘一样的微光 */
-            box-shadow: 0 20px 40px rgba(0,0,0,0.4); 
+            border: 1px solid rgba(255, 255, 255, 0.08); 
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5); 
             margin-bottom: 25px; 
+            animation: fadeIn 0.6s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
         }
 
         h3 { 
             color: #fff; 
-            font-size: 18px;
+            font-size: 17px;
             margin-top: 0; 
+            margin-bottom: 20px;
             text-align: center; 
+            font-weight: 600;
             letter-spacing: 0.5px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
         }
 
-        label { display: block; font-size: 11px; color: #94a3b8; margin: 10px 0 5px 8px; text-transform: uppercase; }
+        h3::before, h3::after {
+            content: "";
+            height: 1px;
+            width: 20px;
+            background: rgba(255,255,255,0.1);
+        }
 
-        /* 输入框优化 */
+        label { 
+            display: block; 
+            font-size: 10px; 
+            color: #94a3b8; 
+            margin: 12px 0 6px 10px; 
+            text-transform: uppercase; 
+            letter-spacing: 1px;
+            font-weight: 700;
+        }
+
+        /* 极简输入框设计 */
         input, select { 
             width: 100%; 
-            padding: 14px; 
-            margin-bottom: 10px; 
+            padding: 15px; 
+            margin-bottom: 5px; 
             background: rgba(15, 23, 42, 0.6); 
             border: 1px solid rgba(255, 255, 255, 0.05); 
-            border-radius: 16px; 
+            border-radius: 18px; 
             color: white; 
             font-size: 14px; 
             box-sizing: border-box; 
             outline: none; 
-            transition: all 0.3s;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
         input:focus, select:focus {
             border-color: #38bdf8;
-            background: rgba(15, 23, 42, 0.8);
-            box-shadow: 0 0 0 4px rgba(56, 189, 248, 0.1);
+            background: rgba(30, 41, 59, 0.8);
+            box-shadow: 0 0 0 4px rgba(56, 189, 248, 0.15);
+            transform: translateY(-1px);
         }
 
-        /* 按钮动效 */
+        /* 按钮动效优化 */
         .btn { 
             border: none; 
-            border-radius: 16px; 
+            border-radius: 18px; 
             font-weight: 600; 
             padding: 16px; 
             cursor: pointer; 
             transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); 
             width: 100%; 
             font-size: 15px; 
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
         }
 
-        .btn:active { transform: scale(0.96); }
+        .btn:active { transform: scale(0.95); }
 
         .btn-nfc { 
-            background: rgba(56, 189, 248, 0.1); 
-            border: 1px solid rgba(56, 189, 248, 0.3); 
+            background: rgba(56, 189, 248, 0.08); 
+            border: 1px dashed rgba(56, 189, 248, 0.4); 
             color: #38bdf8; 
-            margin-bottom: 10px; 
         }
         
-        .btn-nfc:hover { background: rgba(56, 189, 248, 0.2); }
+        .btn-nfc:hover { 
+            background: rgba(56, 189, 248, 0.15); 
+            border-style: solid;
+        }
 
         .btn-save { 
             background: linear-gradient(135deg, #10b981 0%, #059669 100%); 
             color: white; 
             margin-top: 15px;
-            box-shadow: 0 10px 20px rgba(16, 185, 129, 0.2);
+            box-shadow: 0 12px 24px -6px rgba(16, 185, 129, 0.3);
         }
 
-        #status { text-align: center; font-size: 12px; margin: 12px 0; color: #64748b; font-style: italic; }
-        .back-btn { position: absolute; left: 20px; text-decoration: none; color: white; font-size: 20px; }
+        .btn-save:hover {
+            box-shadow: 0 15px 30px -6px rgba(16, 185, 129, 0.5);
+            filter: brightness(1.1);
+        }
+
+        #status { text-align: center; font-size: 12px; margin: 15px 0; color: #64748b; }
+        .back-btn { position: absolute; left: 20px; text-decoration: none; color: white; font-size: 20px; transition: 0.3s; }
+        .back-btn:hover { transform: translateX(-3px); }
     </style>
 </head>
 <body>
 
     <header>
         <a href="menu.html" class="back-btn">⬅️</a>
+        <img src="semsira.png" alt="Logo" class="logo-small">
         <span style="font-weight: 600; letter-spacing: 0.5px;">Pendaftaran Murid</span>
     </header>
 
@@ -131,8 +182,10 @@
             <h3>Maklumat Peribadi</h3>
             <label>Nama Penuh</label>
             <input type="text" id="name" placeholder="NAMA MURID" required>
+            
             <label>Nombor IC</label>
             <input type="text" id="ic" placeholder="CONTOH: 05010102XXXX" required>
+            
             <label>Pilih Kelas</label>
             <select id="class" required>
                 <option value="">-- Sila Pilih --</option>
@@ -145,18 +198,20 @@
                 <option value="RUQAYYAH">RUQAYYAH</option>
                 <option value="UMMU KALSOM">UMMU KALSOM</option>
             </select>
+            
             <label>Jantina</label>
             <select id="gender" required>
                 <option value="">-- Sila Pilih --</option>
                 <option value="Lelaki">Lelaki</option>
                 <option value="Perempuan">Perempuan</option>
             </select>
+            
             <button class="btn btn-save" onclick="saveToFirebase()">💾 SIMPAN REKOD</button>
         </div>
     </div>
 
     <script type="module">
-        /* 你的逻辑部分完全保留，不做任何删除 */
+        /* 你的 JavaScript 核心逻辑完整保留 */
         import { initializeApp } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-app.js";
         import { getFirestore, doc, setDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-firestore.js";
 
