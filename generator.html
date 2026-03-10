@@ -5,17 +5,109 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Daftar Murid - SEMSIRA</title>
     <style>
-        body { background-color: #0f172a; background-image: radial-gradient(circle at top right, #1e293b, #0f172a); color: #f1f5f9; margin: 0; font-family: 'Poppins', sans-serif; min-height: 100vh; }
-        header { background: #1e293b; border-bottom: 1px solid rgba(255, 255, 255, 0.05); padding: 15px; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 15px rgba(0,0,0,0.2); }
+        /* UI UPGRADE - iOS GLASSMORPHISM */
+        body { 
+            background-color: #020617; /* 更深邃的底色 */
+            background-image: 
+                radial-gradient(circle at top right, #1e293b, #0f172a),
+                radial-gradient(circle at bottom left, rgba(56, 189, 248, 0.1), transparent);
+            color: #f1f5f9; 
+            margin: 0; 
+            font-family: 'Poppins', sans-serif; 
+            min-height: 100vh; 
+        }
+
+        header { 
+            background: rgba(30, 41, 59, 0.7); 
+            backdrop-filter: blur(15px); /* 核心毛玻璃效果 */
+            -webkit-backdrop-filter: blur(15px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1); 
+            padding: 15px; 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3); 
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
         .container { padding: 20px; max-width: 500px; margin: 0 auto; }
-        .card { background: #1e293b; border-radius: 20px; padding: 25px; border: 1px solid rgba(255, 255, 255, 0.05); box-shadow: 0 10px 25px rgba(0,0,0,0.2); margin-bottom: 20px; }
-        h3 { color: #38bdf8; margin-top: 0; text-align: center; }
-        label { display: block; font-size: 12px; color: #94a3b8; margin: 10px 0 5px 5px; }
-        input, select { width: 100%; padding: 14px; margin-bottom: 10px; background: #0f172a; border: 1px solid #334155; border-radius: 12px; color: white; font-size: 14px; box-sizing: border-box; outline: none; }
-        .btn { border: none; border-radius: 12px; font-weight: 600; padding: 15px; cursor: pointer; transition: all 0.3s; width: 100%; font-size: 16px; }
-        .btn-nfc { background: rgba(56, 189, 248, 0.1); border: 1px dashed #38bdf8; color: #38bdf8; margin-bottom: 10px; }
-        .btn-save { background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white; margin-top: 10px; }
-        #status { text-align: center; font-size: 13px; margin: 10px 0; color: #94a3b8; }
+
+        /* 高级感卡片设计 */
+        .card { 
+            background: rgba(255, 255, 255, 0.03); /* 极低透明度背景 */
+            backdrop-filter: blur(20px); /* 强力模糊 */
+            -webkit-backdrop-filter: blur(20px);
+            border-radius: 24px; 
+            padding: 25px; 
+            border: 1px solid rgba(255, 255, 255, 0.1); /* 像玻璃边缘一样的微光 */
+            box-shadow: 0 20px 40px rgba(0,0,0,0.4); 
+            margin-bottom: 25px; 
+        }
+
+        h3 { 
+            color: #fff; 
+            font-size: 18px;
+            margin-top: 0; 
+            text-align: center; 
+            letter-spacing: 0.5px;
+        }
+
+        label { display: block; font-size: 11px; color: #94a3b8; margin: 10px 0 5px 8px; text-transform: uppercase; }
+
+        /* 输入框优化 */
+        input, select { 
+            width: 100%; 
+            padding: 14px; 
+            margin-bottom: 10px; 
+            background: rgba(15, 23, 42, 0.6); 
+            border: 1px solid rgba(255, 255, 255, 0.05); 
+            border-radius: 16px; 
+            color: white; 
+            font-size: 14px; 
+            box-sizing: border-box; 
+            outline: none; 
+            transition: all 0.3s;
+        }
+
+        input:focus, select:focus {
+            border-color: #38bdf8;
+            background: rgba(15, 23, 42, 0.8);
+            box-shadow: 0 0 0 4px rgba(56, 189, 248, 0.1);
+        }
+
+        /* 按钮动效 */
+        .btn { 
+            border: none; 
+            border-radius: 16px; 
+            font-weight: 600; 
+            padding: 16px; 
+            cursor: pointer; 
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); 
+            width: 100%; 
+            font-size: 15px; 
+        }
+
+        .btn:active { transform: scale(0.96); }
+
+        .btn-nfc { 
+            background: rgba(56, 189, 248, 0.1); 
+            border: 1px solid rgba(56, 189, 248, 0.3); 
+            color: #38bdf8; 
+            margin-bottom: 10px; 
+        }
+        
+        .btn-nfc:hover { background: rgba(56, 189, 248, 0.2); }
+
+        .btn-save { 
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%); 
+            color: white; 
+            margin-top: 15px;
+            box-shadow: 0 10px 20px rgba(16, 185, 129, 0.2);
+        }
+
+        #status { text-align: center; font-size: 12px; margin: 12px 0; color: #64748b; font-style: italic; }
         .back-btn { position: absolute; left: 20px; text-decoration: none; color: white; font-size: 20px; }
     </style>
 </head>
@@ -23,7 +115,7 @@
 
     <header>
         <a href="menu.html" class="back-btn">⬅️</a>
-        <span style="font-weight: 600;">Pendaftaran Murid</span>
+        <span style="font-weight: 600; letter-spacing: 0.5px;">Pendaftaran Murid</span>
     </header>
 
     <div class="container">
@@ -64,6 +156,7 @@
     </div>
 
     <script type="module">
+        /* 你的逻辑部分完全保留，不做任何删除 */
         import { initializeApp } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-app.js";
         import { getFirestore, doc, setDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-firestore.js";
 
@@ -86,7 +179,6 @@
                     await ndef.scan();
                     document.getElementById('status').innerText = "📳 Sila dekatkan kad NFC...";
                     ndef.addEventListener("reading", ({ serialNumber }) => {
-                        // Simpan dalam format lowercase untuk konsistensi
                         document.getElementById('nfcID').value = serialNumber.toLowerCase();
                         document.getElementById('status').innerText = "✅ Kad dikesan!";
                     });
@@ -104,11 +196,10 @@
             if (!ic || !name || !kelas) return alert("Lengkapkan maklumat!");
 
             try {
-                // KEMASKINI: Field cardID ditukar kepada nfcSeries
                 await setDoc(doc(db, "students", ic), {
                     ic: ic,
                     name: name,
-                    nfcSeries: nfcCode, // Field baru yang selaras
+                    nfcSeries: nfcCode, 
                     kelas: kelas,
                     gender: gender,
                     updatedAt: serverTimestamp()
