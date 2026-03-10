@@ -21,7 +21,7 @@
 
         .header-title {
             flex-grow: 1;
-            text-align: right; /* 标题贴着右边 */
+            text-align: right;
             font-weight: 600;
         }
 
@@ -34,7 +34,11 @@
         .info-p { margin: 5px 0; color: #94a3b8; font-size: 14px; }
         .highlight-ic { font-weight: bold; color: #38bdf8; font-size: 16px; }
         
-        /* 出席记录列表样式 */
+        /* 状态颜色定义 */
+        .status-hadir { color: #22c55e !important; }
+        .status-lewat { color: #f97316 !important; }
+        .status-tidak { color: #ef4444 !important; }
+
         .record-item { display: flex; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid rgba(255, 255, 255, 0.05); font-size: 14px; }
         .rec-date { color: #f1f5f9; }
         .rec-time { color: #94a3b8; font-size: 12px; margin-left: 8px; }
@@ -47,9 +51,23 @@
 
         /* 打印/PDF 专用样式 */
         @media print {
-            @page { margin: 1cm; } /* 减少页边距防止出现网址 */
-            html, body { background: white !important; color: black !important; }
-            header, .btn-group, .back-link, #qrcode-outer, .btn-red { display: none !important; }
+            /* 1. 强制隐藏浏览器自带的页眉页脚（网址和日期） */
+            @page { 
+                margin: 0; 
+                size: auto; 
+            }
+            body { 
+                margin: 1.5cm; /* 给内容留出边距，但不给浏览器留页眉页脚空间 */
+                background: white !important; 
+                color: black !important; 
+            }
+
+            /* 2. 隐藏不需要的元素 */
+            header, .btn-group, .back-link, #qrcode-outer, .btn-red { 
+                display: none !important; 
+            }
+
+            /* 3. 布局调整 */
             .container { max-width: 100%; padding: 0; }
             .card { background: white !important; border: none !important; box-shadow: none !important; text-align: left !important; padding: 10px 0; }
             
@@ -61,6 +79,7 @@
             h4 { color: black !important; border-bottom: 1px solid black !important; }
             .info-p, .highlight-ic { color: black !important; font-size: 12px; }
             .record-item { border-bottom: 1px solid #ddd !important; color: black !important; }
+            .rec-date { color: black !important; }
             .rec-time { color: #555 !important; }
             #summary-box { display: block !important; margin-top: 15px; border: 1px solid black; padding: 10px; color: black; }
         }
@@ -94,9 +113,9 @@
             
             <div id="summary-box">
                 <b>RINGKASAN KEHADIRAN (BULAN INI):</b><br>
-                Hadir: <span id="count-hadir">0</span> | 
-                Lewat: <span id="count-lewat">0</span> | 
-                Tidak Hadir: <span id="count-tidak">0</span>
+                Hadir: <span id="count-hadir" class="status-hadir">0</span> | 
+                Lewat: <span id="count-lewat" class="status-lewat">0</span> | 
+                Tidak Hadir: <span id="count-tidak" class="status-tidak">0</span>
             </div>
 
             <div id="attendanceHistory">
@@ -186,11 +205,19 @@
             sortedDocs.forEach(doc => {
                 const res = doc.data();
                 const status = res.status;
-                const time = res.time || "--:--"; // 获取时间字段
-
-                if (status === "Hadir") countHadir++;
-                else if (status === "Lewat") countLewat++;
-                else if (status === "Tidak Hadir") countTidak++;
+                const time = res.time || "--:--";
+                
+                let colorClass = "";
+                if (status === "Hadir") {
+                    countHadir++;
+                    colorClass = "status-hadir";
+                } else if (status === "Lewat") {
+                    countLewat++;
+                    colorClass = "status-lewat";
+                } else if (status === "Tidak Hadir") {
+                    countTidak++;
+                    colorClass = "status-tidak";
+                }
 
                 const div = document.createElement('div');
                 div.className = "record-item";
@@ -199,14 +226,14 @@
                         ${doc.id.split('_')[0]} 
                         <span class="rec-time">${time}</span>
                     </span> 
-                    <b>${status}</b>
+                    <b class="${colorClass}">${status}</b>
                 `;
                 historyDiv.appendChild(div);
             });
 
             document.getElementById('count-hadir').innerText = countHadir;
             document.getElementById('count-lewat').innerText = countLewat;
-            document.getElementById('count-tidak').innerText = countTidak;
+            document.getElementById('count-tidak').innerText = count_tidak = countTidak;
         }
 
         async function deleteStudent(docRef) {
