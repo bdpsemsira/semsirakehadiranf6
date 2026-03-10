@@ -9,8 +9,7 @@
     <style>
         /* 保留你原有的逻辑，仅通过 CSS 升级 UI */
         body {
-            background-color: #020617; /* 更深邃的背景 */
-            /* 增加两个动态光晕，让毛玻璃更有透感 */
+            background-color: #020617; 
             background-image: 
                 radial-gradient(circle at 10% 20%, rgba(14, 165, 233, 0.15) 0%, transparent 40%),
                 radial-gradient(circle at 90% 80%, rgba(244, 63, 94, 0.15) 0%, transparent 40%);
@@ -18,13 +17,15 @@
             margin: 0;
             font-family: 'Poppins', sans-serif;
             min-height: 100vh;
+            display: flex;
+            flex-direction: column; /* 方便 footer 置底 */
             overflow-x: hidden;
         }
 
         /* iOS 毛玻璃 Header */
         header {
             background: rgba(30, 41, 59, 0.7);
-            backdrop-filter: blur(15px); /* 核心毛玻璃 */
+            backdrop-filter: blur(15px);
             -webkit-backdrop-filter: blur(15px);
             border-bottom: 1px solid rgba(255, 255, 255, 0.1);
             padding: 15px;
@@ -44,6 +45,7 @@
         .menu-container {
             text-align: center;
             padding: 30px 20px;
+            flex: 1; /* 占据主要空间 */
         }
 
         .welcome-text h2 {
@@ -65,7 +67,6 @@
         .btn-menu {
             position: relative;
             overflow: hidden;
-            /* 关键：使用半透明背景 + 模糊 */
             background: rgba(255, 255, 255, 0.03) !important; 
             backdrop-filter: blur(10px);
             -webkit-backdrop-filter: blur(10px);
@@ -81,7 +82,6 @@
             box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
         }
 
-        /* 左侧彩色发光条，增加高级感 */
         .btn-menu::before {
             content: '';
             position: absolute;
@@ -136,6 +136,22 @@
             color: white;
             box-shadow: 0 0 20px rgba(244, 63, 94, 0.4);
         }
+
+        /* --- 新增 Footer 样式 --- */
+        footer {
+            padding: 25px 0;
+            text-align: center;
+            font-size: 11px;
+            color: #475569;
+            letter-spacing: 2px;
+            font-weight: 500;
+            text-transform: uppercase;
+        }
+
+        footer span {
+            color: #38bdf8; /* 为名字添加一点亮点颜色 */
+            opacity: 0.8;
+        }
     </style>
 </head>
 <body>
@@ -180,8 +196,12 @@
         <a href="#" id="logoutBtn" class="logout-link">Log Keluar Aplikasi</a>
     </div>
 
+    <footer>
+        Developed by <span>SEMSIRA KONG</span>
+    </footer>
+
     <script>
-        // --- 逻辑部分完全保留，不做任何修改 ---
+        // --- 逻辑部分完全保留 ---
         if (sessionStorage.getItem('isLoggedIn') !== 'true') {
             window.location.href = 'index.html';
         }
