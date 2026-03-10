@@ -4,34 +4,104 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Tetapan Sistem - SEMSIRA</title>
-    <link rel="stylesheet" href="assets/style.css">
     <style>
-        body { background-color: #0f172a; color: #f1f5f9; font-family: 'Poppins', sans-serif; margin: 0; }
-        header { background: #1e293b; padding: 15px; text-align: center; box-shadow: 0 2px 10px rgba(0,0,0,0.3); }
+        /* UI UPGRADE - iOS GLASSMORPHISM */
+        body { 
+            background-color: #020617; 
+            background-image: 
+                radial-gradient(circle at 20% 20%, rgba(56, 189, 248, 0.1), transparent 40%),
+                radial-gradient(circle at top right, #1e293b, #020617);
+            color: #f1f5f9; 
+            font-family: 'Poppins', sans-serif; 
+            margin: 0; 
+            min-height: 100vh;
+        }
+
+        header { 
+            background: rgba(30, 41, 59, 0.7); 
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            padding: 15px; 
+            text-align: center; 
+            box-shadow: 0 4px 30px rgba(0,0,0,0.3); 
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .back-btn { position: absolute; left: 20px; text-decoration: none; color: white; font-size: 20px; }
+
         .container { padding: 20px; max-width: 500px; margin: 0 auto; }
-        .card { background: #1e293b; border-radius: 20px; padding: 25px; margin-bottom: 20px; border: 1px solid rgba(255,255,255,0.05); }
-        h3 { color: #38bdf8; margin: 0 0 20px 0; font-size: 1.1rem; }
-        .setting-group { margin-bottom: 20px; }
-        label { display: block; margin-bottom: 8px; font-size: 13px; color: #94a3b8; }
-        select, input { width: 100%; padding: 12px; border-radius: 10px; background: #0f172a; border: 1px solid #334155; color: white; box-sizing: border-box; }
+
+        /* iOS 风格毛玻璃卡片 */
+        .card { 
+            background: rgba(255, 255, 255, 0.04); 
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-radius: 24px; 
+            padding: 25px; 
+            margin-bottom: 20px; 
+            border: 1px solid rgba(255,255,255,0.1); 
+            box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+        }
+
+        h3 { color: #38bdf8; margin: 0 0 20px 0; font-size: 16px; font-weight: 600; letter-spacing: 0.5px; }
         
+        /* 危险区域卡片风格 */
+        .card-danger { 
+            background: rgba(239, 68, 68, 0.05); 
+            border: 1px solid rgba(239, 68, 68, 0.2); 
+        }
+        .card-danger h3 { color: #f87171; }
+
+        label { display: block; margin: 12px 0 8px 5px; font-size: 12px; color: #94a3b8; text-transform: uppercase; font-weight: 700; }
+        
+        select, input { 
+            width: 100%; padding: 14px; border-radius: 14px; 
+            background: rgba(15, 23, 42, 0.6); border: 1px solid rgba(255,255,255,0.05); 
+            color: white; box-sizing: border-box; outline: none; transition: 0.3s;
+        }
+
+        select:focus, input:focus { border-color: #38bdf8; background: rgba(15, 23, 42, 0.8); }
+        
+        /* iOS Switch 风格 */
         .switch-container {
             display: flex; justify-content: space-between; align-items: center;
-            background: rgba(15, 23, 42, 0.5); padding: 12px; border-radius: 12px; border: 1px solid #334155;
+            background: rgba(15, 23, 42, 0.4); padding: 12px 16px; border-radius: 16px;
         }
-        .switch { position: relative; display: inline-block; width: 44px; height: 24px; }
-        .switch input { opacity: 0; width: 0; height: 0; }
-        .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #334155; transition: .4s; border-radius: 24px; }
-        .slider:before { position: absolute; content: ""; height: 18px; width: 18px; left: 3px; bottom: 3px; background-color: white; transition: .4s; border-radius: 50%; }
-        input:checked + .slider { background-color: #38bdf8; }
-        input:checked + .slider:before { transform: translateX(20px); }
 
-        .btn-save { background: linear-gradient(135deg, #38bdf8 0%, #0284c7 100%); color: white; border: none; padding: 15px; border-radius: 12px; width: 100%; font-weight: 600; cursor: pointer; margin-top: 10px; }
+        .switch { position: relative; display: inline-block; width: 50px; height: 28px; }
+        .switch input { opacity: 0; width: 0; height: 0; }
+        .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #334155; transition: .4s; border-radius: 30px; }
+        .slider:before { position: absolute; content: ""; height: 22px; width: 22px; left: 3px; bottom: 3px; background-color: white; transition: .4s; border-radius: 50%; box-shadow: 0 2px 4px rgba(0,0,0,0.2); }
+        input:checked + .slider { background-color: #10b981; }
+        input:checked + .slider:before { transform: translateX(22px); }
+
+        .btn-save { 
+            background: linear-gradient(135deg, #38bdf8 0%, #0284c7 100%); 
+            color: white; border: none; padding: 16px; border-radius: 16px; 
+            width: 100%; font-weight: 600; cursor: pointer; margin-top: 10px;
+            box-shadow: 0 10px 20px rgba(56, 189, 248, 0.2); transition: 0.3s;
+        }
+        .btn-save:active { transform: scale(0.98); }
+
+        .btn-danger {
+            background: rgba(239, 68, 68, 0.1);
+            color: #f87171; border: 1px solid rgba(239, 68, 68, 0.3);
+            padding: 14px; border-radius: 14px; width: 100%; font-weight: 600; cursor: pointer;
+            transition: 0.3s;
+        }
+        .btn-danger:hover { background: #ef4444; color: white; }
     </style>
 </head>
 <body>
     <header>
-        <a href="menu.html" style="float: left; text-decoration: none; color: white; position: absolute; left: 20px; font-size: 20px;">⬅️</a>
+        <a href="menu.html" class="back-btn">⬅️</a>
+        <img src="semsira.png" alt="" style="width:24px; margin-right:10px;">
         <span style="font-weight: 600;">Tetapan Sistem</span>
     </header>
 
@@ -39,11 +109,11 @@
         <div class="card">
             <h3>📷 Tetapan Kamera</h3>
             <div class="setting-group">
-                <label>Pilih Sumber Kamera</label>
+                <label>Sumber Kamera</label>
                 <select id="cameraSelect"><option value="">Mengesan kamera...</option></select>
             </div>
             <div class="setting-group">
-                <label>Mirror View (Pantulan Imej)</label>
+                <label>Mirror View</label>
                 <div class="switch-container">
                     <span style="font-size: 14px;">Aktifkan Mirroring</span>
                     <label class="switch">
@@ -57,17 +127,77 @@
         <div class="card">
             <h3>⏰ Had Masa Lewat</h3>
             <div class="setting-group">
-                <label>Masa Mula Lewat (HH:mm)</label>
+                <label>Masa Mula Lewat</label>
                 <input type="time" id="lateTime" value="07:35">
             </div>
             <button class="btn-save" onclick="saveSettings()">💾 SIMPAN TETAPAN</button>
         </div>
+
+        <div class="card card-danger">
+            <h3>⚠️ Kawasan Bahaya</h3>
+            <p style="font-size: 12px; color: #94a3b8; margin-bottom: 15px;">Tindakan ini akan memadamkan SEMUA data murid dan rekod kehadiran secara kekal.</p>
+            <button class="btn-danger" onclick="confirmDeleteDatabase()">🗑️ RESET DATABASE</button>
+        </div>
     </div>
 
     <script src="https://unpkg.com/html5-qrcode"></script>
+    <script type="module">
+        // 导入 Firebase 模块以便进行删除操作
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-app.js";
+        import { getFirestore, collection, getDocs, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-firestore.js";
+
+        // 请确保这里的 Config 与你其他页面的一致
+        const firebaseConfig = {
+            apiKey: "AIzaSyCdKtcJseBEcR5CXapiAmVb8TvOw30rN1Q",
+            authDomain: "semsiraf6kehadiran.firebaseapp.com",
+            projectId: "semsiraf6kehadiran",
+            storageBucket: "semsiraf6kehadiran.firebasestorage.app",
+            messagingSenderId: "410598658230",
+            appId: "1:410598658230:web:911046bf7a8d36260c9617"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        // --- 双重验证删除逻辑 ---
+        window.confirmDeleteDatabase = async () => {
+            // 第一重验证：系统确认
+            const firstCheck = confirm("ADAKAH ANDA PASTI? Semua data murid dan kehadiran akan dipadamkan!");
+            if (!firstCheck) return;
+
+            // 第二重验证：手动输入口令
+            const secondCheck = prompt("Sila taip 'PADAM' untuk mengesahkan pemadaman kekal:");
+            
+            if (secondCheck === "PADAM") {
+                try {
+                    alert("Sedang memadam... Sila tunggu.");
+                    
+                    // 删除 students 集合
+                    const studentSnap = await getDocs(collection(db, "students"));
+                    studentSnap.forEach(async (d) => {
+                        await deleteDoc(doc(db, "students", d.id));
+                    });
+
+                    // 删除 attendance 集合
+                    const attendanceSnap = await getDocs(collection(db, "attendance"));
+                    attendanceSnap.forEach(async (d) => {
+                        await deleteDoc(doc(db, "attendance", d.id));
+                    });
+
+                    alert("Database telah berjaya di-reset!");
+                    location.reload();
+                } catch (e) {
+                    alert("Ralat: " + e.message);
+                }
+            } else {
+                alert("Pengesahan gagal. Data tidak dipadam.");
+            }
+        };
+    </script>
+
     <script>
+        // 原有的相机和保存逻辑
         async function init() {
-            // 1. 获取相机列表
             const cameraSelect = document.getElementById('cameraSelect');
             try {
                 const devices = await Html5Qrcode.getCameras();
@@ -84,7 +214,6 @@
                 }
             } catch (e) { cameraSelect.innerHTML = '<option>Ralat Keizinan</option>'; }
 
-            // 2. 加载其他设置
             document.getElementById('lateTime').value = localStorage.getItem('lateTimeLimit') || "07:35";
             document.getElementById('mirrorToggle').checked = localStorage.getItem('cameraMirror') === 'true';
         }
