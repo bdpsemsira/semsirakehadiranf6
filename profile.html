@@ -145,8 +145,8 @@
 
             <label>ID Kad NFC (Scan untuk rakam):</label>
             <div style="display: flex; gap: 8px;">
-                <input type="text" id="edit-nfc" readonly placeholder="Tiada Kad">
-                <button onclick="scanNfcForEdit()" style="background: #38bdf8; border:none; color:white; padding: 0 15px; border-radius:10px; cursor:pointer;">SCAN</button>
+                <input type="text" id="edit-nfc" placeholder="Tiada Kad">
+                <button onclick="scanNfcForEdit()" id="scanBtn" style="background: #38bdf8; border:none; color:white; padding: 0 15px; border-radius:10px; cursor:pointer;">SCAN</button>
             </div>
             <p id="nfc-status-modal" style="font-size: 10px; color: #94a3b8; margin: -5px 0 10px 5px;">Tekan SCAN dan dekatkan kad</p>
 
@@ -177,6 +177,10 @@
         let studentID = urlParams.get('id');
         let currentDocRef = null;
 
+        // --- 核心修复：外接读取器监听变量 ---
+        let inputBuffer = "";
+        let isPCScanActive = false;
+
         async function loadProfile() {
             try {
                 const docRef = doc(db, "students", studentID);
@@ -195,7 +199,6 @@
                     document.getElementById('p-class').innerText = data.kelas;
                     document.getElementById('p-gender').innerText = data.gender || "Lelaki";
                     
-                    // 读取时优先找 nfcSeries，兼容旧数据找 cardID
                     const cardID = data.nfcSeries || data.cardID || 'TIADA';
                     document.getElementById('p-nfc-display').innerText = `ID KAD: ${cardID}`;
                     
@@ -255,29 +258,62 @@
             const cardID = document.getElementById('p-nfc-display').innerText.replace('ID KAD: ', '');
             document.getElementById('edit-nfc').value = (cardID === 'TIADA') ? '' : cardID;
             document.getElementById('editModal').style.display = 'block';
+            isPCScanActive = false; // 重置PC扫描状态
         };
 
         window.closeModal = () => {
             document.getElementById('editModal').style.display = 'none';
+            isPCScanActive = false;
         };
 
+        // --- 核心修复：增强版 NFC 扫描 (PC + Android) ---
         window.scanNfcForEdit = async () => {
+            const statusLabel = document.getElementById('nfc-status-modal');
+            const nfcInput = document.getElementById('edit-nfc');
+            
+            // 模式 A: 针对安卓 Chrome (NDEFReader)
             if ('NDEFReader' in window) {
                 try {
                     const ndef = new NDEFReader();
                     await ndef.scan();
-                    document.getElementById('nfc-status-modal').innerText = "📳 Sila dekatkan kad...";
-                    document.getElementById('nfc-status-modal').style.color = "#38bdf8";
+                    statusLabel.innerText = "📳 Sila dekatkan kad...";
+                    statusLabel.style.color = "#38bdf8";
                     
                     ndef.addEventListener("reading", ({ serialNumber }) => {
-                        // 统一转为小写保存，增加识别稳定性
-                        document.getElementById('edit-nfc').value = serialNumber.toLowerCase();
-                        document.getElementById('nfc-status-modal').innerText = "✅ Berjaya!";
-                        document.getElementById('nfc-status-modal').style.color = "#22c55e";
+                        nfcInput.value = serialNumber.toLowerCase();
+                        statusLabel.innerText = "✅ Berjaya (Android)!";
+                        statusLabel.style.color = "#22c55e";
                     });
-                } catch (e) { alert("Ralat: " + e); }
-            } else { alert("Guna Chrome di Android untuk NFC."); }
+                } catch (e) { console.log("NDEF Skip: " + e); }
+            } 
+            
+            // 模式 B: 针对 PC 端 Chrome (外接读取器)
+            // 逻辑：点击 SCAN 后进入监听状态，并清空输入框
+            isPCScanActive = true;
+            nfcInput.value = "";
+            nfcInput.focus();
+            statusLabel.innerText = "⌨️ Sila imbas kad menggunakan alat读取器...";
+            statusLabel.style.color = "#f59e0b";
         };
+
+        // 电脑读取器键盘钩子
+        document.addEventListener('keydown', (e) => {
+            if (!isPCScanActive) return;
+
+            if (e.key === 'Enter') {
+                if (inputBuffer.length > 0) {
+                    document.getElementById('edit-nfc').value = inputBuffer.toLowerCase();
+                    document.getElementById('nfc-status-modal').innerText = "✅ Berjaya (PC Reader)!";
+                    document.getElementById('nfc-status-modal').style.color = "#22c55e";
+                    inputBuffer = "";
+                    isPCScanActive = false; // 完成一次扫描后关闭
+                }
+            } else {
+                if (e.key.length === 1) {
+                    inputBuffer += e.key;
+                }
+            }
+        });
 
         document.getElementById('saveEditBtn').onclick = async () => {
             const name = document.getElementById('edit-name').value.toUpperCase();
@@ -285,7 +321,6 @@
             const nfc = document.getElementById('edit-nfc').value.toLowerCase();
 
             try {
-                // 核心修改点：保存到 nfcSeries 字段
                 await updateDoc(currentDocRef, {
                     name: name,
                     kelas: kelas,
