@@ -137,13 +137,14 @@
                     document.getElementById('resClass').innerText = data.kelas;
                     document.getElementById('resID').innerText = "NFC ID: " + nfcId;
                     markAttendance(data);
+                // ... 之前的代码
                 } else {
                     resultUI.classList.add('res-error');
                     document.getElementById('resName').innerText = "KAD TIDAK BERDAFTAR";
+                    document.getElementById('resClass').innerText = "--"; 
                     document.getElementById('attendance-status').innerText = "❌ Gagal";
                     document.getElementById('resID').innerText = "ID: " + nfcId;
                 }
-
                 // 启动 3 秒进度条动画
                 setTimeout(() => { progressBar.style.width = '100%'; }, 50); 
                 window.autoResetTimer = setTimeout(() => { resetUI(); }, 3000);
